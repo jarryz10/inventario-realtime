@@ -465,6 +465,7 @@ export default function App() {
         quantity: parseInt(orderForm.quantity) || 0,
         cost: parseFloat(orderForm.cost) || 0,
         url: orderForm.url.trim(),
+        status: "solicitado",
         timestamp: serverTimestamp()
       });
 
@@ -482,6 +483,48 @@ export default function App() {
       setAlertMessage({ type: "error", text: "Error al registrar el pedido." });
     } finally {
       setIsOrderSubmitting(false);
+    }
+  };
+
+  // Handle Approve Order (Level 3 only)
+  const handleApproveOrder = async (orderId) => {
+    if (userLevel < 3) return;
+    try {
+      const docRef = doc(db, "orders", orderId);
+      await updateDoc(docRef, {
+        status: "en_espera"
+      });
+      setAlertMessage({ type: "success", text: "¡Pedido aprobado y puesto en espera!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error approving order:", error);
+    }
+  };
+
+  // Handle Reject Order (Level 3 only)
+  const handleRejectOrder = async (orderId) => {
+    if (userLevel < 3) return;
+    try {
+      await deleteDoc(doc(db, "orders", orderId));
+      setAlertMessage({ type: "success", text: "Pedido rechazado y eliminado." });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error rejecting order:", error);
+    }
+  };
+
+  // Handle Receive Order (Level 2 or 3)
+  const handleReceiveOrder = async (orderId) => {
+    if (userLevel < 2) return;
+    try {
+      const docRef = doc(db, "orders", orderId);
+      await updateDoc(docRef, {
+        status: "recibido"
+      });
+      setAlertMessage({ type: "success", text: "¡Pedido marcado como recibido!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error receiving order:", error);
     }
   };
 
@@ -951,8 +994,8 @@ export default function App() {
             {activeTab === "ordenes" && userLevel >= 2 && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
                 
-                {/* Left Form: place order (colspan 5) */}
-                <div className="md:col-span-5 flex flex-col h-full overflow-y-auto">
+                {/* Left Form: place order (colspan 3) */}
+                <div className="md:col-span-3 flex flex-col h-full overflow-y-auto">
                   <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                     <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                       Solicitud de Compra
@@ -996,10 +1039,10 @@ export default function App() {
                       </div>
 
                       {/* Cantidad y Costo Total */}
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Cantidad *
+                            Cant *
                           </label>
                           <input
                             type="number"
@@ -1008,15 +1051,15 @@ export default function App() {
                             value={orderForm.quantity}
                             onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value })}
                             disabled={isOrderSubmitting}
-                            className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                            className={`w-full px-3 py-2.5 rounded-xl text-xs glass-input font-semibold ${
                               orderErrors.quantity ? "border-red-500" : ""
                             }`}
                           />
-                          {orderErrors.quantity && <p className="text-[9px] text-red-500 font-bold mt-1">{orderErrors.quantity}</p>}
+                          {orderErrors.quantity && <p className="text-[9px] text-red-500 font-bold mt-0.5">{orderErrors.quantity}</p>}
                         </div>
                         <div>
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Costo Total (USD) *
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1" title="Costo en USD">
+                            Costo *
                           </label>
                           <input
                             type="number"
@@ -1026,11 +1069,11 @@ export default function App() {
                             value={orderForm.cost}
                             onChange={(e) => setOrderForm({ ...orderForm, cost: e.target.value })}
                             disabled={isOrderSubmitting}
-                            className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                            className={`w-full px-3 py-2.5 rounded-xl text-xs glass-input font-semibold ${
                               orderErrors.cost ? "border-red-500" : ""
                             }`}
                           />
-                          {orderErrors.cost && <p className="text-[9px] text-red-500 font-bold mt-1">{orderErrors.cost}</p>}
+                          {orderErrors.cost && <p className="text-[9px] text-red-500 font-bold mt-0.5">{orderErrors.cost}</p>}
                         </div>
                       </div>
 
@@ -1070,72 +1113,139 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right List: registered orders (colspan 7) */}
-                <div className="md:col-span-7 flex flex-col overflow-hidden h-full">
-                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
+                {/* Right Columns: Kanban Board (colspan 9) */}
+                <div className="md:col-span-9 flex flex-col h-full overflow-hidden">
+                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
                     <div className="flex items-center justify-between mb-4 shrink-0">
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                        Historial de Compras Solicitadas
+                        Pedidos Pendientes y Seguimiento
                       </h2>
                       <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                        {orders.length} pedidos
+                        {orders.length} totales
                       </span>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 min-h-[200px]">
+                    {/* Kanban Board Grid */}
+                    <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden min-h-0">
                       {isOrdersLoading ? (
-                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <div className="col-span-3 flex flex-col items-center justify-center py-20 text-center">
                           <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
                           <span className="text-xs text-slate-400 font-bold">Cargando pedidos...</span>
                         </div>
-                      ) : orders.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-center">
-                          <ClipboardList className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">Sin órdenes registradas</h3>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                            No hay pedidos cargados en Firestore. Rellena el formulario para solicitar uno.
-                          </p>
-                        </div>
                       ) : (
-                        <div className="flex flex-col gap-3">
-                          {orders.map((order) => (
-                            <div
-                              key={order.id}
-                              className="glass-card rounded-2xl p-4 shadow-sm border border-white/30 dark:border-slate-800/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-305 hover-scale animate-fade-in"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <span className="text-[8px] uppercase font-black text-sky-500 dark:text-sky-400 tracking-wider">
-                                  COMPRA SOLICITADA
-                                </span>
-                                <h4 className="font-extrabold product-name-text text-sm truncate leading-snug">
-                                  {order.itemName}
-                                </h4>
-                                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-semibold">
-                                  Mod: {order.itemModel} • Qty: <span className="text-slate-700 dark:text-slate-300 font-bold">{order.quantity}</span>
-                                </p>
-                              </div>
-
-                              <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-2 shrink-0">
-                                <div className="text-left sm:text-right">
-                                  <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Costo Total</span>
-                                  <span className="font-black text-sky-600 dark:text-sky-400 text-sm flex items-center">
-                                    <DollarSign className="w-3.5 h-3.5" />
-                                    {order.cost?.toLocaleString("es-CL")}
-                                  </span>
-                                </div>
-                                <a
-                                  href={order.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center hover-scale transition-colors"
-                                  title="Ver producto en la web"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </a>
-                              </div>
+                        <>
+                          {/* COLUMN 1: SOLICITADO */}
+                          <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
+                            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
+                              <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">Solicitado</span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-500/10 text-sky-600">
+                                {orders.filter(o => o.status === "solicitado" || !o.status).length}
+                              </span>
                             </div>
-                          ))}
-                        </div>
+                            <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
+                              {orders.filter(o => o.status === "solicitado" || !o.status).map(order => (
+                                <div key={order.id} className="glass-card rounded-2xl p-3 border border-white/40 dark:border-slate-800/20 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm">
+                                  <div className="min-w-0">
+                                    <h4 className="font-extrabold product-name-text text-xs truncate">{order.itemName}</h4>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
+                                  </div>
+                                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                    <span>Cant: <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
+                                    <span className="font-bold text-sky-600 dark:text-sky-400">${order.cost?.toLocaleString("es-CL")}</span>
+                                  </div>
+                                  <div className="flex gap-2 mt-1 shrink-0 pt-2 border-t border-slate-100 dark:border-slate-800/30 justify-between items-center">
+                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title="Ver producto">
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </a>
+                                    {userLevel === 3 && (
+                                      <div className="flex gap-1.5">
+                                        <button onClick={() => handleRejectOrder(order.id)} className="px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase transition-colors" title="Rechazar Pedido">
+                                          Rechazar
+                                        </button>
+                                        <button onClick={() => handleApproveOrder(order.id)} className="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase transition-colors" title="Aprobar Pedido">
+                                          Aprobar
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                              {orders.filter(o => o.status === "solicitado" || !o.status).length === 0 && (
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">Sin solicitudes</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* COLUMN 2: EN ESPERA */}
+                          <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
+                            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
+                              <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">En Espera</span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600">
+                                {orders.filter(o => o.status === "en_espera").length}
+                              </span>
+                            </div>
+                            <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
+                              {orders.filter(o => o.status === "en_espera").map(order => (
+                                <div key={order.id} className="glass-card rounded-2xl p-3 border border-white/40 dark:border-slate-800/20 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm">
+                                  <div className="min-w-0">
+                                    <h4 className="font-extrabold product-name-text text-xs truncate">{order.itemName}</h4>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
+                                  </div>
+                                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                    <span>Cant: <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
+                                    <span className="font-bold text-sky-600 dark:text-sky-400">${order.cost?.toLocaleString("es-CL")}</span>
+                                  </div>
+                                  <div className="flex gap-2 mt-1 shrink-0 pt-2 border-t border-slate-100 dark:border-slate-800/30 justify-between items-center">
+                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title="Ver producto">
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </a>
+                                    {userLevel >= 2 && (
+                                      <button onClick={() => handleReceiveOrder(order.id)} className="px-2 py-1 rounded bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase transition-colors shadow-sm" title="Recibido">
+                                        Recibido
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                              {orders.filter(o => o.status === "en_espera").length === 0 && (
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">Sin pedidos aprobados</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* COLUMN 3: RECIBIDO */}
+                          <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
+                            <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
+                              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Recibido</span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600">
+                                {orders.filter(o => o.status === "recibido").length}
+                              </span>
+                            </div>
+                            <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
+                              {orders.filter(o => o.status === "recibido").map(order => (
+                                <div key={order.id} className="glass-card rounded-2xl p-3 border border-white/40 dark:border-slate-800/20 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm opacity-80">
+                                  <div className="min-w-0">
+                                    <h4 className="font-extrabold product-name-text text-xs truncate">{order.itemName}</h4>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
+                                  </div>
+                                  <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                                    <span>Cant: <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
+                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">${order.cost?.toLocaleString("es-CL")}</span>
+                                  </div>
+                                  <div className="flex gap-2 mt-1 shrink-0 pt-2 border-t border-slate-100 dark:border-slate-800/30 justify-between items-center">
+                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title="Ver producto">
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </a>
+                                    <span className="text-[8px] uppercase font-black text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">Completado</span>
+                                  </div>
+                                </div>
+                              ))}
+                              {orders.filter(o => o.status === "recibido").length === 0 && (
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">Sin pedidos recibidos</span>
+                              )}
+                            </div>
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
