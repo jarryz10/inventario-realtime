@@ -89,7 +89,9 @@ export default function App() {
     brand: "",
     model: "",
     sku: "",
-    location: ""
+    location: "",
+    minStock: "",
+    description: ""
   });
   const [isSavingDetail, setIsSavingDetail] = useState(false);
 
@@ -102,7 +104,9 @@ export default function App() {
           brand: selectedProduct.brand || "",
           model: selectedProduct.model || "",
           sku: selectedProduct.sku || "",
-          location: selectedProduct.location || ""
+          location: selectedProduct.location || "",
+          minStock: selectedProduct.minStock !== undefined ? selectedProduct.minStock.toString() : "",
+          description: selectedProduct.description || ""
         });
       }
     } else {
@@ -137,6 +141,7 @@ export default function App() {
     location: "",
     minStock: "",
     stock: "",
+    description: "",
     imageType: "upload",
     imageUrl: ""
   });
@@ -526,6 +531,7 @@ export default function App() {
         location: formData.location.trim(),
         minStock: parseInt(formData.minStock) || 0,
         stock: parseInt(formData.stock) || 0,
+        description: formData.description.trim(),
         image: finalImageUrl,
         timestamp: serverTimestamp()
       }).catch(error => {
@@ -541,6 +547,7 @@ export default function App() {
         location: "",
         minStock: "",
         stock: "",
+        description: "",
         imageType: "upload",
         imageUrl: ""
       });
@@ -953,6 +960,10 @@ export default function App() {
       alert("El SKU debe tener exactamente 9 caracteres.");
       return;
     }
+    if (editDetailForm.minStock === "" || parseInt(editDetailForm.minStock) < 0) {
+      alert("Por favor, introduce un stock mínimo válido (número mayor o igual a 0).");
+      return;
+    }
 
     setIsSavingDetail(true);
     try {
@@ -962,7 +973,9 @@ export default function App() {
         brand: editDetailForm.brand.trim(),
         model: editDetailForm.model.trim(),
         sku: editDetailForm.sku.trim().toUpperCase(),
-        location: editDetailForm.location.trim()
+        location: editDetailForm.location.trim(),
+        minStock: parseInt(editDetailForm.minStock) || 0,
+        description: (editDetailForm.description || "").trim()
       });
       setIsEditingDetail(false);
       setAlertMessage({ type: "success", text: "¡Componente actualizado correctamente!" });
@@ -2194,6 +2207,20 @@ export default function App() {
                 {formErrors.stock && <p className="text-[9px] text-red-500 font-bold mt-1">{formErrors.stock}</p>}
               </div>
 
+              {/* Row 4.5: Descripción del Artículo */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                  Descripción del Artículo
+                </label>
+                <textarea
+                  placeholder="Describe brevemente el componente (marca, modelo, características...)..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold resize-none"
+                />
+              </div>
+
               {/* Row 5: Imagen del Artículo con Pestañas y Zona de arrastre */}
               <div className="flex flex-col gap-2.5">
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block">
@@ -2454,22 +2481,58 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Row 3: Ubicación Física */}
+                {/* Row 3: Ubicación Física & Stock Mínimo */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Ubicación Física *</span>
+                    {isEditingDetail ? (
+                      <input
+                        type="text"
+                        value={editDetailForm.location}
+                        onChange={(e) => setEditDetailForm({ ...editDetailForm, location: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
+                        required
+                      />
+                    ) : (
+                      <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                        <MapPin className="w-4 h-4 text-sky-500" />
+                        {selectedProduct.location || "Sin Ubicación registrada"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Stock Mínimo *</span>
+                    {isEditingDetail ? (
+                      <input
+                        type="number"
+                        min="0"
+                        value={editDetailForm.minStock}
+                        onChange={(e) => setEditDetailForm({ ...editDetailForm, minStock: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
+                        required
+                      />
+                    ) : (
+                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">
+                        {selectedProduct.minStock !== undefined ? selectedProduct.minStock : 0}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                  <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Ubicación Física *</span>
+                  <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Descripción del Artículo</span>
                   {isEditingDetail ? (
-                    <input
-                      type="text"
-                      value={editDetailForm.location}
-                      onChange={(e) => setEditDetailForm({ ...editDetailForm, location: e.target.value })}
-                      className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
-                      required
+                    <textarea
+                      value={editDetailForm.description}
+                      onChange={(e) => setEditDetailForm({ ...editDetailForm, description: e.target.value })}
+                      rows={2}
+                      className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500 resize-none"
                     />
                   ) : (
-                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                      <MapPin className="w-4 h-4 text-sky-500" />
-                      {selectedProduct.location || "Sin Ubicación registrada"}
-                    </span>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
+                      {selectedProduct.description || "Sin descripción proporcionada."}
+                    </p>
                   )}
                 </div>
 
