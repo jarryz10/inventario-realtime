@@ -45,6 +45,44 @@ import {
   Printer
 } from "lucide-react";
 
+const TABS_CONFIG = [
+  {
+    id: "inventario",
+    title: "Inventario Real-time",
+    description: "Supervisa y gestiona las existencias del almacén al instante",
+    shortTitle: "Inventario",
+    iconName: "Boxes"
+  },
+  {
+    id: "ordenes",
+    title: "Órdenes y Pedidos de Compra",
+    description: "Solicita adquisiciones y compras externas para reabastecimiento",
+    shortTitle: "Órdenes",
+    iconName: "ClipboardList"
+  },
+  {
+    id: "reportes",
+    title: "Reporte Diario de Actividades",
+    description: "Registra y audita las actividades realizadas durante el turno",
+    shortTitle: "Reportes",
+    iconName: "FileText"
+  },
+  {
+    id: "limpieza",
+    title: "Limpieza de Impresora",
+    description: "Registra y supervisa los servicios de mantenimiento de equipos de impresión",
+    shortTitle: "Limpieza",
+    iconName: "Printer"
+  }
+];
+
+const ICON_COMPONENTS = {
+  Boxes,
+  ClipboardList,
+  FileText,
+  Printer
+};
+
 export default function App() {
   // Authentication & Roles State
   const [currentUser, setCurrentUser] = useState(null);
@@ -1396,68 +1434,29 @@ export default function App() {
             <span className="text-[9px] font-black text-sky-600 dark:text-sky-400 mt-2 tracking-wider">REALTIME</span>
           </div>
 
-          {/* Navigation Tabs (Inventario vs Ordenes) */}
+          {/* Navigation Tabs (Dynamic modular configuration) */}
           <div className="flex flex-col gap-5">
-            <button
-              onClick={() => {
-                setActiveTab("inventario");
-                setAlertMessage({ type: "", text: "" });
-              }}
-              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
-                activeTab === "inventario"
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
-                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              }`}
-              title="Inventario"
-            >
-              <Boxes className="w-5.5 h-5.5 mb-1" />
-              <span className="text-[10px] font-bold">Inventario</span>
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("ordenes");
-                setAlertMessage({ type: "", text: "" });
-              }}
-              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
-                activeTab === "ordenes"
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
-                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              }`}
-              title="Órdenes y Pedidos"
-            >
-              <ClipboardList className="w-5.5 h-5.5 mb-1" />
-              <span className="text-[10px] font-bold">Órdenes</span>
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("reportes");
-                setAlertMessage({ type: "", text: "" });
-              }}
-              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
-                activeTab === "reportes"
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
-                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              }`}
-              title="Reporte Diario"
-            >
-              <FileText className="w-5.5 h-5.5 mb-1" />
-              <span className="text-[10px] font-bold">Reportes</span>
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("limpieza");
-                setAlertMessage({ type: "", text: "" });
-              }}
-              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
-                activeTab === "limpieza"
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
-                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              }`}
-              title="Limpieza de Impresora"
-            >
-              <Printer className="w-5.5 h-5.5 mb-1" />
-              <span className="text-[10px] font-bold">Limpieza</span>
-            </button>
+            {TABS_CONFIG.map((tab) => {
+              const IconComponent = ICON_COMPONENTS[tab.iconName] || Boxes;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setAlertMessage({ type: "", text: "" });
+                  }}
+                  className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                    activeTab === tab.id
+                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  }`}
+                  title={tab.title}
+                >
+                  <IconComponent className="w-5.5 h-5.5 mb-1" />
+                  <span className="text-[10px] font-bold">{tab.shortTitle}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Theme & Logout */}
@@ -1493,22 +1492,10 @@ export default function App() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                {activeTab === "inventario" 
-                  ? "Inventario Real-time" 
-                  : activeTab === "ordenes" 
-                    ? "Órdenes y Pedidos de Compra" 
-                    : activeTab === "reportes"
-                      ? "Reporte Diario de Actividades"
-                      : "Limpieza de Impresora"}
+                {TABS_CONFIG.find(tab => tab.id === activeTab)?.title || "Panel de Control"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                {activeTab === "inventario" 
-                  ? "Supervisa y gestiona las existencias del almacén al instante" 
-                  : activeTab === "ordenes"
-                    ? "Solicita adquisiciones y compras externas para reabastecimiento"
-                    : activeTab === "reportes"
-                      ? "Registra y audita las actividades realizadas durante el turno"
-                      : "Registra y supervisa los servicios de mantenimiento de equipos de impresión"}
+                {TABS_CONFIG.find(tab => tab.id === activeTab)?.description || ""}
               </p>
             </div>
 
@@ -2372,12 +2359,9 @@ export default function App() {
                             >
                               <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona modelo...</option>
                               {[
-                                "Zebra ZT411 (Industrial)",
-                                "Zebra ZT230 (Industrial)",
-                                "Honeywell PM43 (Industrial)",
-                                "HP LaserJet Pro (Oficina)",
-                                "Epson EcoTank (Oficina)",
-                                "Brother HL (Etiquetas)"
+                                "Sato",
+                                "Zebra",
+                                "Lexmark"
                               ].map(model => (
                                 <option key={model} value={model} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                   {model}
