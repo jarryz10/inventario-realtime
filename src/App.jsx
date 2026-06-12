@@ -2492,16 +2492,16 @@ export default function App() {
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-extrabold text-xs text-slate-950 dark:text-slate-50">
+                                      <span className="font-extrabold text-xs text-slate-900">
                                         Usuario: {record.createdBy} | Estación: {record.station}
                                       </span>
-                                      <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950/80 text-sky-950 dark:text-sky-300 border border-sky-400/40 dark:border-sky-800/50 text-[10px] font-black uppercase shadow-sm">
+                                      <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900 text-sky-950 dark:text-white border border-sky-300 dark:border-sky-800 text-[10px] font-black uppercase shadow-sm">
                                         {record.printerType}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-xs text-slate-950 dark:text-slate-300 font-bold">{record.date}</span>
-                                      <span className="text-[10px] text-slate-950 dark:text-slate-300 font-extrabold">{isExpanded ? "▲" : "▼"}</span>
+                                      <span className="text-xs text-slate-800 font-bold">{record.date}</span>
+                                      <span className="text-[10px] text-slate-800 font-extrabold">{isExpanded ? "▲" : "▼"}</span>
                                     </div>
                                   </div>
                                   
@@ -2579,16 +2579,16 @@ export default function App() {
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-extrabold text-xs text-slate-950 dark:text-slate-50">
+                                    <span className="font-extrabold text-xs text-slate-900">
                                       Usuario: {record.createdBy} | Estación: {record.station}
                                     </span>
-                                    <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950/80 text-sky-950 dark:text-sky-300 border border-sky-400/40 dark:border-sky-800/50 text-[10px] font-black uppercase shadow-sm">
+                                    <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900 text-sky-950 dark:text-white border border-sky-300 dark:border-sky-800 text-[10px] font-black uppercase shadow-sm">
                                       {record.printerType}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs text-slate-950 dark:text-slate-300 font-bold">{record.date}</span>
-                                    <span className="text-[10px] text-slate-950 dark:text-slate-300 font-extrabold">{isExpanded ? "▲" : "▼"}</span>
+                                    <span className="text-xs text-slate-800 font-bold">{record.date}</span>
+                                    <span className="text-[10px] text-slate-800 font-extrabold">{isExpanded ? "▲" : "▼"}</span>
                                   </div>
                                 </div>
                                 
