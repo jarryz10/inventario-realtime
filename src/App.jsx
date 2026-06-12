@@ -258,7 +258,7 @@ export default function App() {
       console.error("Failed to setup real-time listener:", error);
       setIsLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   // Effect to fetch orders in real-time from Firestore (orders)
   useEffect(() => {
@@ -294,7 +294,7 @@ export default function App() {
       console.error("Failed to setup orders real-time listener:", error);
       setIsOrdersLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   // Generate SKU
   const handleGenerateSKU = () => {
