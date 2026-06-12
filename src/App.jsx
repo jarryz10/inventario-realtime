@@ -41,7 +41,8 @@ import {
   Lock,
   LogOut,
   Edit3,
-  FileText
+  FileText,
+  Printer
 } from "lucide-react";
 
 export default function App() {
@@ -126,6 +127,18 @@ export default function App() {
   const [reportRows, setReportRows] = useState([{ time: "08:00 - 09:00", activity: "" }]);
   const [isReportSubmitting, setIsReportSubmitting] = useState(false);
   const [expandedReportId, setExpandedReportId] = useState(null);
+
+  // Printer Cleaning State
+  const [printerCleanings, setPrinterCleanings] = useState([]);
+  const [isCleaningLoading, setIsCleaningLoading] = useState(true);
+  const [cleaningForm, setCleaningForm] = useState({
+    station: "",
+    ip: "10.40.",
+    printerType: ""
+  });
+  const [cleaningErrors, setCleaningErrors] = useState({});
+  const [isCleaningSubmitting, setIsCleaningSubmitting] = useState(false);
+  const [expandedCleaningId, setExpandedCleaningId] = useState(null);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -459,6 +472,48 @@ export default function App() {
     } catch (error) {
       console.error("Failed to setup daily reports real-time listener:", error);
       setIsReportsLoading(false);
+    }
+  }, [currentUser, userLevel]);
+
+  // Effect to fetch printer cleanings in real-time from Firestore
+  useEffect(() => {
+    if (!currentUser) return;
+    setIsCleaningLoading(true);
+    try {
+      let q = collection(db, "printer_cleaning");
+      
+      // Filter in query for Nivel 1 (Operador)
+      if (userLevel === 1) {
+        q = query(collection(db, "printer_cleaning"), where("createdBy", "==", currentUser.username));
+      }
+      
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          let cleaningList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Sort by timestamp (newest first)
+          cleaningList.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
+          setPrinterCleanings(cleaningList);
+          setIsCleaningLoading(false);
+        },
+        (error) => {
+          console.error("Firestore printer cleanings query error:", error);
+          setIsCleaningLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup printer cleanings real-time listener:", error);
+      setIsCleaningLoading(false);
     }
   }, [currentUser, userLevel]);
 
@@ -871,6 +926,194 @@ export default function App() {
     }
   };
 
+  // Validate IPv4 Address starting with 10.40.
+  const isValidIP = (ip) => {
+    const ipPattern = /^10\.40\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)$/;
+    return ipPattern.test(ip);
+  };
+
+  // Restrict IP Address editing to maintain 10.40. prefix and allow only numbers and dots
+  const handleIPChange = (val) => {
+    if (!val.startsWith("10.40.")) {
+      setCleaningForm(prev => ({ ...prev, ip: "10.40." }));
+    } else {
+      const suffix = val.substring(6);
+      const cleanSuffix = suffix.replace(/[^0-9.]/g, "");
+      setCleaningForm(prev => ({ ...prev, ip: "10.40." + cleanSuffix }));
+    }
+  };
+
+  // Submit printer cleaning form to Firestore
+  const handleSubmitCleaning = async (e) => {
+    e.preventDefault();
+    if (userLevel >= 3) return;
+    setAlertMessage({ type: "", text: "" });
+
+    const station = cleaningForm.station.trim();
+    const ip = cleaningForm.ip.trim();
+    const printerType = cleaningForm.printerType.trim();
+
+    const errors = {};
+    if (!station) {
+      errors.station = "La estación es obligatoria.";
+    } else if (station.length > 3) {
+      errors.station = "Máximo de 3 caracteres.";
+    }
+
+    if (!ip) {
+      errors.ip = "La dirección IP es obligatoria.";
+    } else if (!isValidIP(ip)) {
+      errors.ip = "Dirección IP inválida (ej. 10.40.23.104).";
+    }
+
+    if (!printerType) {
+      errors.printerType = "El modelo de impresora es obligatorio.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCleaningErrors(errors);
+      return;
+    }
+
+    setCleaningErrors({});
+    setIsCleaningSubmitting(true);
+    try {
+      const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+      await addDoc(collection(db, "printer_cleaning"), {
+        station,
+        ip,
+        printerType,
+        createdBy: currentUser.username,
+        userLevel: userLevel,
+        date: today,
+        timestamp: serverTimestamp()
+      });
+
+      setCleaningForm({
+        station: "",
+        ip: "10.40.",
+        printerType: ""
+      });
+      setAlertMessage({ type: "success", text: "¡Servicio de limpieza registrado exitosamente!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error submitting cleaning registry:", error);
+      setAlertMessage({ type: "error", text: "Error al registrar la limpieza." });
+    } finally {
+      setIsCleaningSubmitting(false);
+    }
+  };
+
+  // Generate and download PDF for printer cleaning service sheet
+  const handleDownloadCleaningPDF = (record) => {
+    try {
+      if (!record) {
+        throw new Error("El registro es nulo o indefinido");
+      }
+
+      const station = record.station || "N/D";
+      const ip = record.ip || "N/D";
+      const printerType = record.printerType || "N/D";
+      const createdBy = record.createdBy || "N/D";
+      const date = record.date || "N/D";
+      const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/D";
+
+      const doc = new jsPDF();
+
+      // Membrete / Top logo & brand
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(14, 165, 233); // Sky-500
+      doc.text("MasterInventory", 14, 20);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139); // Slate-500
+      doc.text("Sistema de Mantenimiento y Calidad de Almacén", 14, 25);
+
+      // Title of the document
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(30, 41, 59); // Slate-800
+      doc.text("Certificado de Limpieza de Impresora", 14, 38);
+
+      // Horizontal divider line
+      doc.setDrawColor(203, 213, 225); // Slate-300
+      doc.setLineWidth(0.5);
+      doc.line(14, 43, 196, 43);
+
+      // Organized table with item details
+      const tableHeaders = [["Detalle de Servicio", "Información Registrada"]];
+      const tableRows = [
+        ["Estación de Trabajo", station],
+        ["Dirección IP del Equipo", ip],
+        ["Tipo / Modelo de Impresora", printerType],
+        ["Técnico / Operador", createdBy],
+        ["Nivel del Técnico", `Nivel ${recordUserLevel} (${recordUserLevel === 2 ? "Supervisor" : "Operador"})`],
+        ["Fecha de Mantenimiento", date]
+      ];
+
+      autoTable(doc, {
+        startY: 48,
+        head: tableHeaders,
+        body: tableRows,
+        theme: "striped",
+        headStyles: {
+          fillColor: [14, 165, 233], // Sky-500
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 10
+        },
+        bodyStyles: {
+          fontSize: 9.5,
+          textColor: [51, 65, 85]
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // Slate-50
+        },
+        margin: { left: 14, right: 14 },
+        styles: {
+          overflow: "linebreak",
+          cellPadding: 6
+        }
+      });
+
+      // Signature/Authorization section
+      const finalY = doc.lastAutoTable.finalY + 30;
+
+      doc.setDrawColor(203, 213, 225); // Slate-300
+      doc.line(14, finalY, 80, finalY);
+      doc.line(130, finalY, 196, finalY);
+
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(51, 65, 85);
+      doc.text("Firma del Técnico", 14 + 16, finalY + 5);
+      doc.text("Firma de Supervisión / Calidad", 130 + 10, finalY + 5);
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text(createdBy, 14 + 20, finalY + 10);
+      doc.text("MasterInventory QC", 130 + 20, finalY + 10);
+
+      // Footer
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // Slate-400
+      doc.text(`Documento generado el: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+      doc.text("Registro oficial de mantenimiento - Confidencial", 130, pageHeight - 10);
+
+      // Save PDF
+      const sanitizeStation = station.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+      const filename = `Limpieza_Impresora_${sanitizeStation}_${record.date.replace(/\//g, "-")}.pdf`;
+      doc.save(filename);
+    } catch (error) {
+      console.error("Error al descargar PDF de limpieza:", error);
+      alert("Ocurrió un error al generar el PDF de limpieza.");
+    }
+  };
+
   // Handle Approve Order (Level 3 only)
   const handleApproveOrder = async (orderId) => {
     if (userLevel < 3) return;
@@ -1200,6 +1443,21 @@ export default function App() {
               <FileText className="w-5.5 h-5.5 mb-1" />
               <span className="text-[10px] font-bold">Reportes</span>
             </button>
+            <button
+              onClick={() => {
+                setActiveTab("limpieza");
+                setAlertMessage({ type: "", text: "" });
+              }}
+              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                activeTab === "limpieza"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              }`}
+              title="Limpieza de Impresora"
+            >
+              <Printer className="w-5.5 h-5.5 mb-1" />
+              <span className="text-[10px] font-bold">Limpieza</span>
+            </button>
           </div>
 
           {/* Theme & Logout */}
@@ -1239,14 +1497,18 @@ export default function App() {
                   ? "Inventario Real-time" 
                   : activeTab === "ordenes" 
                     ? "Órdenes y Pedidos de Compra" 
-                    : "Reporte Diario de Actividades"}
+                    : activeTab === "reportes"
+                      ? "Reporte Diario de Actividades"
+                      : "Limpieza de Impresora"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                 {activeTab === "inventario" 
                   ? "Supervisa y gestiona las existencias del almacén al instante" 
                   : activeTab === "ordenes"
                     ? "Solicita adquisiciones y compras externas para reabastecimiento"
-                    : "Registra y audita las actividades realizadas durante el turno"}
+                    : activeTab === "reportes"
+                      ? "Registra y audita las actividades realizadas durante el turno"
+                      : "Registra y supervisa los servicios de mantenimiento de equipos de impresión"}
               </p>
             </div>
 
@@ -2030,6 +2292,266 @@ export default function App() {
                                         onClick={() => handleDownloadPDF(report)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
                                         title="Descargar Reporte en PDF"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-white" />
+                                        <span>Descargar PDF</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 4: LIMPIEZA DE IMPRESORA */}
+            {activeTab === "limpieza" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
+                {userLevel < 3 ? (
+                  <>
+                    {/* Left Form: create cleaning log (colspan 5) */}
+                    <div className="md:col-span-5 flex flex-col h-full overflow-y-auto pr-1 scroll-glass">
+                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
+                          Registrar Limpieza de Impresora
+                        </h2>
+                        
+                        <form onSubmit={handleSubmitCleaning} className="flex flex-col gap-4">
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                              Estación de Trabajo *
+                            </label>
+                            <input
+                              type="text"
+                              maxLength={3}
+                              placeholder="Ej. A01, E-3"
+                              value={cleaningForm.station}
+                              onChange={(e) => setCleaningForm({ ...cleaningForm, station: e.target.value })}
+                              className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                                cleaningErrors.station ? "border-red-500" : ""
+                              }`}
+                              required
+                            />
+                            {cleaningErrors.station && <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors.station}</p>}
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                              Dirección IP *
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Ej. 10.40.23.104"
+                              value={cleaningForm.ip}
+                              onChange={(e) => handleIPChange(e.target.value)}
+                              className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
+                                cleaningErrors.ip ? "border-red-500" : ""
+                              }`}
+                              required
+                            />
+                            {cleaningErrors.ip && <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors.ip}</p>}
+                          </div>
+
+                          <div>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                              Tipo de Impresora *
+                            </label>
+                            <select
+                              value={cleaningForm.printerType}
+                              onChange={(e) => setCleaningForm({ ...cleaningForm, printerType: e.target.value })}
+                              className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold ${
+                                cleaningErrors.printerType ? "border-red-500" : ""
+                              }`}
+                              required
+                            >
+                              <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona modelo...</option>
+                              {[
+                                "Zebra ZT411 (Industrial)",
+                                "Zebra ZT230 (Industrial)",
+                                "Honeywell PM43 (Industrial)",
+                                "HP LaserJet Pro (Oficina)",
+                                "Epson EcoTank (Oficina)",
+                                "Brother HL (Etiquetas)"
+                              ].map(model => (
+                                <option key={model} value={model} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                  {model}
+                                </option>
+                              ))}
+                            </select>
+                            {cleaningErrors.printerType && <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors.printerType}</p>}
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isCleaningSubmitting}
+                            className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer"
+                          >
+                            {isCleaningSubmitting ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-3.5 h-3.5" />
+                            )}
+                            <span>{isCleaningSubmitting ? "Guardando..." : "Guardar Registro"}</span>
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                    
+                    {/* Right History: (colspan 7) */}
+                    <div className="md:col-span-7 flex flex-col h-full overflow-hidden">
+                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                        <div className="flex items-center justify-between mb-4 shrink-0">
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            Historial de Limpieza
+                          </h2>
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                            {printerCleanings.length} reportes
+                          </span>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
+                          {isCleaningLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                              <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                              <span className="text-xs text-slate-400 font-bold">Cargando limpiezas...</span>
+                            </div>
+                          ) : printerCleanings.length === 0 ? (
+                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin registros de limpieza</span>
+                          ) : (
+                            printerCleanings.map((record) => {
+                              const isExpanded = expandedCleaningId === record.id;
+                              return (
+                                <div 
+                                  key={record.id} 
+                                  onClick={() => setExpandedCleaningId(isExpanded ? null : record.id)}
+                                  className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">Estación: {record.station}</span>
+                                      <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[8px] font-black uppercase">
+                                        {record.printerType.split(" ")[0]}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{record.date}</span>
+                                      <span className="text-[9px] text-slate-400 font-bold">{isExpanded ? "▲" : "▼"}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  {isExpanded && (
+                                    <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                      <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
+                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP</span>
+                                          <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
+                                        </div>
+                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
+                                          <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
+                                        </div>
+                                        <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Modelo del Equipo</span>
+                                          <span className="text-slate-700 dark:text-slate-300">{record.printerType}</span>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex justify-end pt-2">
+                                        <button
+                                          onClick={() => handleDownloadCleaningPDF(record)}
+                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                          title="Descargar Certificado en PDF"
+                                        >
+                                          <FileText className="w-3.5 h-3.5 text-white" />
+                                          <span>Descargar PDF</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Nivel 3: Audit View (colspan 12) */
+                  <div className="col-span-12 flex flex-col h-full overflow-hidden">
+                    <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                      <div className="flex items-center justify-between mb-4 shrink-0">
+                        <div>
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            Supervisión de Limpieza de Impresoras
+                          </h2>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Registro y auditoría de limpieza y mantenimiento de equipos</p>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          {printerCleanings.length} totales
+                        </span>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-4">
+                        {isCleaningLoading ? (
+                          <div className="flex flex-col items-center justify-center py-20 text-center w-full">
+                            <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                            <span className="text-xs text-slate-400 font-bold">Cargando limpiezas para supervisión...</span>
+                          </div>
+                        ) : printerCleanings.length === 0 ? (
+                          <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold w-full">
+                            No se registran limpiezas en el sistema.
+                          </div>
+                        ) : (
+                          printerCleanings.map((record) => {
+                            const isExpanded = expandedCleaningId === record.id;
+                            return (
+                              <div 
+                                key={record.id} 
+                                onClick={() => setExpandedCleaningId(isExpanded ? null : record.id)}
+                                className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">Estación: {record.station}</span>
+                                    <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[8px] font-black uppercase">
+                                      {record.printerType.split(" ")[0]}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{record.date}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">{isExpanded ? "▲" : "▼"}</span>
+                                  </div>
+                                </div>
+                                
+                                {isExpanded && (
+                                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                    <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
+                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP</span>
+                                        <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
+                                      </div>
+                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
+                                        <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
+                                      </div>
+                                      <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Modelo del Equipo</span>
+                                        <span className="text-slate-700 dark:text-slate-300">{record.printerType}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-end pt-2">
+                                      <button
+                                        onClick={() => handleDownloadCleaningPDF(record)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                        title="Descargar Certificado en PDF"
                                       >
                                         <FileText className="w-3.5 h-3.5 text-white" />
                                         <span>Descargar PDF</span>
