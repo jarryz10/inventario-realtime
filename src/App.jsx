@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "./firebase";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import { 
   collection, 
   addDoc, 
@@ -110,6 +112,7 @@ export default function App() {
   const [isReportsLoading, setIsReportsLoading] = useState(true);
   const [reportRows, setReportRows] = useState([{ time: "08:00 - 09:00", activity: "" }]);
   const [isReportSubmitting, setIsReportSubmitting] = useState(false);
+  const [expandedReportId, setExpandedReportId] = useState(null);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -634,6 +637,77 @@ export default function App() {
       setAlertMessage({ type: "error", text: "Error al enviar el reporte." });
     } finally {
       setIsReportSubmitting(false);
+    }
+  };
+
+  // Generate and download PDF for a daily report
+  const handleDownloadPDF = (report) => {
+    try {
+      const doc = new jsPDF();
+
+      // Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(14, 165, 233); // Sky-500
+      doc.text("Reporte Diario de Actividades", 14, 20);
+
+      // Subtitle
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139); // Slate-500
+      doc.text("MasterInventory - Sistema de Almacén", 14, 26);
+
+      // Divider line
+      doc.setDrawColor(226, 232, 240); // Slate-200 border
+      doc.line(14, 32, 196, 32);
+
+      // Metadata Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(51, 65, 85); // Slate-700
+      doc.text("Detalles del Reporte:", 14, 40);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Operador / Creador: ${report.createdBy}`, 14, 46);
+      doc.text(`Nivel de Permisos: Nivel ${report.userLevel} (${report.userLevel === 2 ? "Supervisor" : "Operador"})`, 14, 52);
+      doc.text(`Fecha del Turno: ${report.date}`, 14, 58);
+
+      // Table of Activities
+      const tableHeaders = [["Bloque de Tiempo", "Actividades Realizadas"]];
+      const tableRows = report.activities.map(act => [act.time, act.activity]);
+
+      doc.autoTable({
+        startY: 66,
+        head: tableHeaders,
+        body: tableRows,
+        theme: "striped",
+        headStyles: {
+          fillColor: [14, 165, 233], // Sky-500
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 10
+        },
+        bodyStyles: {
+          fontSize: 9,
+          textColor: [51, 65, 85]
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // Slate-50
+        },
+        margin: { top: 10, left: 14, right: 14 },
+        styles: {
+          overflow: "linebreak",
+          cellPadding: 5
+        }
+      });
+
+      // Save PDF
+      const filename = `Reporte_${report.createdBy}_${report.date.replace(/\//g, "-")}.pdf`;
+      doc.save(filename);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Ocurrió un error al generar el PDF.");
     }
   };
 
@@ -1620,33 +1694,58 @@ export default function App() {
                           ) : dailyReports.length === 0 ? (
                             <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin reportes registrados</span>
                           ) : (
-                            dailyReports.map((report) => (
-                              <div key={report.id} className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 animate-fade-in">
-                                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/30 pb-2 shrink-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.createdBy}</span>
-                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                                      report.userLevel === 2 
-                                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
-                                        : "bg-sky-500/10 text-sky-600 dark:text-sky-400"
-                                    }`}>
-                                      {report.userLevel === 2 ? "Supervisor" : "Operador"}
-                                    </span>
-                                  </div>
-                                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{report.date}</span>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  {report.activities?.map((row, idx) => (
-                                    <div key={idx} className="flex gap-3 text-xs leading-relaxed">
-                                      <span className="font-mono font-bold text-[10px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-2 py-0.5 rounded-lg h-fit">
-                                        {row.time}
+                            dailyReports.map((report) => {
+                              const isExpanded = expandedReportId === report.id;
+                              return (
+                                <div 
+                                  key={report.id} 
+                                  onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
+                                  className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 cursor-pointer select-none animate-fade-in"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.createdBy}</span>
+                                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                                        report.userLevel === 2 
+                                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
+                                          : "bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                                      }`}>
+                                        {report.userLevel === 2 ? "Supervisor" : "Operador"}
                                       </span>
-                                      <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
                                     </div>
-                                  ))}
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{report.date}</span>
+                                      <span className="text-[9px] text-slate-400 font-bold">{isExpanded ? "▲" : "▼"}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  {isExpanded && (
+                                    <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                      <div className="flex flex-col gap-2">
+                                        {report.activities?.map((row, idx) => (
+                                          <div key={idx} className="flex gap-3 text-xs leading-relaxed">
+                                            <span className="font-mono font-bold text-[10px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-2 py-0.5 rounded-lg h-fit">
+                                              {row.time}
+                                            </span>
+                                            <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <div className="flex justify-end pt-2">
+                                        <button
+                                          onClick={() => handleDownloadPDF(report)}
+                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                          title="Descargar Reporte en PDF"
+                                        >
+                                          <FileText className="w-3.5 h-3.5 text-white" />
+                                          <span>Descargar PDF</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
-                            ))
+                              );
+                            })
                           )}
                         </div>
                       </div>
@@ -1679,10 +1778,17 @@ export default function App() {
                             No se registran reportes en el sistema.
                           </div>
                         ) : (
-                          dailyReports.map((report) => (
-                            <div key={report.id} className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col justify-between gap-3 animate-fade-in">
-                              <div className="flex flex-col gap-3">
-                                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/30 pb-2">
+                          dailyReports.map((report) => {
+                            const isExpanded = expandedReportId === report.id;
+                            return (
+                              <div 
+                                key={report.id} 
+                                onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
+                                className={`glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 cursor-pointer select-none animate-fade-in ${
+                                  isExpanded ? "md:col-span-2 lg:col-span-3 h-fit" : ""
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.createdBy}</span>
                                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
@@ -1693,21 +1799,39 @@ export default function App() {
                                       {report.userLevel === 2 ? "Supervisor" : "Operador"}
                                     </span>
                                   </div>
-                                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{report.date}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{report.date}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold">{isExpanded ? "▲" : "▼"}</span>
+                                  </div>
                                 </div>
-                                <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1 scroll-glass">
-                                  {report.activities?.map((row, idx) => (
-                                    <div key={idx} className="flex gap-2 text-xs leading-relaxed">
-                                      <span className="font-mono font-bold text-[9px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-1.5 py-0.5 rounded h-fit">
-                                        {row.time}
-                                      </span>
-                                      <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
+                                
+                                {isExpanded && (
+                                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1 scroll-glass">
+                                      {report.activities?.map((row, idx) => (
+                                        <div key={idx} className="flex gap-2 text-xs leading-relaxed">
+                                          <span className="font-mono font-bold text-[9px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-1.5 py-0.5 rounded h-fit">
+                                            {row.time}
+                                          </span>
+                                          <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
+                                        </div>
+                                      ))}
                                     </div>
-                                  ))}
-                                </div>
+                                    <div className="flex justify-end pt-2">
+                                      <button
+                                        onClick={() => handleDownloadPDF(report)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                        title="Descargar Reporte en PDF"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-white" />
+                                        <span>Descargar PDF</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
                     </div>
