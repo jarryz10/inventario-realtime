@@ -38,7 +38,8 @@ import {
   Mail,
   Lock,
   LogOut,
-  Edit3
+  Edit3,
+  FileText
 } from "lucide-react";
 
 export default function App() {
@@ -103,6 +104,12 @@ export default function App() {
   const [isOrdersLoading, setIsOrdersLoading] = useState(true);
   const [orderHistory, setOrderHistory] = useState([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+
+  // Daily Reports State
+  const [dailyReports, setDailyReports] = useState([]);
+  const [isReportsLoading, setIsReportsLoading] = useState(true);
+  const [reportRows, setReportRows] = useState([{ time: "08:00 - 09:00", activity: "" }]);
+  const [isReportSubmitting, setIsReportSubmitting] = useState(false);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -389,6 +396,55 @@ export default function App() {
     }
   }, [currentUser]);
 
+  // Effect to fetch daily reports in real-time from Firestore
+  useEffect(() => {
+    if (!currentUser) return;
+    setIsReportsLoading(true);
+    try {
+      let q = collection(db, "daily_reports");
+      
+      // Filter in query for Nivel 1 (Operador)
+      if (userLevel === 1) {
+        q = query(collection(db, "daily_reports"), where("createdBy", "==", currentUser.username));
+      }
+      
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          let reportsList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Filter in JS for Nivel 2 (Supervisor sees Nivel 1 reports + their own reports)
+          if (userLevel === 2) {
+            reportsList = reportsList.filter(
+              r => r.userLevel === 1 || r.createdBy === currentUser.username
+            );
+          }
+          
+          // Sort by timestamp (newest first)
+          reportsList.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
+          setDailyReports(reportsList);
+          setIsReportsLoading(false);
+        },
+        (error) => {
+          console.error("Firestore daily reports query error:", error);
+          setIsReportsLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup daily reports real-time listener:", error);
+      setIsReportsLoading(false);
+    }
+  }, [currentUser, userLevel]);
+
   // Generate SKU
   const handleGenerateSKU = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -525,6 +581,59 @@ export default function App() {
       setAlertMessage({ type: "error", text: "Error al registrar el pedido." });
     } finally {
       setIsOrderSubmitting(false);
+    }
+  };
+
+  // Add Daily Report Row
+  const handleAddReportRow = () => {
+    const standardBlocks = [
+      "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
+      "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00",
+      "16:00 - 17:00", "17:00 - 18:00", "18:00 - 19:00", "19:00 - 20:00"
+    ];
+    let nextIndex = reportRows.length;
+    if (nextIndex >= standardBlocks.length) nextIndex = standardBlocks.length - 1;
+    const nextTime = standardBlocks[nextIndex];
+    setReportRows(prev => [...prev, { time: nextTime, activity: "" }]);
+  };
+
+  // Remove Daily Report Row
+  const handleRemoveReportRow = (index) => {
+    if (reportRows.length <= 1) return;
+    setReportRows(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle Daily Report Submission
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    if (userLevel >= 3) return;
+    setAlertMessage({ type: "", text: "" });
+
+    const filledRows = reportRows.filter(r => r.activity.trim() !== "");
+    if (filledRows.length === 0) {
+      alert("Por favor ingresa al menos una actividad.");
+      return;
+    }
+
+    setIsReportSubmitting(true);
+    try {
+      const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+      await addDoc(collection(db, "daily_reports"), {
+        activities: filledRows.map(r => ({ time: r.time, activity: r.activity.trim() })),
+        createdBy: currentUser.username,
+        userLevel: userLevel,
+        date: today,
+        timestamp: serverTimestamp()
+      });
+
+      setReportRows([{ time: "08:00 - 09:00", activity: "" }]);
+      setAlertMessage({ type: "success", text: "¡Reporte diario enviado exitosamente!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error submitting daily report:", error);
+      setAlertMessage({ type: "error", text: "Error al enviar el reporte." });
+    } finally {
+      setIsReportSubmitting(false);
     }
   };
 
@@ -836,6 +945,21 @@ export default function App() {
               <ClipboardList className="w-5.5 h-5.5 mb-1" />
               <span className="text-[10px] font-bold">Órdenes</span>
             </button>
+            <button
+              onClick={() => {
+                setActiveTab("reportes");
+                setAlertMessage({ type: "", text: "" });
+              }}
+              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                activeTab === "reportes"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              }`}
+              title="Reporte Diario"
+            >
+              <FileText className="w-5.5 h-5.5 mb-1" />
+              <span className="text-[10px] font-bold">Reportes</span>
+            </button>
           </div>
 
           {/* Theme & Logout */}
@@ -871,12 +995,18 @@ export default function App() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                {activeTab === "inventario" ? "Inventario Real-time" : "Órdenes y Pedidos de Compra"}
+                {activeTab === "inventario" 
+                  ? "Inventario Real-time" 
+                  : activeTab === "ordenes" 
+                    ? "Órdenes y Pedidos de Compra" 
+                    : "Reporte Diario de Actividades"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                 {activeTab === "inventario" 
                   ? "Supervisa y gestiona las existencias del almacén al instante" 
-                  : "Solicita adquisiciones y compras externas para reabastecimiento"}
+                  : activeTab === "ordenes"
+                    ? "Solicita adquisiciones y compras externas para reabastecimiento"
+                    : "Registra y audita las actividades realizadas durante el turno"}
               </p>
             </div>
 
@@ -1370,6 +1500,219 @@ export default function App() {
                   </div>
                 </div>
 
+              </div>
+            )}
+
+            {/* TAB 3: REPORTE DIARIO */}
+            {activeTab === "reportes" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
+                {userLevel < 3 ? (
+                  <>
+                    {/* Left Form: create report (colspan 5) */}
+                    <div className="md:col-span-5 flex flex-col h-full overflow-y-auto pr-1 scroll-glass">
+                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
+                          Nuevo Reporte Diario
+                        </h2>
+                        
+                        <form onSubmit={handleSubmitReport} className="flex flex-col gap-4">
+                          <div className="flex flex-col gap-4">
+                            {reportRows.map((row, index) => (
+                              <div key={index} className="p-3 rounded-2xl bg-slate-500/5 border border-slate-100/20 dark:border-slate-800/10 flex flex-col gap-2 relative">
+                                <div className="flex justify-between items-center gap-2">
+                                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                    Bloque de Hora
+                                  </label>
+                                  {reportRows.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveReportRow(index)}
+                                      className="p-1 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                                      title="Eliminar fila"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                                
+                                <select
+                                  value={row.time}
+                                  onChange={(e) => {
+                                    const updated = [...reportRows];
+                                    updated[index].time = e.target.value;
+                                    setReportRows(updated);
+                                  }}
+                                  className="w-full px-3 py-2 rounded-xl text-xs glass-input font-bold"
+                                >
+                                  {[
+                                    "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
+                                    "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00",
+                                    "16:00 - 17:00", "17:00 - 18:00", "18:00 - 19:00", "19:00 - 20:00"
+                                  ].map(block => (
+                                    <option key={block} value={block} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                      {block}
+                                    </option>
+                                  ))}
+                                </select>
+                                
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-1">
+                                  Actividad Realizada *
+                                </label>
+                                <textarea
+                                  placeholder="Describe las tareas realizadas en este bloque..."
+                                  value={row.activity}
+                                  onChange={(e) => {
+                                    const updated = [...reportRows];
+                                    updated[index].activity = e.target.value;
+                                    setReportRows(updated);
+                                  }}
+                                  rows={2}
+                                  className="w-full px-3 py-2 rounded-xl text-xs glass-input font-semibold resize-none"
+                                  required
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={handleAddReportRow}
+                            className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 hover:border-sky-500 dark:hover:border-sky-500 text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer hover:bg-sky-500/5"
+                          >
+                            <PlusCircle className="w-4 h-4" />
+                            <span>Agregar Fila</span>
+                          </button>
+                          
+                          <button
+                            type="submit"
+                            disabled={isReportSubmitting}
+                            className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer"
+                          >
+                            {isReportSubmitting ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-3.5 h-3.5" />
+                            )}
+                            <span>{isReportSubmitting ? "Enviando..." : "Enviar Reporte"}</span>
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                    
+                    {/* Right History: (colspan 7) */}
+                    <div className="md:col-span-7 flex flex-col h-full overflow-hidden">
+                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                        <div className="flex items-center justify-between mb-4 shrink-0">
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            Historial de Reportes
+                          </h2>
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                            {dailyReports.length} reportes
+                          </span>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-4 pb-2">
+                          {isReportsLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                              <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                              <span className="text-xs text-slate-400 font-bold">Cargando reportes...</span>
+                            </div>
+                          ) : dailyReports.length === 0 ? (
+                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin reportes registrados</span>
+                          ) : (
+                            dailyReports.map((report) => (
+                              <div key={report.id} className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 animate-fade-in">
+                                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/30 pb-2 shrink-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.createdBy}</span>
+                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                                      report.userLevel === 2 
+                                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
+                                        : "bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                                    }`}>
+                                      {report.userLevel === 2 ? "Supervisor" : "Operador"}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{report.date}</span>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                  {report.activities?.map((row, idx) => (
+                                    <div key={idx} className="flex gap-3 text-xs leading-relaxed">
+                                      <span className="font-mono font-bold text-[10px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-2 py-0.5 rounded-lg h-fit">
+                                        {row.time}
+                                      </span>
+                                      <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Nivel 3: Audit View (colspan 12) */
+                  <div className="col-span-12 flex flex-col h-full overflow-hidden">
+                    <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                      <div className="flex items-center justify-between mb-4 shrink-0">
+                        <div>
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            Auditoría de Reportes Diarios
+                          </h2>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Control y supervisión de turnos de Operadores y Supervisores</p>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          {dailyReports.length} totales
+                        </span>
+                      </div>
+                      
+                      <div className="flex-1 overflow-y-auto pr-1 scroll-glass grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                        {isReportsLoading ? (
+                          <div className="col-span-3 flex flex-col items-center justify-center py-20 text-center">
+                            <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                            <span className="text-xs text-slate-400 font-bold">Cargando reportes para auditoría...</span>
+                          </div>
+                        ) : dailyReports.length === 0 ? (
+                          <div className="col-span-3 text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                            No se registran reportes en el sistema.
+                          </div>
+                        ) : (
+                          dailyReports.map((report) => (
+                            <div key={report.id} className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col justify-between gap-3 animate-fade-in">
+                              <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/30 pb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.createdBy}</span>
+                                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                                      report.userLevel === 2 
+                                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
+                                        : "bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                                    }`}>
+                                      {report.userLevel === 2 ? "Supervisor" : "Operador"}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{report.date}</span>
+                                </div>
+                                <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1 scroll-glass">
+                                  {report.activities?.map((row, idx) => (
+                                    <div key={idx} className="flex gap-2 text-xs leading-relaxed">
+                                      <span className="font-mono font-bold text-[9px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-1.5 py-0.5 rounded h-fit">
+                                        {row.time}
+                                      </span>
+                                      <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
