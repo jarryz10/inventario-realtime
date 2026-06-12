@@ -7,7 +7,9 @@ import {
   deleteDoc, 
   doc, 
   query, 
-  serverTimestamp 
+  serverTimestamp,
+  updateDoc,
+  increment
 } from "firebase/firestore";
 import { 
   Boxes, 
@@ -215,6 +217,19 @@ export default function App() {
     }
   };
 
+  // Handle Adjust Stock in Firestore
+  const handleAdjustStock = async (productId, amount, currentStock) => {
+    if (amount < 0 && currentStock <= 0) return;
+    try {
+      const docRef = doc(db, "items", productId);
+      await updateDoc(docRef, {
+        stock: increment(amount)
+      });
+    } catch (error) {
+      console.error("Error adjusting stock in Firestore:", error);
+    }
+  };
+
   const getStockStatus = (stock, minStock) => {
     const s = parseInt(stock) || 0;
     const m = parseInt(minStock) || 0;
@@ -381,11 +396,32 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* footer block: Stock status & Delete action */}
+                      {/* footer block: Stock status & Quick Controls */}
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/30">
-                        <div className="flex flex-col">
-                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-1">Estado de Stock</span>
-                          {getStockStatus(product.stock, product.minStock)}
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Estado de Stock</span>
+                          <div className="flex items-center gap-1.5">
+                            {getStockStatus(product.stock, product.minStock)}
+                            
+                            {/* Quick stock adjusters */}
+                            <div className="flex items-center gap-1 ml-1 shrink-0">
+                              <button
+                                onClick={() => handleAdjustStock(product.id, -1, product.stock)}
+                                disabled={product.stock <= 0}
+                                className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-slate-100 dark:disabled:hover:bg-slate-800 hover-scale transition-colors cursor-pointer"
+                                title="Restar 1 unidad"
+                              >
+                                -
+                              </button>
+                              <button
+                                onClick={() => handleAdjustStock(product.id, 1, product.stock)}
+                                className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer"
+                                title="Sumar 1 unidad"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
                         </div>
 
                         <button
