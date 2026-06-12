@@ -52,7 +52,7 @@ export default function App() {
     setIsLoading(true);
     try {
       // Query collection directly without orderBy to avoid index prerequisites and connection drops on other devices
-      const q = collection(db, "productos");
+      const q = collection(db, "items");
       
       const unsubscribe = onSnapshot(
         q, 
@@ -103,8 +103,13 @@ export default function App() {
     try {
       // Executing addDoc asynchronously without awaiting allows the UI to remain responsive
       // and guarantees that the finally block runs immediately, resetting the loader.
-      addDoc(collection(db, "productos"), {
-        nombre: newProductName.trim(),
+      addDoc(collection(db, "items"), {
+        name: newProductName.trim(),
+        price: 0,
+        description: "",
+        stock: 0,
+        category: "General",
+        image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&auto=format&fit=crop&q=60",
         timestamp: serverTimestamp()
       }).catch(error => {
         console.error("Error adding document to Firestore:", error);
@@ -125,7 +130,7 @@ export default function App() {
   // Handle Delete Product
   const handleDeleteProduct = async (productId) => {
     try {
-      await deleteDoc(doc(db, "productos", productId));
+      await deleteDoc(doc(db, "items", productId));
       setAlertMessage({ type: "success", text: "Producto eliminado correctamente." });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -292,7 +297,7 @@ export default function App() {
                           <Package className="w-4.5 h-4.5" />
                         </div>
                         <span className="font-extrabold text-slate-800 dark:text-white text-xs sm:text-sm truncate">
-                          {product.nombre}
+                          {product.name}
                         </span>
                       </div>
 
