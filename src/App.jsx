@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { translations } from "./translations";
 import { 
   collection, 
   addDoc, 
@@ -44,7 +45,8 @@ import {
   FileText,
   Printer,
   Radio,
-  Users
+  Users,
+  Globe
 } from "lucide-react";
 
 const TABS_CONFIG = [
@@ -102,6 +104,10 @@ const ICON_COMPONENTS = {
 };
 
 export default function App() {
+  // Translation State
+  const [language, setLanguage] = useState(() => localStorage.getItem("app_language") || "es");
+  const t = translations[language];
+
   // Authentication & Roles State
   const [currentUser, setCurrentUser] = useState(null);
   const [userLevel, setUserLevel] = useState(1); // 1 = Operador, 2 = Supervisor, 3 = Administrador
@@ -314,7 +320,7 @@ export default function App() {
 
     const username = loginUsername.trim().toLowerCase();
     if (!username || !loginPassword) {
-      setLoginError("Por favor ingresa todos los campos obligatorios.");
+      setLoginError(t.err_required_fields);
       return;
     }
 
@@ -708,18 +714,18 @@ export default function App() {
   // Add Component Form Validation
   const validateForm = () => {
     const errors = {};
-    if (!formData.name.trim()) errors.name = "Nombre obligatorio";
-    if (!formData.brand.trim()) errors.brand = "Marca obligatoria";
-    if (!formData.model.trim()) errors.model = "Modelo obligatorio";
+    if (!formData.name.trim()) errors.name = t.err_name_req;
+    if (!formData.brand.trim()) errors.brand = t.err_brand_req;
+    if (!formData.model.trim()) errors.model = t.err_model_req;
     if (!formData.sku.trim() || formData.sku.trim().length !== 9) {
-      errors.sku = "El SKU debe tener 9 caracteres";
+      errors.sku = t.err_sku_invalid;
     }
-    if (!formData.location.trim()) errors.location = "Ubicación obligatoria";
+    if (!formData.location.trim()) errors.location = t.err_location_req;
     if (formData.minStock === "" || parseInt(formData.minStock) < 0) {
-      errors.minStock = "Mínimo inválido";
+      errors.minStock = t.err_min_stock_invalid;
     }
     if (formData.stock === "" || parseInt(formData.stock) < 0) {
-      errors.stock = "Stock inicial inválido";
+      errors.stock = t.err_stock_invalid;
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -781,16 +787,16 @@ export default function App() {
   // Add Order Form Validation
   const validateOrderForm = () => {
     const errors = {};
-    if (!orderForm.itemName.trim()) errors.itemName = "Nombre del artículo obligatorio";
-    if (!orderForm.itemModel.trim()) errors.itemModel = "Modelo obligatorio";
+    if (!orderForm.itemName.trim()) errors.itemName = t.err_item_name_req;
+    if (!orderForm.itemModel.trim()) errors.itemModel = t.err_model_req;
     if (!orderForm.quantity || parseInt(orderForm.quantity) <= 0) {
-      errors.quantity = "Cantidad debe ser mayor que 0";
+      errors.quantity = t.err_qty_invalid;
     }
     if (!orderForm.cost || parseFloat(orderForm.cost) <= 0) {
-      errors.cost = "Costo total debe ser mayor que 0";
+      errors.cost = t.err_cost_invalid;
     }
     if (!orderForm.url.trim() || !orderForm.url.startsWith("http")) {
-      errors.url = "Ingresa un enlace válido que inicie con http";
+      errors.url = t.err_url_invalid;
     }
     setOrderErrors(errors);
     return Object.keys(errors).length === 0;
@@ -860,7 +866,7 @@ export default function App() {
 
     const filledRows = reportRows.filter(r => r.activity.trim() !== "");
     if (filledRows.length === 0) {
-      alert("Por favor ingresa al menos una actividad.");
+      alert(t.alert_min_one_activity);
       return;
     }
 
@@ -968,7 +974,7 @@ export default function App() {
       doc.save(filename);
     } catch (error) {
       console.error("Error detallado de jspdf:", error);
-      alert("Ocurrió un error al generar el PDF.");
+      alert(t.alert_pdf_error);
     }
   };
 
@@ -1084,7 +1090,7 @@ export default function App() {
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar ficha técnica:", error);
-      alert("Ocurrió un error al generar la ficha técnica en PDF.");
+      alert(t.alert_pdf_tech_error);
     }
   };
 
@@ -1157,19 +1163,19 @@ export default function App() {
       const rowErrors = {};
 
       if (!station) {
-        rowErrors.station = "La estación es obligatoria.";
+        rowErrors.station = t.err_station_req;
       } else if (station.length > 3) {
-        rowErrors.station = "Máximo de 3 caracteres.";
+        rowErrors.station = t.err_station_max;
       }
 
       if (!ip) {
-        rowErrors.ip = "La dirección IP es obligatoria.";
+        rowErrors.ip = t.err_ip_req;
       } else if (!isValidIP(ip)) {
-        rowErrors.ip = "IP inválida (ej. 10.40.23.104).";
+        rowErrors.ip = t.err_ip_invalid;
       }
 
       if (!printerType) {
-        rowErrors.printerType = "El modelo es obligatorio.";
+        rowErrors.printerType = t.err_printer_model_req;
       }
 
       if (Object.keys(rowErrors).length > 0) {
@@ -1325,7 +1331,7 @@ export default function App() {
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar PDF de limpieza:", error);
-      alert("Ocurrió un error al generar el PDF de limpieza.");
+      alert(t.alert_pdf_cleaning_error);
     }
   };
 
@@ -1375,19 +1381,19 @@ export default function App() {
       const rowErrors = {};
 
       if (!station) {
-        rowErrors.station = "La estación es obligatoria.";
+        rowErrors.station = t.err_station_req;
       } else if (station.length > 3) {
-        rowErrors.station = "Máximo de 3 caracteres.";
+        rowErrors.station = t.err_station_max;
       }
 
       if (!ip) {
-        rowErrors.ip = "La dirección IP es obligatoria.";
+        rowErrors.ip = t.err_ip_req;
       } else if (!isValidRfidIP(ip)) {
-        rowErrors.ip = "IP inválida (ej. 10.40.85.12).";
+        rowErrors.ip = t.err_ip_invalid_rfid;
       }
 
       if (!antennaStatus) {
-        rowErrors.antennaStatus = "El estado de antenas es obligatorio.";
+        rowErrors.antennaStatus = t.err_antenna_status_req;
       }
 
       if (Object.keys(rowErrors).length > 0) {
@@ -1446,7 +1452,7 @@ export default function App() {
     const password = userForm.password;
 
     if (!name || !position || !shift || !level || !username || !password) {
-      setUserFormError("Todos los campos marcados con asterisco (*) son obligatorios.");
+      setUserFormError(t.err_asterisk_fields);
       return;
     }
 
@@ -1456,7 +1462,11 @@ export default function App() {
       const userDocRef = doc(db, "users", username);
       const userDocSnap = await getDoc(userDocRef);
       if (userDocSnap.exists()) {
-        setUserFormError(`El Usuario / ID "${username}" ya está registrado en el sistema.`);
+        setUserFormError(
+          language === "es"
+            ? `El Usuario / ID "${username}" ya está registrado en el sistema.`
+            : `Username / ID "${username}" is already registered in the system.`
+        );
         setIsUserSubmitting(false);
         return;
       }
@@ -1482,11 +1492,18 @@ export default function App() {
         password: ""
       });
 
-      setAlertMessage({ type: "success", text: "¡Usuario creado exitosamente!" });
+      setAlertMessage({
+        type: "success",
+        text: language === "es" ? "¡Usuario creado exitosamente!" : "User created successfully!"
+      });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
       console.error("Error creating user:", error);
-      setUserFormError("Error al registrar el nuevo usuario en Firestore.");
+      setUserFormError(
+        language === "es"
+          ? "Error al registrar el nuevo usuario en Firestore."
+          : "Error registering new user in Firestore."
+      );
     } finally {
       setIsUserSubmitting(false);
     }
@@ -1524,11 +1541,14 @@ export default function App() {
       });
 
       setEditingUser(null);
-      setAlertMessage({ type: "success", text: "¡Usuario actualizado correctamente!" });
+      setAlertMessage({
+        type: "success",
+        text: language === "es" ? "¡Usuario actualizado correctamente!" : "User updated successfully!"
+      });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
       console.error("Error updating user:", error);
-      alert("Ocurrió un error al guardar los cambios del usuario.");
+      alert(t.alert_user_save_error);
     } finally {
       setIsUserSaving(false);
     }
@@ -1540,28 +1560,33 @@ export default function App() {
     
     // Safety check: Prevent deleting self
     if (user.id === currentUser.username) {
-      alert("No puedes eliminar tu propio usuario activo.");
+      alert(t.alert_cannot_delete_self);
       return;
     }
 
     // Safety check: Prevent deleting master user '1234'
     if (user.id === "1234") {
-      alert("No está permitido eliminar al Usuario Maestro del sistema.");
+      alert(t.alert_master_protected);
       return;
     }
 
     const confirmDelete = window.confirm(
-      `¿Está completamente seguro de que desea eliminar al asociado "${user.name}" (${user.id})?\nEsta acción es irreversible y revocará su acceso de inmediato.`
+      language === "es"
+        ? `¿Está completamente seguro de que desea eliminar al asociado "${user.name}" (${user.id})?\nEsta acción es irreversible y revocará su acceso de inmediato.`
+        : `Are you completely sure you want to delete associate "${user.name}" (${user.id})?\nThis action is irreversible and will revoke access immediately.`
     );
 
     if (confirmDelete) {
       try {
         await deleteDoc(doc(db, "users", user.id));
-        setAlertMessage({ type: "success", text: "Usuario eliminado del sistema correctamente." });
+        setAlertMessage({
+          type: "success",
+          text: language === "es" ? "Usuario eliminado del sistema correctamente." : "User successfully deleted from the system."
+        });
         setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
       } catch (error) {
         console.error("Error deleting user:", error);
-        alert("Ocurrió un error al intentar eliminar al usuario.");
+        alert(t.alert_user_delete_error);
       }
     }
   };
@@ -1569,38 +1594,44 @@ export default function App() {
   // Delete printer cleaning document from Firestore (strictly Level 3)
   const handleDeleteCleaning = async (id) => {
     if (userLevel < 3) {
-      alert("No tienes permisos suficientes para realizar esta acción.");
+      alert(t.alert_insufficient_permissions);
       return;
     }
-    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar este reporte de manera permanente?");
+    const confirmDelete = window.confirm(t.confirm_delete_report);
     if (!confirmDelete) return;
 
     try {
       await deleteDoc(doc(db, "printer_cleaning", id));
-      setAlertMessage({ type: "success", text: "Reporte de limpieza eliminado permanentemente." });
+      setAlertMessage({
+        type: "success",
+        text: language === "es" ? "Reporte de limpieza eliminado permanentemente." : "Printer cleaning report permanently deleted."
+      });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
       console.error("Error deleting cleaning report:", error);
-      alert("Error al eliminar el reporte de limpieza.");
+      alert(t.alert_cleaning_delete_error);
     }
   };
 
   // Delete RFID verification document from Firestore (strictly Level 3)
   const handleDeleteRfid = async (id) => {
     if (userLevel < 3) {
-      alert("No tienes permisos suficientes para realizar esta acción.");
+      alert(t.alert_insufficient_permissions);
       return;
     }
-    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar este reporte de manera permanente?");
+    const confirmDelete = window.confirm(t.confirm_delete_report);
     if (!confirmDelete) return;
 
     try {
       await deleteDoc(doc(db, "rfid_verification", id));
-      setAlertMessage({ type: "success", text: "Reporte de RFID eliminado permanentemente." });
+      setAlertMessage({
+        type: "success",
+        text: language === "es" ? "Reporte de RFID eliminado permanentemente." : "RFID verification report permanently deleted."
+      });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
       console.error("Error deleting RFID report:", error);
-      alert("Error al eliminar el reporte de RFID.");
+      alert(t.alert_rfid_delete_error);
     }
   };
 
@@ -1722,7 +1753,7 @@ export default function App() {
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar PDF de RFID:", error);
-      alert("Ocurrió un error al generar el PDF de verificación.");
+      alert(t.alert_pdf_rfid_error);
     }
   };
 
@@ -1808,15 +1839,15 @@ export default function App() {
       !editDetailForm.sku.trim() ||
       !editDetailForm.location.trim()
     ) {
-      alert("Por favor, rellena todos los campos obligatorios (*)");
+      alert(t.err_asterisk_fields);
       return;
     }
     if (editDetailForm.sku.trim().length !== 9) {
-      alert("El SKU debe tener exactamente 9 caracteres.");
+      alert(t.alert_sku_length);
       return;
     }
     if (editDetailForm.minStock === "" || parseInt(editDetailForm.minStock) < 0) {
-      alert("Por favor, introduce un stock mínimo válido (número mayor o igual a 0).");
+      alert(t.alert_min_stock_val);
       return;
     }
 
@@ -1833,11 +1864,14 @@ export default function App() {
         description: (editDetailForm.description || "").trim()
       });
       setIsEditingDetail(false);
-      setAlertMessage({ type: "success", text: "¡Componente actualizado correctamente!" });
+      setAlertMessage({
+        type: "success",
+        text: language === "es" ? "¡Componente actualizado correctamente!" : "Component updated successfully!"
+      });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
       console.error("Error updating product details:", error);
-      alert("Ocurrió un error al guardar los cambios en Firestore.");
+      alert(t.alert_firestore_save_error);
     } finally {
       setIsSavingDetail(false);
     }
@@ -1876,7 +1910,7 @@ export default function App() {
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px]" />
         <div className="glass-card rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center border border-white/40 dark:border-slate-800/30">
           <Loader2 className="w-12 h-12 text-sky-500 animate-spin mb-4" />
-          <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Verificando sesión...</h2>
+          <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">{t.verifying_session}</h2>
         </div>
       </div>
     );
@@ -1895,18 +1929,32 @@ export default function App() {
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] pointer-events-none" />
         
+        {/* Language selector in top-right corner of login screen */}
+        <button
+          onClick={() => {
+            const nextLang = language === "es" ? "en" : "es";
+            setLanguage(nextLang);
+            localStorage.setItem("app_language", nextLang);
+          }}
+          className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-slate-900/40 hover:bg-white/60 dark:hover:bg-slate-900/60 text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-white/20 dark:border-slate-800/10 select-none hover-scale cursor-pointer transition-colors duration-200 backdrop-blur-md"
+          title={language === "es" ? "Switch to English" : "Cambiar a Español"}
+        >
+          <Globe className="w-3.5 h-3.5 text-sky-500" />
+          <span>{language === "es" ? "ES" : "EN"}</span>
+        </button>
+
         <div className="w-full max-w-md glass-container rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative z-10 border border-white/50 dark:border-slate-800/30 animate-scale-in">
           {/* Logo Area */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 hover-scale">
               <Boxes className="w-8 h-8" />
             </div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 tracking-tight">Inventario Real-time</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">Control de existencias y pedidos de compra</p>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 tracking-tight">{language === "es" ? "Inventario Real-time" : "Real-time Inventory"}</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">{t.login_description}</p>
           </div>
 
           <h2 className="text-sm font-black text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200/50 dark:border-slate-800/50 pb-2">
-            Iniciar Sesión
+            {t.login_title}
           </h2>
 
           {loginError && (
@@ -1919,13 +1967,13 @@ export default function App() {
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div>
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                Nombre de Usuario *
+                {t.username_or_id}
               </label>
               <div className="relative">
                 <Boxes className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="ej. operador"
+                  placeholder={language === "es" ? "ej. operador" : "e.g. operador"}
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   disabled={isLoggingIn}
@@ -1937,7 +1985,7 @@ export default function App() {
 
             <div>
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                Contraseña *
+                {t.password}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
@@ -1963,18 +2011,18 @@ export default function App() {
               ) : (
                 <CheckCircle className="w-3.5 h-3.5" />
               )}
-              <span>{isLoggingIn ? "Autenticando..." : "Ingresar"}</span>
+              <span>{isLoggingIn ? t.authenticating : t.enter_btn}</span>
             </button>
           </form>
 
           {/* Quick instructions / Demo credentials */}
           <div className="mt-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 text-[10px] text-slate-400 font-semibold leading-relaxed">
-            <span className="text-sky-500 font-bold block mb-1">Credenciales de Prueba:</span>
+            <span className="text-sky-500 font-bold block mb-1">{t.demo_credentials}</span>
             <div className="grid grid-cols-1 gap-1 font-mono">
-              <div>• Usuario Maestro (Nivel 3): 1234 / 1234</div>
-              <div>• Operador (Nivel 1): operador / 123456</div>
-              <div>• Supervisor (Nivel 2): supervisor / 123456</div>
-              <div>• Administrador (Nivel 3): admin / 123456</div>
+              <div>{t.master_user_demo}</div>
+              <div>{t.operator_demo}</div>
+              <div>{t.supervisor_demo}</div>
+              <div>{t.admin_demo}</div>
             </div>
           </div>
         </div>
@@ -2012,6 +2060,8 @@ export default function App() {
           <div className="flex flex-col gap-5">
             {TABS_CONFIG.filter(tab => tab.id !== "usuario" || userLevel >= 3).map((tab) => {
               const IconComponent = ICON_COMPONENTS[tab.iconName] || Boxes;
+              const tabTitle = t[`tab_${tab.id}_title`] || tab.title;
+              const tabShort = t[`tab_${tab.id}_short`] || tab.shortTitle;
               return (
                 <button
                   key={tab.id}
@@ -2019,15 +2069,15 @@ export default function App() {
                     setActiveTab(tab.id);
                     setAlertMessage({ type: "", text: "" });
                   }}
-                  className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                  className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-355 hover-scale cursor-pointer ${
                     activeTab === tab.id
                       ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
                       : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   }`}
-                  title={tab.title}
+                  title={tabTitle}
                 >
                   <IconComponent className="w-5.5 h-5.5 mb-1" />
-                  <span className="text-[10px] font-bold">{tab.shortTitle}</span>
+                  <span className="text-[10px] font-bold">{tabShort}</span>
                 </button>
               );
             })}
@@ -2039,7 +2089,7 @@ export default function App() {
             <button
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               className="w-10 h-10 rounded-xl flex items-center justify-center hover-scale transition-colors duration-200 cursor-pointer"
-              title={theme === "light" ? "Modo Oscuro" : "Modo Claro"}
+              title={theme === "light" ? (language === "es" ? "Modo Oscuro" : "Dark Mode") : (language === "es" ? "Modo Claro" : "Light Mode")}
             >
               {theme === "light" ? (
                 <Moon className="w-5 h-5 text-slate-500 hover:text-slate-900" />
@@ -2052,7 +2102,7 @@ export default function App() {
             <button
               onClick={handleLogout}
               className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-500/10 text-slate-400 hover:text-red-500 hover-scale transition-colors duration-200 cursor-pointer"
-              title="Cerrar Sesión"
+              title={t.logout}
             >
               <LogOut className="w-5 h-5" />
             </button>
@@ -2066,24 +2116,37 @@ export default function App() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                {TABS_CONFIG.find(tab => tab.id === activeTab)?.title || "Panel de Control"}
+                {t[`tab_${activeTab}_title`] || "Panel de Control"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                {TABS_CONFIG.find(tab => tab.id === activeTab)?.description || ""}
+                {t[`tab_${activeTab}_desc`] || ""}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto justify-end">
+              <button
+                onClick={() => {
+                  const nextLang = language === "es" ? "en" : "es";
+                  setLanguage(nextLang);
+                  localStorage.setItem("app_language", nextLang);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-extrabold border border-sky-500/20 select-none hover-scale cursor-pointer transition-colors duration-200"
+                title={language === "es" ? "Switch to English" : "Cambiar a Español"}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>{language === "es" ? "ES" : "EN"}</span>
+              </button>
+
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20 select-none">
                 <Database className="w-3.5 h-3.5" />
-                <span>Conectado</span>
+                <span>{t.connected}</span>
               </div>
 
               {activeTab === "inventario" && (
                 <div className="relative w-48 sm:w-60 shrink-0">
                   <input
                     type="text"
-                    placeholder="Buscar por nombre, marca o SKU..."
+                    placeholder={t.search_components}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-8 pr-7 py-2 rounded-xl text-xs glass-input font-bold"
@@ -2121,7 +2184,7 @@ export default function App() {
                   className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 rounded-xl text-xs font-bold shadow-md shadow-sky-500/10 hover-scale cursor-pointer"
                 >
                   <PlusCircle className="w-4.5 h-4.5" />
-                  <span>Agregar Componente</span>
+                  <span>{t.add_component}</span>
                 </button>
               )}
             </div>
@@ -2143,10 +2206,10 @@ export default function App() {
               <div className="glass-card rounded-[2rem] p-5 shadow-lg h-full flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
                 <div className="flex items-center justify-between mb-4 shrink-0">
                   <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                    Componentes en Almacén
+                    {t.components_warehouse}
                   </h2>
                   <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                    {products.length} registrados
+                    {products.length} {t.registered_suffix}
                   </span>
                 </div>
 
@@ -2154,22 +2217,24 @@ export default function App() {
                   {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center">
                       <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                      <span className="text-xs text-slate-400 font-bold">Cargando base de datos...</span>
+                      <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
                     </div>
                   ) : products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
                       <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">Inventario vacío</h3>
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.empty_inventory}</h3>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                        No se registran componentes. Presiona "Agregar Componente" para dar de alta uno.
+                        {t.empty_inventory_desc}
                       </p>
                     </div>
                   ) : filteredProducts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
                       <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">Sin coincidencias</h3>
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.no_matches}</h3>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                        No encontramos artículos que coincidan con "{searchTerm}". Intenta buscar otro término.
+                        {language === "es" 
+                          ? `No encontramos artículos que coincidan con "${searchTerm}". Intenta buscar otro término.`
+                          : `No items matched the search term "${searchTerm}". Try another term.`}
                       </p>
                     </div>
                   ) : (
@@ -2190,13 +2255,13 @@ export default function App() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <span className="text-[9px] uppercase font-bold text-sky-600 dark:text-sky-400 tracking-wider">
-                                {product.brand || "Sin Marca"}
+                                {product.brand || t.no_brand}
                               </span>
                               <h3 className="font-extrabold product-name-text text-sm truncate leading-snug">
                                 {product.name}
                               </h3>
                               <p className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">
-                                Mod: {product.model || "N/D"}
+                                Mod: {product.model || t.na}
                               </p>
                             </div>
                           </div>
@@ -2209,17 +2274,17 @@ export default function App() {
                               </span>
                             </div>
                             <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Ubicación</span>
+                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">{language === "es" ? "Ubicación" : "Location"}</span>
                               <span className="font-bold text-[10px] text-slate-600 dark:text-slate-300 truncate flex items-center gap-0.5">
                                 <MapPin className="w-3 h-3 text-sky-500" />
-                                {product.location || "N/D"}
+                                {product.location || t.na}
                               </span>
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/30">
                             <div className="flex flex-col gap-1">
-                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Estado de Stock</span>
+                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t.stock_status}</span>
                               <div className="flex items-center gap-1.5">
                                 {getStockStatus(product.stock, product.minStock)}
                                 
@@ -2231,7 +2296,7 @@ export default function App() {
                                     }}
                                     disabled={product.stock <= 0}
                                     className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-slate-100 dark:disabled:hover:bg-slate-800 hover-scale transition-colors cursor-pointer"
-                                    title="Restar 1 unidad"
+                                    title={t.subtract_unit_tooltip}
                                   >
                                     -
                                   </button>
@@ -2241,7 +2306,7 @@ export default function App() {
                                       handleAdjustStock(product.id, 1, product.stock);
                                     }}
                                     className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer"
-                                    title="Sumar 1 unidad"
+                                    title={t.add_unit_tooltip}
                                   >
                                     +
                                   </button>
@@ -2256,7 +2321,7 @@ export default function App() {
                                   handleDeleteProduct(product.id);
                                 }}
                                 className="w-8 h-8 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0 transition-colors duration-150"
-                                title="Eliminar de Firestore"
+                                title={t.delete_firestore_tooltip}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -2278,18 +2343,18 @@ export default function App() {
                 <div className="md:col-span-3 flex flex-col h-full overflow-y-auto">
                   <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                     <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                      Solicitud de Compra
+                      {t.purchase_request}
                     </h2>
                     
                     <form onSubmit={handleAddOrder} className="flex flex-col gap-4">
                       {/* Nombre del Artículo */}
                       <div>
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                          Nombre del Artículo *
+                          {t.item_name_label}
                         </label>
                         <input
                           type="text"
-                          placeholder="Ej. Memoria RAM DDR5 32GB"
+                          placeholder={t.item_name_placeholder}
                           value={orderForm.itemName}
                           onChange={(e) => setOrderForm({ ...orderForm, itemName: e.target.value })}
                           disabled={isOrderSubmitting}
@@ -2303,11 +2368,11 @@ export default function App() {
                       {/* Modelo */}
                       <div>
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                          Modelo *
+                          {t.model_label}
                         </label>
                         <input
                           type="text"
-                          placeholder="Ej. Kingston Fury Beast"
+                          placeholder={t.item_model_placeholder}
                           value={orderForm.itemModel}
                           onChange={(e) => setOrderForm({ ...orderForm, itemModel: e.target.value })}
                           disabled={isOrderSubmitting}
@@ -2322,12 +2387,12 @@ export default function App() {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Cant *
+                            {t.qty_label}
                           </label>
                           <input
                             type="number"
                             min="1"
-                            placeholder="0"
+                            placeholder={t.qty_placeholder}
                             value={orderForm.quantity}
                             onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value })}
                             disabled={isOrderSubmitting}
@@ -2339,13 +2404,13 @@ export default function App() {
                         </div>
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1" title="Costo en USD">
-                            Costo *
+                            {t.cost_short}
                           </label>
                           <input
                             type="number"
                             min="0.01"
                             step="0.01"
-                            placeholder="0.00"
+                            placeholder={t.cost_placeholder}
                             value={orderForm.cost}
                             onChange={(e) => setOrderForm({ ...orderForm, cost: e.target.value })}
                             disabled={isOrderSubmitting}
@@ -2360,11 +2425,11 @@ export default function App() {
                       {/* URL Enlace */}
                       <div>
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                          URL Enlace al Producto *
+                          {t.link_placeholder}
                         </label>
                         <input
                           type="text"
-                          placeholder="https://..."
+                          placeholder={t.url_placeholder}
                           value={orderForm.url}
                           onChange={(e) => setOrderForm({ ...orderForm, url: e.target.value })}
                           disabled={isOrderSubmitting}
@@ -2386,7 +2451,7 @@ export default function App() {
                         ) : (
                           <ShoppingBag className="w-3.5 h-3.5" />
                         )}
-                        <span>{isOrderSubmitting ? "Registrando..." : "Registrar Pedido"}</span>
+                        <span>{isOrderSubmitting ? t.saving : t.submit_order}</span>
                       </button>
 
                     </form>
@@ -2399,10 +2464,10 @@ export default function App() {
                   <div className="glass-card rounded-[2rem] p-5 shadow-lg h-[58%] flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30 shrink-0">
                     <div className="flex items-center justify-between mb-3 shrink-0">
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                        Pedidos Pendientes y Seguimiento
+                        {t.pending_orders}
                       </h2>
                       <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                        {orders.filter(o => o.status !== "recibido" && o.status !== "rechazado").length} pendientes
+                        {orders.filter(o => o.status !== "recibido" && o.status !== "rechazado").length} {t.pending_suffix}
                       </span>
                     </div>
 
@@ -2411,14 +2476,14 @@ export default function App() {
                       {isOrdersLoading ? (
                         <div className="col-span-3 flex flex-col items-center justify-center py-20 text-center">
                           <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                          <span className="text-xs text-slate-400 font-bold">Cargando pedidos...</span>
+                          <span className="text-xs text-slate-400 font-bold">{t.loading}</span>
                         </div>
                       ) : (
                         <>
                           {/* COLUMN 1: SOLICITADO */}
                           <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
-                              <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">Solicitado</span>
+                              <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">{t.requested_col}</span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-500/10 text-sky-600">
                                 {orders.filter(o => o.status === "solicitado" || !o.status).length}
                               </span>
@@ -2431,20 +2496,20 @@ export default function App() {
                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
                                   </div>
                                   <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                                    <span>Cant: <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
+                                    <span>{language === "es" ? "Cant:" : "Qty:"} <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
                                     <span className="font-bold text-sky-600 dark:text-sky-400">${order.cost?.toLocaleString("es-CL")}</span>
                                   </div>
                                   <div className="flex gap-2 mt-1 shrink-0 pt-2 border-t border-slate-100 dark:border-slate-800/30 justify-between items-center">
-                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title="Ver producto">
+                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title={t.view_product_tooltip}>
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </a>
                                     {userLevel === 3 && (
                                       <div className="flex gap-1.5">
-                                        <button onClick={() => handleRejectOrder(order.id)} className="px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase transition-colors" title="Rechazar Pedido">
-                                          Rechazar
+                                        <button onClick={() => handleRejectOrder(order.id)} className="px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-[9px] font-black uppercase transition-colors" title={t.reject_order_tooltip}>
+                                          {t.btn_reject}
                                         </button>
-                                        <button onClick={() => handleApproveOrder(order.id)} className="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase transition-colors" title="Aprobar Pedido">
-                                          Aprobar
+                                        <button onClick={() => handleApproveOrder(order.id)} className="px-2 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[9px] font-black uppercase transition-colors" title={t.approve_order_tooltip}>
+                                          {t.btn_approve}
                                         </button>
                                       </div>
                                     )}
@@ -2452,7 +2517,7 @@ export default function App() {
                                 </div>
                               ))}
                               {orders.filter(o => o.status === "solicitado" || !o.status).length === 0 && (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">Sin solicitudes</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">{t.no_requests}</span>
                               )}
                             </div>
                           </div>
@@ -2460,7 +2525,7 @@ export default function App() {
                           {/* COLUMN 2: EN ESPERA */}
                           <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
-                              <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">En Espera</span>
+                              <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">{t.onhold_col}</span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600">
                                 {orders.filter(o => o.status === "en_espera").length}
                               </span>
@@ -2473,23 +2538,23 @@ export default function App() {
                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
                                   </div>
                                   <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                                    <span>Cant: <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
+                                    <span>{language === "es" ? "Cant:" : "Qty:"} <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
                                     <span className="font-bold text-sky-600 dark:text-sky-400">${order.cost?.toLocaleString("es-CL")}</span>
                                   </div>
                                   <div className="flex gap-2 mt-1 shrink-0 pt-2 border-t border-slate-100 dark:border-slate-800/30 justify-between items-center">
-                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title="Ver producto">
+                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title={t.view_product_tooltip}>
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </a>
                                     {userLevel >= 2 && (
-                                      <button onClick={() => handleReceiveOrder(order.id)} className="px-2 py-1 rounded bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase transition-colors shadow-sm" title="Recibido">
-                                        Recibido
+                                      <button onClick={() => handleReceiveOrder(order.id)} className="px-2 py-1 rounded bg-emerald-500 hover:bg-emerald-600 text-white text-[9px] font-black uppercase transition-colors shadow-sm" title={t.receive_order_tooltip}>
+                                        {t.btn_received}
                                       </button>
                                     )}
                                   </div>
                                 </div>
                               ))}
                               {orders.filter(o => o.status === "en_espera").length === 0 && (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">Sin pedidos aprobados</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">{t.no_approved}</span>
                               )}
                             </div>
                           </div>
@@ -2497,7 +2562,7 @@ export default function App() {
                           {/* COLUMN 3: RECIBIDO */}
                           <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
-                              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Recibido</span>
+                              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{t.received_col}</span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600">
                                 {orders.filter(o => o.status === "recibido").slice(0, 3).length} rec.
                               </span>
@@ -2510,19 +2575,19 @@ export default function App() {
                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
                                   </div>
                                   <div className="flex justify-between items-center text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                                    <span>Cant: <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
+                                    <span>{language === "es" ? "Cant:" : "Qty:"} <strong className="text-slate-700 dark:text-slate-200">{order.quantity}</strong></span>
                                     <span className="font-bold text-emerald-600 dark:text-emerald-400">${order.cost?.toLocaleString("es-CL")}</span>
                                   </div>
                                   <div className="flex gap-2 mt-1 shrink-0 pt-2 border-t border-slate-100 dark:border-slate-800/30 justify-between items-center">
-                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title="Ver producto">
+                                    <a href={order.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-colors" title={t.view_product_tooltip}>
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </a>
-                                    <span className="text-[8px] uppercase font-black text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">Completado</span>
+                                    <span className="text-[8px] uppercase font-black text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded">{t.completed_status}</span>
                                   </div>
                                 </div>
                               ))}
                               {orders.filter(o => o.status === "recibido").length === 0 && (
-                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">Sin pedidos recibidos</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-6">{t.no_received}</span>
                               )}
                             </div>
                           </div>
@@ -2535,10 +2600,10 @@ export default function App() {
                   <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
                     <div className="flex items-center justify-between mb-3 shrink-0">
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                        Historial de Pedidos
+                        {t.orders_history_title}
                       </h2>
                       <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                        {orderHistory.length} finalizados
+                        {orderHistory.length} {t.finished_suffix}
                       </span>
                     </div>
 
@@ -2546,24 +2611,24 @@ export default function App() {
                       {isHistoryLoading ? (
                         <div className="flex flex-col items-center justify-center py-8 text-center">
                           <Loader2 className="w-6 h-6 text-sky-500 animate-spin mb-2" />
-                          <span className="text-[10px] text-slate-400 font-bold">Cargando historial...</span>
+                          <span className="text-[10px] text-slate-400 font-bold">{t.loading}</span>
                         </div>
                       ) : orderHistory.length === 0 ? (
                         <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs font-semibold">
-                          No hay registros en el historial.
+                          {t.no_records}
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-left border-collapse">
                             <thead>
                               <tr className="border-b border-slate-200/40 dark:border-slate-800/30 text-[9px] text-slate-400 font-black uppercase tracking-wider">
-                                <th className="pb-2 font-black">Artículo</th>
-                                <th className="pb-2 font-black">Modelo</th>
-                                <th className="pb-2 font-black text-center">Cant</th>
-                                <th className="pb-2 font-black text-right">Costo Total</th>
-                                <th className="pb-2 font-black text-center">Estado</th>
-                                <th className="pb-2 font-black text-center">Fecha/Hora</th>
-                                <th className="pb-2 font-black text-center">Enlace</th>
+                                <th className="pb-2 font-black">{t.item_header}</th>
+                                <th className="pb-2 font-black">{t.model_label.replace(" *", "")}</th>
+                                <th className="pb-2 font-black text-center">{t.qty_header}</th>
+                                <th className="pb-2 font-black text-right">{t.cost_header}</th>
+                                <th className="pb-2 font-black text-center">{t.status_label}</th>
+                                <th className="pb-2 font-black text-center">{t.date_time}</th>
+                                <th className="pb-2 font-black text-center">{t.link_header}</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100/30 dark:divide-slate-800/10 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
@@ -2579,9 +2644,9 @@ export default function App() {
                                     <td className="py-2.5 text-right font-black text-sky-600 dark:text-sky-400">${item.cost?.toLocaleString("es-CL")}</td>
                                     <td className="py-2.5 text-center">
                                       {item.status === "recibido" ? (
-                                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Recibido</span>
+                                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{t.received_status}</span>
                                       ) : (
-                                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-500/10 text-red-600 dark:text-red-400">Rechazado</span>
+                                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-500/10 text-red-600 dark:text-red-400">{t.rejected_status}</span>
                                       )}
                                     </td>
                                     <td className="py-2.5 text-center text-[9px] text-slate-400 dark:text-slate-500 font-medium">{dateStr}</td>
@@ -2591,7 +2656,7 @@ export default function App() {
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 hover:text-sky-500 transition-colors"
-                                        title="Ver producto"
+                                        title={t.view_product_tooltip}
                                       >
                                         <ExternalLink className="w-3.5 h-3.5" />
                                       </a>
@@ -2606,11 +2671,9 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-
               </div>
             )}
 
-            {/* TAB 3: REPORTE DIARIO */}
             {activeTab === "reportes" && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
                 {userLevel < 3 ? (
@@ -2619,7 +2682,7 @@ export default function App() {
                     <div className="md:col-span-5 flex flex-col h-full overflow-y-auto pr-1 scroll-glass">
                       <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                          Nuevo Reporte Diario
+                          {t.new_daily_report}
                         </h2>
                         
                         <form onSubmit={handleSubmitReport} className="flex flex-col gap-4">
@@ -2628,14 +2691,14 @@ export default function App() {
                               <div key={index} className="p-3 rounded-2xl bg-slate-500/5 border border-slate-100/20 dark:border-slate-800/10 flex flex-col gap-2 relative">
                                 <div className="flex justify-between items-center gap-2">
                                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                                    Bloque de Hora
+                                    {t.time_block_header}
                                   </label>
                                   {reportRows.length > 1 && (
                                     <button
                                       type="button"
                                       onClick={() => handleRemoveReportRow(index)}
                                       className="p-1 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
-                                      title="Eliminar fila"
+                                      title={t.delete_row_tooltip}
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -2663,10 +2726,10 @@ export default function App() {
                                 </select>
                                 
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider mt-1">
-                                  Actividad Realizada *
+                                  {t.activity_header}
                                 </label>
                                 <textarea
-                                  placeholder="Describe las tareas realizadas en este bloque..."
+                                  placeholder={t.activity_placeholder}
                                   value={row.activity}
                                   onChange={(e) => {
                                     const updated = [...reportRows];
@@ -2687,7 +2750,7 @@ export default function App() {
                             className="w-full py-2.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-800 hover:border-sky-500 dark:hover:border-sky-500 text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer hover:bg-sky-500/5"
                           >
                             <PlusCircle className="w-4 h-4" />
-                            <span>Agregar Fila</span>
+                            <span>{t.add_row}</span>
                           </button>
                           
                           <button
@@ -2700,7 +2763,7 @@ export default function App() {
                             ) : (
                               <CheckCircle className="w-3.5 h-3.5" />
                             )}
-                            <span>{isReportSubmitting ? "Enviando..." : "Enviar Reporte"}</span>
+                            <span>{isReportSubmitting ? t.submitting : t.submit_report}</span>
                           </button>
                         </form>
                       </div>
@@ -2711,10 +2774,10 @@ export default function App() {
                       <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                            Historial de Reportes
+                            {t.recent_reports_title}
                           </h2>
                           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                            {dailyReports.length} reportes
+                            {dailyReports.length} {t.reports_suffix}
                           </span>
                         </div>
                         
@@ -2722,10 +2785,10 @@ export default function App() {
                           {isReportsLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                               <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                              <span className="text-xs text-slate-400 font-bold">Cargando reportes...</span>
+                              <span className="text-xs text-slate-400 font-bold">{t.loading}</span>
                             </div>
                           ) : dailyReports.length === 0 ? (
-                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin reportes registrados</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">{t.no_reports_registered}</span>
                           ) : (
                             dailyReports.map((report) => {
                               const isExpanded = expandedReportId === report.id;
@@ -2743,7 +2806,7 @@ export default function App() {
                                           ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
                                           : "bg-sky-500/10 text-sky-600 dark:text-sky-400"
                                       }`}>
-                                        {report.userLevel === 2 ? "Supervisor" : "Operador"}
+                                        {report.userLevel === 2 ? t.supervisor_role : t.operator_role}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -2768,10 +2831,10 @@ export default function App() {
                                         <button
                                           onClick={() => handleDownloadPDF(report)}
                                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                          title="Descargar Reporte en PDF"
+                                          title={t.download_report_pdf}
                                         >
                                           <FileText className="w-3.5 h-3.5 text-white" />
-                                          <span>Descargar PDF</span>
+                                          <span>{t.download_pdf}</span>
                                         </button>
                                       </div>
                                     </div>
@@ -2791,12 +2854,12 @@ export default function App() {
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                            Auditoría de Reportes Diarios
+                            {t.audit_reports_title}
                           </h2>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Control y supervisión de turnos de Operadores y Supervisores</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{t.audit_reports_subtitle}</p>
                         </div>
                         <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                          {dailyReports.length} totales
+                          {dailyReports.length} {t.total_suffix}
                         </span>
                       </div>
                       
@@ -2804,11 +2867,11 @@ export default function App() {
                         {isReportsLoading ? (
                           <div className="flex flex-col items-center justify-center py-20 text-center w-full">
                             <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                            <span className="text-xs text-slate-400 font-bold">Cargando reportes para auditoría...</span>
+                            <span className="text-xs text-slate-400 font-bold">{t.loading_reports_audit}</span>
                           </div>
                         ) : dailyReports.length === 0 ? (
                           <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold w-full">
-                            No se registran reportes en el sistema.
+                            {t.no_reports_system}
                           </div>
                         ) : (
                           dailyReports.map((report) => {
@@ -2827,7 +2890,7 @@ export default function App() {
                                         ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
                                         : "bg-sky-500/10 text-sky-600 dark:text-sky-400"
                                     }`}>
-                                      {report.userLevel === 2 ? "Supervisor" : "Operador"}
+                                      {report.userLevel === 2 ? t.supervisor_role : t.operator_role}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -2844,7 +2907,7 @@ export default function App() {
                                           <span className="font-mono font-bold text-[9px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-1.5 py-0.5 rounded h-fit">
                                             {row.time}
                                           </span>
-                                          <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
+                                          <span className="text-slate-600 dark:text-slate-350 whitespace-pre-wrap">{row.activity}</span>
                                         </div>
                                       ))}
                                     </div>
@@ -2852,10 +2915,10 @@ export default function App() {
                                       <button
                                         onClick={() => handleDownloadPDF(report)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                        title="Descargar Reporte en PDF"
+                                        title={t.download_report_pdf}
                                       >
                                         <FileText className="w-3.5 h-3.5 text-white" />
-                                        <span>Descargar PDF</span>
+                                        <span>{t.download_pdf}</span>
                                       </button>
                                     </div>
                                   </div>
@@ -2880,7 +2943,7 @@ export default function App() {
                     <div className="w-full flex flex-col h-auto">
                       <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                          REGISTRAR LIMPIEZA DE IMPRESORA
+                          {t.printer_form_title}
                         </h2>
                         
                         <form onSubmit={handleSubmitCleaning} className="flex flex-col gap-5">
@@ -2892,12 +2955,12 @@ export default function App() {
                                 {/* Estación */}
                                 <div className="md:col-span-3">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                                    Estación de Trabajo *
+                                    {t.workstation_label}
                                   </label>
                                   <input
                                     type="text"
                                     maxLength={3}
-                                    placeholder="Ej. A01"
+                                    placeholder={language === "es" ? "Ej. A01" : "e.g. A01"}
                                     value={row.station}
                                     onChange={(e) => {
                                       const updated = [...cleaningRows];
@@ -2913,15 +2976,15 @@ export default function App() {
                                     <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].station}</p>
                                   )}
                                 </div>
-
+ 
                                 {/* IP Address */}
                                 <div className="md:col-span-4">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                                    Dirección IP *
+                                    {t.ip_address_label}
                                   </label>
                                   <input
                                     type="text"
-                                    placeholder="Ej. 10.40.23.104"
+                                    placeholder={language === "es" ? "Ej. 10.40.23.104" : "e.g. 10.40.23.104"}
                                     value={row.ip}
                                     onChange={(e) => handleIPChangeForRow(index, e.target.value)}
                                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
@@ -2933,11 +2996,11 @@ export default function App() {
                                     <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].ip}</p>
                                   )}
                                 </div>
-
+ 
                                 {/* Tipo de Impresora */}
                                 <div className="md:col-span-4">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                                    Tipo de Impresora *
+                                    {t.printer_type_label}
                                   </label>
                                   <select
                                     value={row.printerType}
@@ -2951,7 +3014,7 @@ export default function App() {
                                     }`}
                                     required
                                   >
-                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona modelo...</option>
+                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">{t.select_model_placeholder}</option>
                                     {["Sato", "Zebra", "Lexmark"].map(model => (
                                       <option key={model} value={model} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                         {model}
@@ -2962,7 +3025,7 @@ export default function App() {
                                     <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].printerType}</p>
                                   )}
                                 </div>
-
+ 
                                 {/* Remover fila button */}
                                 <div className="md:col-span-1 flex justify-center pb-1">
                                   {cleaningRows.length > 1 ? (
@@ -2970,7 +3033,7 @@ export default function App() {
                                       type="button"
                                       onClick={() => handleRemoveCleaningRow(index)}
                                       className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-colors duration-200 hover-scale cursor-pointer animate-fade-in"
-                                      title="Eliminar fila"
+                                      title={language === "es" ? "Eliminar fila" : "Remove row"}
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
@@ -2978,11 +3041,11 @@ export default function App() {
                                     <div className="w-10 h-10" />
                                   )}
                                 </div>
-
+ 
                               </div>
                             ))}
                           </div>
-
+ 
                           {/* Form actions */}
                           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                             <button
@@ -2991,9 +3054,9 @@ export default function App() {
                               className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-sky-500/40 hover:border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <PlusCircle className="w-4 h-4" />
-                              <span>+ Agregar otra impresora</span>
+                              <span>{t.add_printer_btn}</span>
                             </button>
-
+ 
                             <button
                               type="submit"
                               disabled={isCleaningSubmitting}
@@ -3004,7 +3067,7 @@ export default function App() {
                               ) : (
                                 <CheckCircle className="w-3.5 h-3.5" />
                               )}
-                              <span>{isCleaningSubmitting ? "Guardando..." : "Guardar Registro"}</span>
+                              <span>{isCleaningSubmitting ? t.loading : t.save_record}</span>
                             </button>
                           </div>
                         </form>
@@ -3016,10 +3079,10 @@ export default function App() {
                       <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                            Historial de Limpieza
+                            {t.cleaning_history_title}
                           </h2>
                           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                            {printerCleanings.length} reportes
+                            {printerCleanings.length} {t.reports_suffix}
                           </span>
                         </div>
                         
@@ -3027,10 +3090,10 @@ export default function App() {
                           {isCleaningLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                               <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                              <span className="text-xs text-slate-400 font-bold">Cargando historial...</span>
+                              <span className="text-xs text-slate-400 font-bold">{t.loading}</span>
                             </div>
                           ) : printerCleanings.length === 0 ? (
-                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin registros de limpieza</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">{t.no_records}</span>
                           ) : (
                             printerCleanings.map((record) => {
                               const isExpanded = expandedCleaningId === record.id;
@@ -3049,7 +3112,7 @@ export default function App() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <span className="font-extrabold text-xs text-slate-900">
-                                        Usuario: {record.createdBy}
+                                        {t.user_label}: {record.createdBy}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -3064,9 +3127,9 @@ export default function App() {
                                         <table className="w-full text-left border-collapse text-xs">
                                           <thead>
                                             <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
-                                              <th className="py-2 px-3">Estación</th>
-                                              <th className="py-2 px-3">Dirección IP</th>
-                                              <th className="py-2 px-3">Tipo de Impresora</th>
+                                              <th className="py-2 px-3">{t.station_label}</th>
+                                              <th className="py-2 px-3">{t.ip_address_label}</th>
+                                              <th className="py-2 px-3">{t.printer_type_label}</th>
                                             </tr>
                                           </thead>
                                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
@@ -3092,26 +3155,26 @@ export default function App() {
                                       
                                       <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                          Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                          {language === "es" ? "Registrado por" : "Registered by"}: {record.createdBy} ({t.level_label} {record.userLevel})
                                         </span>
                                         <div className="flex items-center gap-2">
                                           {userLevel >= 3 && (
                                             <button
                                               onClick={() => handleDeleteCleaning(record.id)}
                                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
-                                              title="Eliminar Reporte Permanentemente"
+                                              title={t.delete}
                                             >
                                               <Trash2 className="w-3.5 h-3.5" />
-                                              <span>Eliminar</span>
+                                              <span>{t.delete}</span>
                                             </button>
                                           )}
                                           <button
                                             onClick={() => handleDownloadCleaningPDF(record)}
                                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                            title="Descargar Certificado en PDF"
+                                            title={t.download_pdf}
                                           >
                                             <FileText className="w-3.5 h-3.5 text-white" />
-                                            <span>Descargar PDF</span>
+                                            <span>{t.download_pdf}</span>
                                           </button>
                                         </div>
                                       </div>
@@ -3132,12 +3195,12 @@ export default function App() {
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                            Supervisión de Limpieza de Impresoras
+                            {t.cleaning_supervision_title}
                           </h2>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Registro y auditoría de limpieza y mantenimiento de equipos</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{t.cleaning_supervision_subtitle}</p>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                          {printerCleanings.length} totales
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          {printerCleanings.length} {t.total_suffix}
                         </span>
                       </div>
                       
@@ -3145,11 +3208,11 @@ export default function App() {
                         {isCleaningLoading ? (
                           <div className="flex flex-col items-center justify-center py-20 text-center w-full">
                             <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                            <span className="text-xs text-slate-400 font-bold">Cargando limpiezas para supervisión...</span>
+                            <span className="text-xs text-slate-400 font-bold">{t.loading}</span>
                           </div>
                         ) : printerCleanings.length === 0 ? (
                           <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold w-full">
-                            No se registran limpiezas en el sistema.
+                            {t.no_records}
                           </div>
                         ) : (
                           printerCleanings.map((record) => {
@@ -3169,7 +3232,7 @@ export default function App() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-900">
-                                      Usuario: {record.createdBy}
+                                      {t.user_label}: {record.createdBy}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -3184,9 +3247,9 @@ export default function App() {
                                       <table className="w-full text-left border-collapse text-xs">
                                         <thead>
                                           <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
-                                            <th className="py-2 px-3">Estación</th>
-                                            <th className="py-2 px-3">Dirección IP</th>
-                                            <th className="py-2 px-3">Tipo de Impresora</th>
+                                            <th className="py-2 px-3">{t.station_label}</th>
+                                            <th className="py-2 px-3">{t.ip_address_label}</th>
+                                            <th className="py-2 px-3">{t.printer_type_label}</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
@@ -3212,26 +3275,26 @@ export default function App() {
                                     
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                        Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                        {language === "es" ? "Registrado por" : "Registered by"}: {record.createdBy} ({t.level_label} {record.userLevel})
                                       </span>
                                       <div className="flex items-center gap-2">
                                         {userLevel >= 3 && (
                                           <button
                                             onClick={() => handleDeleteCleaning(record.id)}
                                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
-                                            title="Eliminar Reporte Permanentemente"
+                                            title={t.delete}
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
-                                            <span>Eliminar</span>
+                                            <span>{t.delete}</span>
                                           </button>
                                         )}
                                         <button
                                           onClick={() => handleDownloadCleaningPDF(record)}
                                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                          title="Descargar Certificado en PDF"
+                                          title={t.download_pdf}
                                         >
                                           <FileText className="w-3.5 h-3.5 text-white" />
-                                          <span>Descargar PDF</span>
+                                          <span>{t.download_pdf}</span>
                                         </button>
                                       </div>
                                     </div>
@@ -3257,7 +3320,7 @@ export default function App() {
                     <div className="w-full flex flex-col h-auto">
                       <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                          Registrar Verificación de RFID
+                          {t.rfid_form_title}
                         </h2>
                         
                         <form onSubmit={handleSubmitRfid} className="flex flex-col gap-5">
@@ -3269,12 +3332,12 @@ export default function App() {
                                 {/* Estación */}
                                 <div className="md:col-span-3">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                                    Estación *
+                                    {t.station_field}
                                   </label>
                                   <input
                                     type="text"
                                     maxLength={3}
-                                    placeholder="Ej. A01"
+                                    placeholder={language === "es" ? "Ej. A01" : "e.g. A01"}
                                     value={row.station}
                                     onChange={(e) => {
                                       const updated = [...rfidRows];
@@ -3290,15 +3353,15 @@ export default function App() {
                                     <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].station}</p>
                                   )}
                                 </div>
-
+ 
                                 {/* Lector IP */}
                                 <div className="md:col-span-4">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                                    Lector IP *
+                                    {t.ip_field}
                                   </label>
                                   <input
                                     type="text"
-                                    placeholder="Ej. 10.40.85.12"
+                                    placeholder={language === "es" ? "Ej. 10.40.85.12" : "e.g. 10.40.85.12"}
                                     value={row.ip}
                                     onChange={(e) => handleRfidIPChangeForRow(index, e.target.value)}
                                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
@@ -3310,11 +3373,11 @@ export default function App() {
                                     <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].ip}</p>
                                   )}
                                 </div>
-
+ 
                                 {/* Estado de Antenas */}
                                 <div className="md:col-span-4">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                                    Estado de Antenas *
+                                    {t.antennas_field}
                                   </label>
                                   <select
                                     value={row.antennaStatus}
@@ -3328,15 +3391,15 @@ export default function App() {
                                     }`}
                                     required
                                   >
-                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona estado...</option>
-                                    <option value="Bueno" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">✔ Bueno / Óptimo</option>
-                                    <option value="Fallo" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">❌ Mal / Fallo</option>
+                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">{t.select_status_placeholder}</option>
+                                    <option value="Bueno" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.status_optimo}</option>
+                                    <option value="Fallo" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.status_fallo}</option>
                                   </select>
                                   {rfidErrors[index]?.antennaStatus && (
                                     <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].antennaStatus}</p>
                                   )}
                                 </div>
-
+ 
                                 {/* Remover fila button */}
                                 <div className="md:col-span-1 flex justify-center pb-1">
                                   <button
@@ -3344,16 +3407,16 @@ export default function App() {
                                     disabled={rfidRows.length === 1}
                                     onClick={() => handleRemoveRfidRow(index)}
                                     className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white disabled:opacity-30 disabled:hover:bg-red-500/10 disabled:hover:text-red-500 transition-colors duration-200 hover-scale cursor-pointer"
-                                    title="Eliminar fila"
+                                    title={language === "es" ? "Eliminar fila" : "Remove row"}
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
                                 </div>
-
+ 
                               </div>
                             ))}
                           </div>
-
+ 
                           {/* Form actions */}
                           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                             <button
@@ -3362,9 +3425,9 @@ export default function App() {
                               className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-sky-500/40 hover:border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <PlusCircle className="w-4 h-4" />
-                              <span>+ Agregar otra estación</span>
+                              <span>{t.add_rfid_btn}</span>
                             </button>
-
+ 
                             <button
                               type="submit"
                               disabled={isRfidSubmitting}
@@ -3375,7 +3438,7 @@ export default function App() {
                               ) : (
                                 <CheckCircle className="w-3.5 h-3.5" />
                               )}
-                              <span>{isRfidSubmitting ? "Guardando..." : "Guardar Registro"}</span>
+                              <span>{isRfidSubmitting ? t.loading : t.save_record}</span>
                             </button>
                           </div>
                         </form>
@@ -3387,10 +3450,10 @@ export default function App() {
                       <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                            Historial de Verificación
+                            {t.rfid_history_title}
                           </h2>
                           <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                            {rfidVerifications.length} reportes
+                            {rfidVerifications.length} {t.reports_suffix}
                           </span>
                         </div>
                         
@@ -3398,10 +3461,10 @@ export default function App() {
                           {isRfidLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                               <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                              <span className="text-xs text-slate-400 font-bold">Cargando verificaciones...</span>
+                              <span className="text-xs text-slate-400 font-bold">{t.loading_verifications}</span>
                             </div>
                           ) : rfidVerifications.length === 0 ? (
-                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin registros de verificación RFID</span>
+                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">{t.no_rfid_records}</span>
                           ) : (
                             rfidVerifications.map((record) => {
                               const isExpanded = expandedRfidId === record.id;
@@ -3420,7 +3483,7 @@ export default function App() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <span className="font-extrabold text-xs text-slate-900">
-                                        Usuario: {record.createdBy}
+                                        {t.user_label}: {record.createdBy}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -3435,9 +3498,9 @@ export default function App() {
                                         <table className="w-full text-left border-collapse text-xs">
                                           <thead>
                                             <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
-                                              <th className="py-2 px-3">Estación</th>
-                                              <th className="py-2 px-3">Lector IP</th>
-                                              <th className="py-2 px-3 text-center">Estado Antenas</th>
+                                              <th className="py-2 px-3">{t.station_header}</th>
+                                              <th className="py-2 px-3">{t.ip_header}</th>
+                                              <th className="py-2 px-3 text-center">{t.antennas_header}</th>
                                             </tr>
                                           </thead>
                                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
@@ -3455,7 +3518,7 @@ export default function App() {
                                                       isBueno 
                                                         ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" 
                                                         : "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
-                                                    }`} title={isBueno ? "Bueno / Óptimo" : "Mal / Fallo"}>
+                                                    }`} title={isBueno ? t.status_optimo : t.status_fallo}>
                                                       {isBueno ? "✔" : "❌"}
                                                     </span>
                                                   </td>
@@ -3468,26 +3531,26 @@ export default function App() {
                                       
                                       <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                          Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                          {t.registered_by_level} {record.createdBy} ({t.level_short} {record.userLevel})
                                         </span>
                                         <div className="flex items-center gap-2">
                                           {userLevel >= 3 && (
                                             <button
                                               onClick={() => handleDeleteRfid(record.id)}
                                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
-                                              title="Eliminar Reporte Permanentemente"
+                                              title={t.delete_report_tooltip}
                                             >
                                               <Trash2 className="w-3.5 h-3.5" />
-                                              <span>Eliminar</span>
+                                              <span>{t.delete}</span>
                                             </button>
                                           )}
                                           <button
                                             onClick={() => handleDownloadRfidPDF(record)}
                                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                            title="Descargar Ficha en PDF"
+                                            title={t.download_pdf_tooltip}
                                           >
                                             <FileText className="w-3.5 h-3.5 text-white" />
-                                            <span>Descargar PDF</span>
+                                            <span>{t.download_pdf}</span>
                                           </button>
                                         </div>
                                       </div>
@@ -3508,12 +3571,12 @@ export default function App() {
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                            Supervisión de Verificación de RFID
+                            {t.rfid_supervision_title}
                           </h2>
-                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Auditoría del estado de antenas y lectores RFID en planta</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{t.rfid_supervision_subtitle}</p>
                         </div>
                         <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                          {rfidVerifications.length} totales
+                          {rfidVerifications.length} {t.total_suffix}
                         </span>
                       </div>
                       
@@ -3521,11 +3584,11 @@ export default function App() {
                         {isRfidLoading ? (
                           <div className="flex flex-col items-center justify-center py-20 text-center w-full">
                             <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                            <span className="text-xs text-slate-400 font-bold">Cargando verificaciones para supervisión...</span>
+                            <span className="text-xs text-slate-400 font-bold">{t.loading_supervision}</span>
                           </div>
                         ) : rfidVerifications.length === 0 ? (
                           <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold w-full">
-                            No se registran verificaciones en el sistema.
+                            {t.no_verifications_system}
                           </div>
                         ) : (
                           rfidVerifications.map((record) => {
@@ -3545,7 +3608,7 @@ export default function App() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-900">
-                                      Usuario: {record.createdBy}
+                                      {t.user_label}: {record.createdBy}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -3560,9 +3623,9 @@ export default function App() {
                                       <table className="w-full text-left border-collapse text-xs">
                                         <thead>
                                           <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
-                                            <th className="py-2 px-3">Estación</th>
-                                            <th className="py-2 px-3">Lector IP</th>
-                                            <th className="py-2 px-3 text-center">Estado Antenas</th>
+                                            <th className="py-2 px-3">{t.station_header}</th>
+                                            <th className="py-2 px-3">{t.ip_header}</th>
+                                            <th className="py-2 px-3 text-center">{t.antennas_header}</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
@@ -3580,7 +3643,7 @@ export default function App() {
                                                     isBueno 
                                                       ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" 
                                                       : "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
-                                                  }`} title={isBueno ? "Bueno / Óptimo" : "Mal / Fallo"}>
+                                                  }`} title={isBueno ? t.status_optimo : t.status_fallo}>
                                                     {isBueno ? "✔" : "❌"}
                                                   </span>
                                                 </td>
@@ -3593,26 +3656,26 @@ export default function App() {
                                     
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                        Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                        {t.registered_by_level} {record.createdBy} ({t.level_short} {record.userLevel})
                                       </span>
                                       <div className="flex items-center gap-2">
                                         {userLevel >= 3 && (
                                           <button
                                             onClick={() => handleDeleteRfid(record.id)}
                                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
-                                            title="Eliminar Reporte Permanentemente"
+                                            title={t.delete_report_tooltip}
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
-                                            <span>Eliminar</span>
+                                            <span>{t.delete}</span>
                                           </button>
                                         )}
                                         <button
                                           onClick={() => handleDownloadRfidPDF(record)}
                                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                          title="Descargar Ficha en PDF"
+                                          title={t.download_pdf_tooltip}
                                         >
                                           <FileText className="w-3.5 h-3.5 text-white" />
-                                          <span>Descargar PDF</span>
+                                          <span>{t.download_pdf}</span>
                                         </button>
                                       </div>
                                     </div>
@@ -3640,18 +3703,18 @@ export default function App() {
                   <div className="lg:col-span-1 flex flex-col h-auto">
                     <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                        Registrar Nuevo Asociado
+                        {t.user_form_title}
                       </h2>
                       
                       <form onSubmit={handleCreateUser} className="flex flex-col gap-4">
                         {/* Nombre del Asociado */}
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Nombre del Asociado *
+                            {t.assoc_name}
                           </label>
                           <input
                             type="text"
-                            placeholder="Ej. Juan Pérez"
+                            placeholder={language === "es" ? "Ej. Juan Pérez" : "e.g. John Doe"}
                             value={userForm.name}
                             onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))}
                             className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
@@ -3662,11 +3725,11 @@ export default function App() {
                         {/* Posición / Puesto */}
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Posición / Puesto *
+                            {t.position_label}
                           </label>
                           <input
                             type="text"
-                            placeholder="Ej. Técnico de Soporte"
+                            placeholder={language === "es" ? "Ej. Técnico de Soporte" : "e.g. Support Technician"}
                             value={userForm.position}
                             onChange={(e) => setUserForm(prev => ({ ...prev, position: e.target.value }))}
                             className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
@@ -3677,7 +3740,7 @@ export default function App() {
                         {/* Turno */}
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Turno *
+                            {t.shift_label}
                           </label>
                           <select
                             value={userForm.shift}
@@ -3685,15 +3748,15 @@ export default function App() {
                             className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
                             required
                           >
-                            <option value="Matutino" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Matutino</option>
-                            <option value="Nocturno" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nocturno</option>
+                            <option value="Matutino" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.morning_shift}</option>
+                            <option value="Nocturno" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.night_shift}</option>
                           </select>
                         </div>
 
                         {/* Nivel de Acceso */}
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Nivel de Acceso *
+                            {t.level_access_label}
                           </label>
                           <select
                             value={userForm.level}
@@ -3701,20 +3764,20 @@ export default function App() {
                             className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
                             required
                           >
-                            <option value={1} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nivel 1 (Operador)</option>
-                            <option value={2} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nivel 2 (Supervisor)</option>
-                            <option value={3} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nivel 3 (Administrador)</option>
+                            <option value={1} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.level_1_opt}</option>
+                            <option value={2} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.level_2_opt}</option>
+                            <option value={3} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.level_3_opt}</option>
                           </select>
                         </div>
 
                         {/* Usuario / ID (Texto único) */}
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Usuario / ID (Único) *
+                            {t.user_id_unique}
                           </label>
                           <input
                             type="text"
-                            placeholder="Ej. jperez"
+                            placeholder={language === "es" ? "Ej. jperez" : "e.g. jdoe"}
                             value={userForm.username}
                             onChange={(e) => setUserForm(prev => ({ ...prev, username: e.target.value }))}
                             className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
@@ -3725,11 +3788,11 @@ export default function App() {
                         {/* Contraseña */}
                         <div>
                           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                            Contraseña *
+                            {t.password}
                           </label>
                           <input
                             type="password"
-                            placeholder="Introduce contraseña"
+                            placeholder={t.password_placeholder_input}
                             value={userForm.password}
                             onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
                             className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
@@ -3754,7 +3817,7 @@ export default function App() {
                           ) : (
                             <PlusCircle className="w-3.5 h-3.5" />
                           )}
-                          <span>{isUserSubmitting ? "Creando..." : "Crear Usuario"}</span>
+                          <span>{isUserSubmitting ? t.creating_user : t.btn_create_user}</span>
                         </button>
                       </form>
                     </div>
@@ -3765,33 +3828,33 @@ export default function App() {
                     <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30 w-full min-h-[400px]">
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                          Asociados Registrados
+                          {t.assoc_list_title}
                         </h2>
                         <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                          {usersList.length} asociados
+                          {usersList.length} {t.associates_suffix}
                         </span>
                       </div>
 
                       {isUsersLoading ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center w-full my-auto">
                           <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                          <span className="text-xs text-slate-400 font-bold">Cargando asociados...</span>
+                          <span className="text-xs text-slate-400 font-bold">{t.loading_associates}</span>
                         </div>
                       ) : usersList.length === 0 ? (
                         <div className="text-center py-20 text-slate-400 dark:text-slate-500 text-xs font-semibold my-auto">
-                          No hay asociados registrados en el sistema.
+                          {t.no_associates_registered}
                         </div>
                       ) : (
                         <div className="overflow-x-auto w-full">
                           <table className="w-full text-left border-collapse text-xs">
                             <thead>
                               <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
-                                <th className="py-3 px-3">Asociado</th>
-                                <th className="py-3 px-3">Usuario / ID</th>
-                                <th className="py-3 px-3">Posición</th>
-                                <th className="py-3 px-3">Turno</th>
-                                <th className="py-3 px-3 text-center">Nivel</th>
-                                <th className="py-3 px-3 text-center">Acciones</th>
+                                <th className="py-3 px-3">{t.assoc_header}</th>
+                                <th className="py-3 px-3">{t.assoc_username_header}</th>
+                                <th className="py-3 px-3">{t.position_header}</th>
+                                <th className="py-3 px-3">{t.shift_header}</th>
+                                <th className="py-3 px-3 text-center">{t.level_header}</th>
+                                <th className="py-3 px-3 text-center">{t.actions}</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
@@ -3801,7 +3864,7 @@ export default function App() {
                                 return (
                                   <tr key={user.id} className="hover:bg-slate-500/5 transition-colors">
                                     <td className="py-3 px-3 font-bold text-slate-900 dark:text-slate-100">
-                                      {user.name || "N/D"} {isSelf && <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-600 text-[9px] font-black uppercase">Tú</span>}
+                                      {user.name || "N/D"} {isSelf && <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-600 text-[9px] font-black uppercase">{t.you_badge}</span>}
                                     </td>
                                     <td className="py-3 px-3 font-mono text-slate-500 dark:text-slate-400 font-bold">{user.id}</td>
                                     <td className="py-3 px-3">{user.position || "N/D"}</td>
@@ -3811,7 +3874,7 @@ export default function App() {
                                           ? "bg-amber-100/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-350 border-amber-300/30"
                                           : "bg-indigo-100/70 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-350 border-indigo-300/30"
                                       }`}>
-                                        {user.shift || "Matutino"}
+                                        {user.shift === "Matutino" ? t.morning_shift : t.night_shift}
                                       </span>
                                     </td>
                                     <td className="py-3 px-3 text-center font-bold">
@@ -3822,7 +3885,7 @@ export default function App() {
                                           ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-350 border-emerald-300/30"
                                           : "bg-slate-100 text-slate-900 dark:bg-slate-950/40 dark:text-slate-350 border-slate-300/30"
                                       }`}>
-                                        Nivel {user.level || 1}
+                                        {t.level_short} {user.level || 1}
                                       </span>
                                     </td>
                                     <td className="py-3 px-3">
@@ -3832,7 +3895,7 @@ export default function App() {
                                           type="button"
                                           onClick={() => handleEditUserClick(user)}
                                           className="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500 text-sky-600 hover:text-white transition-all cursor-pointer hover-scale flex items-center justify-center"
-                                          title="Editar Detalles / Acceso"
+                                          title={t.edit_details_access_tooltip}
                                         >
                                           <Edit3 className="w-3.5 h-3.5" />
                                         </button>
@@ -3843,7 +3906,7 @@ export default function App() {
                                           onClick={() => handleDeleteUser(user)}
                                           disabled={isSelf || isMaster}
                                           className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-50 text-red-500 hover:text-red-700 disabled:opacity-30 disabled:hover:bg-red-500/10 disabled:hover:text-red-500 transition-all cursor-pointer hover-scale flex items-center justify-center"
-                                          title={isSelf ? "No puedes auto-eliminarte" : isMaster ? "Usuario Maestro protegido" : "Eliminar Asociado"}
+                                          title={isSelf ? t.cannot_delete_self_tooltip : isMaster ? t.master_user_protected_tooltip : t.delete_assoc_tooltip}
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -3878,8 +3941,8 @@ export default function App() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white">Configurar Detalles de Asociado</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Modifica los permisos o contraseña de {editingUser.id}.</p>
+                <h2 className="text-lg font-black text-slate-800 dark:text-white">{t.edit_user_title}</h2>
+                <p className="text-xs text-slate-400 mt-0.5">{t.edit_assoc_subtitle} {editingUser.id}.</p>
               </div>
               <button
                 type="button"
@@ -3895,7 +3958,7 @@ export default function App() {
               {/* Usuario / ID (Read-only) */}
               <div>
                 <label className="text-xs font-bold text-slate-400 block mb-1">
-                  Usuario / ID (No Modificable)
+                  {t.username_readonly}
                 </label>
                 <input
                   type="text"
@@ -3908,7 +3971,7 @@ export default function App() {
               {/* Nombre */}
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                  Nombre del Asociado *
+                  {t.assoc_name}
                 </label>
                 <input
                   type="text"
@@ -3922,7 +3985,7 @@ export default function App() {
               {/* Posición / Puesto */}
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                  Posición / Puesto *
+                  {t.position_label}
                 </label>
                 <input
                   type="text"
@@ -3936,7 +3999,7 @@ export default function App() {
               {/* Turno */}
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                  Turno *
+                  {t.shift_label}
                 </label>
                 <select
                   value={editUserForm.shift}
@@ -3944,15 +4007,15 @@ export default function App() {
                   className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
                   required
                 >
-                  <option value="Matutino">Matutino</option>
-                  <option value="Nocturno">Nocturno</option>
+                  <option value="Matutino">{t.morning_shift}</option>
+                  <option value="Nocturno">{t.night_shift}</option>
                 </select>
               </div>
 
               {/* Nivel de Acceso */}
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                  Nivel de Acceso *
+                  {t.level_access_label}
                 </label>
                 <select
                   value={editUserForm.level}
@@ -3963,19 +4026,19 @@ export default function App() {
                   }`}
                   required
                 >
-                  <option value={1}>Nivel 1 (Operador)</option>
-                  <option value={2}>Nivel 2 (Supervisor)</option>
-                  <option value={3}>Nivel 3 (Administrador)</option>
+                  <option value={1}>{t.level_1_opt}</option>
+                  <option value={2}>{t.level_2_opt}</option>
+                  <option value={3}>{t.level_3_opt}</option>
                 </select>
                 {editingUser.id === "1234" && (
-                  <p className="text-[9px] text-slate-400 font-bold mt-1">El nivel del Usuario Maestro está protegido.</p>
+                  <p className="text-[9px] text-slate-400 font-bold mt-1">{t.master_user_protected}</p>
                 )}
               </div>
 
               {/* Contraseña */}
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                  Contraseña *
+                  {t.password}
                 </label>
                 <input
                   type="password"
@@ -3993,7 +4056,7 @@ export default function App() {
                   onClick={() => setEditingUser(null)}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs hover-scale cursor-pointer"
                 >
-                  Cancelar
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
@@ -4005,7 +4068,7 @@ export default function App() {
                   ) : (
                     <CheckCircle className="w-3 h-3" />
                   )}
-                  <span>{isUserSaving ? "Guardando..." : "Guardar Cambios"}</span>
+                  <span>{isUserSaving ? t.saving : t.save_changes}</span>
                 </button>
               </div>
 
@@ -4023,8 +4086,10 @@ export default function App() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white">Agregar Nuevo Componente</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Registra una nueva pieza en el inventario real-time.</p>
+                <h2 className="text-lg font-black text-slate-800 dark:text-white">{t.add_new_component_title}</h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {language === "es" ? "Registra una nueva pieza en el inventario real-time." : "Register a new piece in the real-time inventory."}
+                </p>
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
@@ -4041,11 +4106,11 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                    Nombre del Artículo *
+                    {t.name_label}
                   </label>
                   <input
                     type="text"
-                    placeholder="Ej. Microprocesador Intel Core i9"
+                    placeholder={language === "es" ? "Ej. Microprocesador Intel Core i9" : "e.g. Intel Core i9 Processor"}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
@@ -4056,11 +4121,11 @@ export default function App() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                    Marca *
+                    {t.brand_label}
                   </label>
                   <input
                     type="text"
-                    placeholder="Ej. Intel"
+                    placeholder={language === "es" ? "Ej. Intel" : "e.g. Intel"}
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
@@ -4075,11 +4140,11 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                    Modelo *
+                    {t.model_label}
                   </label>
                   <input
                     type="text"
-                    placeholder="Ej. i9-14900K"
+                    placeholder={language === "es" ? "Ej. i9-14900K" : "e.g. i9-14900K"}
                     value={formData.model}
                     onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
@@ -4090,13 +4155,13 @@ export default function App() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                    SKU (9 Caracteres) *
+                    {language === "es" ? "SKU (9 Caracteres) *" : "SKU (9 Characters) *"}
                   </label>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       maxLength={9}
-                      placeholder="Ej. INTEL1490"
+                      placeholder={language === "es" ? "Ej. INTEL1490" : "e.g. INTEL1490"}
                       value={formData.sku}
                       onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
                       className={`flex-1 px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold uppercase ${
@@ -4109,7 +4174,7 @@ export default function App() {
                       className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover-scale flex items-center gap-1.5 transition-colors shrink-0"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Generar</span>
+                      <span>{language === "es" ? "Generar" : "Generate"}</span>
                     </button>
                   </div>
                   {formErrors.sku && <p className="text-[9px] text-red-500 font-bold mt-1">{formErrors.sku}</p>}
@@ -4120,11 +4185,11 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                    Ubicación Física *
+                    {t.location_label}
                   </label>
                   <input
                     type="text"
-                    placeholder="Ej. Estante C - Fila 2"
+                    placeholder={language === "es" ? "Ej. Estante C - Fila 2" : "e.g. Shelf C - Row 2"}
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
@@ -4135,12 +4200,12 @@ export default function App() {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                    Stock Mínimo (Alerta) *
+                    {t.min_stock_label}
                   </label>
                   <input
                     type="number"
                     min="0"
-                    placeholder="Ej. 5"
+                    placeholder={language === "es" ? "Ej. 5" : "e.g. 5"}
                     value={formData.minStock}
                     onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
@@ -4154,12 +4219,12 @@ export default function App() {
               {/* Row 4: Stock Inicial */}
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                  Stock Inicial *
+                  {language === "es" ? "Stock Inicial *" : "Initial Stock *"}
                 </label>
                 <input
                   type="number"
                   min="0"
-                  placeholder="Ej. 25"
+                  placeholder={language === "es" ? "Ej. 25" : "e.g. 25"}
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                   className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
@@ -4172,10 +4237,10 @@ export default function App() {
               {/* Row 4.5: Descripción del Artículo */}
               <div>
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                  Descripción del Artículo
+                  {t.desc_label}
                 </label>
                 <textarea
-                  placeholder="Describe brevemente el componente (marca, modelo, características...)..."
+                  placeholder={language === "es" ? "Describe brevemente el componente (marca, modelo, características...)..." : "Briefly describe the component (brand, model, features...)..."}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={2}
@@ -4186,7 +4251,7 @@ export default function App() {
               {/* Row 5: Imagen del Artículo con Pestañas y Zona de arrastre */}
               <div className="flex flex-col gap-2.5">
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block">
-                  Imagen del Artículo *
+                  {language === "es" ? "Imagen del Artículo *" : "Item Image *"}
                 </label>
                 
                 {/* Selector tabs */}
@@ -4200,7 +4265,7 @@ export default function App() {
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                   >
-                    Subir Archivo
+                    {t.upload_file}
                   </button>
                   <button
                     type="button"
@@ -4211,7 +4276,7 @@ export default function App() {
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                   >
-                    Seleccionar Icono
+                    {t.select_icon}
                   </button>
                   <button
                     type="button"
@@ -4222,7 +4287,7 @@ export default function App() {
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                   >
-                    URL
+                    {t.url_label}
                   </button>
                 </div>
 
@@ -4234,9 +4299,9 @@ export default function App() {
                   >
                     <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-sky-500 transition-colors mb-1.5" />
                     <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                      {formData.imageUrl ? "¡Imagen cargada correctamente!" : "Arrastra una imagen aquí o haz click para seleccionar"}
+                      {formData.imageUrl ? (language === "es" ? "¡Imagen cargada correctamente!" : "Image uploaded successfully!") : t.drag_drop_placeholder}
                     </span>
-                    {formData.imageUrl && <span className="text-[8px] text-emerald-500 font-semibold mt-0.5">Mock: Placa de Hardware Cargada</span>}
+                    {formData.imageUrl && <span className="text-[8px] text-emerald-500 font-semibold mt-0.5">{language === "es" ? "Mock: Placa de Hardware Cargada" : "Mock: Hardware Board Loaded"}</span>}
                   </div>
                 )}
 
@@ -4266,7 +4331,7 @@ export default function App() {
                   <div className="flex flex-col gap-1.5 animate-fade-in">
                     <input
                       type="text"
-                      placeholder="Pega la URL de la imagen aquí (https://...)"
+                      placeholder={t.image_url_placeholder}
                       value={formData.imageUrl}
                       onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
@@ -4282,7 +4347,7 @@ export default function App() {
                   onClick={() => setIsAddModalOpen(false)}
                   className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors hover-scale"
                 >
-                  Cancelar
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
@@ -4294,7 +4359,7 @@ export default function App() {
                   ) : (
                     <PlusCircle className="w-3.5 h-3.5" />
                   )}
-                  <span>{isSubmitting ? "Guardando..." : "Guardar Componente"}</span>
+                  <span>{isSubmitting ? t.saving : t.save_component}</span>
                 </button>
               </div>
 
@@ -4312,10 +4377,10 @@ export default function App() {
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
                 <h2 className="text-lg font-black text-slate-800 dark:text-white">
-                  {isEditingDetail ? "Editar Componente" : "Detalles del Componente"}
+                  {isEditingDetail ? (language === "es" ? "Editar Componente" : "Edit Component") : t.details_modal_title}
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {isEditingDetail ? "Modifica los campos técnicos del componente." : "Información técnica y stock en tiempo real."}
+                  {isEditingDetail ? (language === "es" ? "Modifica los campos técnicos del componente." : "Modify the technical fields of the component.") : (language === "es" ? "Información técnica y stock en tiempo real." : "Technical info and real-time stock.")}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -4324,14 +4389,14 @@ export default function App() {
                     <button
                       onClick={() => handleDownloadTechnicalSheet(selectedProduct)}
                       className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 flex items-center justify-center transition-all duration-150 hover-scale cursor-pointer"
-                      title="Descargar Ficha Técnica PDF"
+                      title={t.technical_sheet_download}
                     >
                       <FileText className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setIsEditingDetail(true)}
                       className="w-9 h-9 rounded-full bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 flex items-center justify-center transition-all duration-150 hover-scale cursor-pointer"
-                      title="Editar Detalles"
+                      title={t.edit_details_tooltip}
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -4370,7 +4435,7 @@ export default function App() {
                 {/* Row 1: Nombre & Marca */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Nombre del Artículo *</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{t.name_label}</span>
                     {isEditingDetail ? (
                       <input
                         type="text"
@@ -4384,7 +4449,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Marca *</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{t.brand_label}</span>
                     {isEditingDetail ? (
                       <input
                         type="text"
@@ -4394,7 +4459,7 @@ export default function App() {
                         required
                       />
                     ) : (
-                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.brand || "Sin Marca"}</span>
+                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.brand || t.no_brand}</span>
                     )}
                   </div>
                 </div>
@@ -4402,7 +4467,7 @@ export default function App() {
                 {/* Row 2: Modelo & SKU */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Modelo *</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{t.model_label}</span>
                     {isEditingDetail ? (
                       <input
                         type="text"
@@ -4412,11 +4477,11 @@ export default function App() {
                         required
                       />
                     ) : (
-                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.model || "Sin Modelo"}</span>
+                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.model || t.no_model}</span>
                     )}
                   </div>
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">SKU (9 Caracteres) *</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{language === "es" ? "SKU (9 Caracteres) *" : "SKU (9 Characters) *"}</span>
                     {isEditingDetail ? (
                       <div className="flex gap-2">
                         <input
@@ -4431,14 +4496,14 @@ export default function App() {
                           type="button"
                           onClick={handleGenerateEditSKU}
                           className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-[10px] hover-scale flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
-                          title="Generar SKU automáticamente"
+                          title={language === "es" ? "Generar SKU automáticamente" : "Generate SKU automatically"}
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
-                          <span>Generar</span>
+                          <span>{language === "es" ? "Generar" : "Generate"}</span>
                         </button>
                       </div>
                     ) : (
-                      <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-300 uppercase block">{selectedProduct.sku || "Sin SKU"}</span>
+                      <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-300 uppercase block">{selectedProduct.sku || t.no_sku}</span>
                     )}
                   </div>
                 </div>
@@ -4446,7 +4511,7 @@ export default function App() {
                 {/* Row 3: Ubicación Física & Stock Mínimo */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Ubicación Física *</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{language === "es" ? "Ubicación Física *" : "Physical Location *"}</span>
                     {isEditingDetail ? (
                       <input
                         type="text"
@@ -4458,12 +4523,12 @@ export default function App() {
                     ) : (
                       <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
                         <MapPin className="w-4 h-4 text-sky-500" />
-                        {selectedProduct.location || "Sin Ubicación registrada"}
+                        {selectedProduct.location || t.no_location}
                       </span>
                     )}
                   </div>
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Stock Mínimo *</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{t.min_stock_label}</span>
                     {isEditingDetail ? (
                       <input
                         type="number"
@@ -4483,7 +4548,7 @@ export default function App() {
 
                 {/* Description */}
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                  <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Descripción del Artículo</span>
+                  <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{t.desc_label}</span>
                   {isEditingDetail ? (
                     <textarea
                       value={editDetailForm.description}
@@ -4493,7 +4558,7 @@ export default function App() {
                     />
                   ) : (
                     <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
-                      {selectedProduct.description || "Sin descripción proporcionada."}
+                      {selectedProduct.description || (language === "es" ? "Sin descripción proporcionada." : "No description provided.")}
                     </p>
                   )}
                 </div>
@@ -4501,8 +4566,8 @@ export default function App() {
                 {/* Row 4: Stock controls & Min stock */}
                 <div className="p-4 rounded-2xl bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/40 dark:border-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex flex-col text-center sm:text-left">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Control de Stock</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Ajusta el volumen en inventario.</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mb-0.5">{t.stock_control}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{t.stock_control_desc}</span>
                   </div>
                   
                   {/* Stock adjuster controls */}
@@ -4512,19 +4577,19 @@ export default function App() {
                       onClick={() => handleAdjustStock(selectedProduct.id, -1, selectedProduct.stock)}
                       disabled={selectedProduct.stock <= 0}
                       className="w-8 h-8 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-black text-base disabled:opacity-40 hover-scale transition-colors cursor-pointer"
-                      title="Restar 1 unidad"
+                      title={t.subtract_unit_tooltip}
                     >
                       -
                     </button>
                     <div className="text-center min-w-[50px]">
                       <span className="text-2xl font-black text-slate-800 dark:text-white block">{selectedProduct.stock}</span>
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Min: {selectedProduct.minStock}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t.min_prefix} {selectedProduct.minStock}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleAdjustStock(selectedProduct.id, 1, selectedProduct.stock)}
                       className="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-black text-base hover-scale transition-colors cursor-pointer"
-                      title="Sumar 1 unidad"
+                      title={t.add_unit_tooltip}
                     >
                       +
                     </button>
@@ -4545,7 +4610,7 @@ export default function App() {
                     disabled={isSavingDetail}
                     className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors disabled:opacity-50"
                   >
-                    Cancelar
+                    {t.cancel}
                   </button>
                   <button
                     type="button"
@@ -4558,7 +4623,7 @@ export default function App() {
                     ) : (
                       <CheckCircle className="w-3.5 h-3.5" />
                     )}
-                    <span>{isSavingDetail ? "Guardando..." : "Guardar Cambios"}</span>
+                    <span>{isSavingDetail ? t.saving : t.save_changes}</span>
                   </button>
                 </>
               ) : (
@@ -4567,7 +4632,7 @@ export default function App() {
                   onClick={() => setSelectedProductId(null)}
                   className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover-scale transition-colors"
                 >
-                  Cerrar Detalles
+                  {t.close_details}
                 </button>
               )}
             </div>
