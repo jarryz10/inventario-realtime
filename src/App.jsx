@@ -1566,6 +1566,44 @@ export default function App() {
     }
   };
 
+  // Delete printer cleaning document from Firestore (strictly Level 3)
+  const handleDeleteCleaning = async (id) => {
+    if (userLevel < 3) {
+      alert("No tienes permisos suficientes para realizar esta acción.");
+      return;
+    }
+    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar este reporte de manera permanente?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "printer_cleaning", id));
+      setAlertMessage({ type: "success", text: "Reporte de limpieza eliminado permanentemente." });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error deleting cleaning report:", error);
+      alert("Error al eliminar el reporte de limpieza.");
+    }
+  };
+
+  // Delete RFID verification document from Firestore (strictly Level 3)
+  const handleDeleteRfid = async (id) => {
+    if (userLevel < 3) {
+      alert("No tienes permisos suficientes para realizar esta acción.");
+      return;
+    }
+    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar este reporte de manera permanente?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "rfid_verification", id));
+      setAlertMessage({ type: "success", text: "Reporte de RFID eliminado permanentemente." });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error deleting RFID report:", error);
+      alert("Error al eliminar el reporte de RFID.");
+    }
+  };
+
   // Generate and download PDF for RFID verification service sheet
   const handleDownloadRfidPDF = (record) => {
     try {
@@ -3056,14 +3094,26 @@ export default function App() {
                                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
                                           Registrado por: {record.createdBy} (Nivel {record.userLevel})
                                         </span>
-                                        <button
-                                          onClick={() => handleDownloadCleaningPDF(record)}
-                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                          title="Descargar Certificado en PDF"
-                                        >
-                                          <FileText className="w-3.5 h-3.5 text-white" />
-                                          <span>Descargar PDF</span>
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                          {userLevel >= 3 && (
+                                            <button
+                                              onClick={() => handleDeleteCleaning(record.id)}
+                                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
+                                              title="Eliminar Reporte Permanentemente"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                              <span>Eliminar</span>
+                                            </button>
+                                          )}
+                                          <button
+                                            onClick={() => handleDownloadCleaningPDF(record)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                            title="Descargar Certificado en PDF"
+                                          >
+                                            <FileText className="w-3.5 h-3.5 text-white" />
+                                            <span>Descargar PDF</span>
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
                                   )}
@@ -3164,14 +3214,26 @@ export default function App() {
                                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
                                         Registrado por: {record.createdBy} (Nivel {record.userLevel})
                                       </span>
-                                      <button
-                                        onClick={() => handleDownloadCleaningPDF(record)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                        title="Descargar Certificado en PDF"
-                                      >
-                                        <FileText className="w-3.5 h-3.5 text-white" />
-                                        <span>Descargar PDF</span>
-                                      </button>
+                                      <div className="flex items-center gap-2">
+                                        {userLevel >= 3 && (
+                                          <button
+                                            onClick={() => handleDeleteCleaning(record.id)}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
+                                            title="Eliminar Reporte Permanentemente"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            <span>Eliminar</span>
+                                          </button>
+                                        )}
+                                        <button
+                                          onClick={() => handleDownloadCleaningPDF(record)}
+                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                          title="Descargar Certificado en PDF"
+                                        >
+                                          <FileText className="w-3.5 h-3.5 text-white" />
+                                          <span>Descargar PDF</span>
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 )}
@@ -3408,14 +3470,26 @@ export default function App() {
                                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
                                           Registrado por: {record.createdBy} (Nivel {record.userLevel})
                                         </span>
-                                        <button
-                                          onClick={() => handleDownloadRfidPDF(record)}
-                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                          title="Descargar Ficha en PDF"
-                                        >
-                                          <FileText className="w-3.5 h-3.5 text-white" />
-                                          <span>Descargar PDF</span>
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                          {userLevel >= 3 && (
+                                            <button
+                                              onClick={() => handleDeleteRfid(record.id)}
+                                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
+                                              title="Eliminar Reporte Permanentemente"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                              <span>Eliminar</span>
+                                            </button>
+                                          )}
+                                          <button
+                                            onClick={() => handleDownloadRfidPDF(record)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                            title="Descargar Ficha en PDF"
+                                          >
+                                            <FileText className="w-3.5 h-3.5 text-white" />
+                                            <span>Descargar PDF</span>
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
                                   )}
@@ -3521,14 +3595,26 @@ export default function App() {
                                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
                                         Registrado por: {record.createdBy} (Nivel {record.userLevel})
                                       </span>
-                                      <button
-                                        onClick={() => handleDownloadRfidPDF(record)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                        title="Descargar Ficha en PDF"
-                                      >
-                                        <FileText className="w-3.5 h-3.5 text-white" />
-                                        <span>Descargar PDF</span>
-                                      </button>
+                                      <div className="flex items-center gap-2">
+                                        {userLevel >= 3 && (
+                                          <button
+                                            onClick={() => handleDeleteRfid(record.id)}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
+                                            title="Eliminar Reporte Permanentemente"
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            <span>Eliminar</span>
+                                          </button>
+                                        )}
+                                        <button
+                                          onClick={() => handleDownloadRfidPDF(record)}
+                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                          title="Descargar Ficha en PDF"
+                                        >
+                                          <FileText className="w-3.5 h-3.5 text-white" />
+                                          <span>Descargar PDF</span>
+                                        </button>
+                                      </div>
                                     </div>
                                   </div>
                                 )}
