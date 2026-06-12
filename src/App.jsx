@@ -2299,12 +2299,12 @@ export default function App() {
 
             {/* TAB 4: LIMPIEZA DE IMPRESORA */}
             {activeTab === "limpieza" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass">
                 {userLevel < 3 ? (
                   <>
                     {/* Left Form: create cleaning log (colspan 5) */}
-                    <div className="md:col-span-5 flex flex-col h-full overflow-y-auto pr-1 scroll-glass">
-                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                    <div className="md:col-span-5 flex flex-col h-auto pr-1">
+                      <div className="glass-card rounded-[2rem] p-5 pb-12 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                           Registrar Limpieza de Impresora
                         </h2>
@@ -2388,8 +2388,8 @@ export default function App() {
                     </div>
                     
                     {/* Right History: (colspan 7) */}
-                    <div className="md:col-span-7 flex flex-col h-full overflow-hidden">
-                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                    <div className="md:col-span-7 flex flex-col h-auto">
+                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             Historial de Limpieza
@@ -2399,7 +2399,7 @@ export default function App() {
                           </span>
                         </div>
                         
-                        <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
+                        <div className="flex flex-col gap-3 pb-2">
                           {isCleaningLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                               <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
@@ -2468,8 +2468,8 @@ export default function App() {
                   </>
                 ) : (
                   /* Nivel 3: Audit View (colspan 12) */
-                  <div className="col-span-12 flex flex-col h-full overflow-hidden">
-                    <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                  <div className="col-span-12 flex flex-col h-auto">
+                    <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
@@ -2482,7 +2482,7 @@ export default function App() {
                         </span>
                       </div>
                       
-                      <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-4">
+                      <div className="flex flex-col gap-3 pb-4">
                         {isCleaningLoading ? (
                           <div className="flex flex-col items-center justify-center py-20 text-center w-full">
                             <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
