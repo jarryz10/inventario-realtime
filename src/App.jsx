@@ -296,7 +296,7 @@ export default function App() {
                         <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
                           <Package className="w-4.5 h-4.5" />
                         </div>
-                        <span className="font-extrabold text-slate-950 dark:text-white text-xs sm:text-sm truncate">
+                        <span className="font-extrabold product-name-text text-xs sm:text-sm truncate">
                           {product.name}
                         </span>
                       </div>

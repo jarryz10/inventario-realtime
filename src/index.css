@@ -159,3 +159,12 @@ body {
 .animate-scale-in {
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Explicit text color overrides with !important */
+.product-name-text {
+  color: #111111 !important;
+}
+
+.dark .product-name-text {
+  color: #ffffff !important;
+}
