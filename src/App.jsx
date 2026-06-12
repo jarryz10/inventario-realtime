@@ -36,7 +36,8 @@ import {
   ListCollapse,
   Mail,
   Lock,
-  LogOut
+  LogOut,
+  Edit3
 } from "lucide-react";
 
 export default function App() {
@@ -67,6 +68,34 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const selectedProduct = products.find(p => p.id === selectedProductId) || null;
+
+  // Component Details Edit State
+  const [isEditingDetail, setIsEditingDetail] = useState(false);
+  const [editDetailForm, setEditDetailForm] = useState({
+    name: "",
+    brand: "",
+    model: "",
+    sku: "",
+    location: ""
+  });
+  const [isSavingDetail, setIsSavingDetail] = useState(false);
+
+  // Sync edit form fields when a product is opened or updated in real time
+  useEffect(() => {
+    if (selectedProduct) {
+      if (!isEditingDetail) {
+        setEditDetailForm({
+          name: selectedProduct.name || "",
+          brand: selectedProduct.brand || "",
+          model: selectedProduct.model || "",
+          sku: selectedProduct.sku || "",
+          location: selectedProduct.location || ""
+        });
+      }
+    } else {
+      setIsEditingDetail(false);
+    }
+  }, [selectedProductId, selectedProduct, isEditingDetail]);
 
   // Orders State (Órdenes y Pedidos)
   const [orders, setOrders] = useState([]);
@@ -478,6 +507,47 @@ export default function App() {
       });
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  // Handle Save Component Details Edit
+  const handleSaveProductDetails = async () => {
+    if (userLevel < 2 || !selectedProduct) return;
+    
+    // Simple Validation
+    if (
+      !editDetailForm.name.trim() ||
+      !editDetailForm.brand.trim() ||
+      !editDetailForm.model.trim() ||
+      !editDetailForm.sku.trim() ||
+      !editDetailForm.location.trim()
+    ) {
+      alert("Por favor, rellena todos los campos obligatorios (*)");
+      return;
+    }
+    if (editDetailForm.sku.trim().length !== 9) {
+      alert("El SKU debe tener exactamente 9 caracteres.");
+      return;
+    }
+
+    setIsSavingDetail(true);
+    try {
+      const docRef = doc(db, "items", selectedProduct.id);
+      await updateDoc(docRef, {
+        name: editDetailForm.name.trim(),
+        brand: editDetailForm.brand.trim(),
+        model: editDetailForm.model.trim(),
+        sku: editDetailForm.sku.trim().toUpperCase(),
+        location: editDetailForm.location.trim()
+      });
+      setIsEditingDetail(false);
+      setAlertMessage({ type: "success", text: "¡Componente actualizado correctamente!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error updating product details:", error);
+      alert("Ocurrió un error al guardar los cambios en Firestore.");
+    } finally {
+      setIsSavingDetail(false);
     }
   };
 
@@ -1361,15 +1431,33 @@ export default function App() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white">Detalles del Componente</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Información técnica y stock en tiempo real.</p>
+                <h2 className="text-lg font-black text-slate-800 dark:text-white">
+                  {isEditingDetail ? "Editar Componente" : "Detalles del Componente"}
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {isEditingDetail ? "Modifica los campos técnicos del componente." : "Información técnica y stock en tiempo real."}
+                </p>
               </div>
-              <button
-                onClick={() => setSelectedProductId(null)}
-                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {userLevel >= 2 && !isEditingDetail && (
+                  <button
+                    onClick={() => setIsEditingDetail(true)}
+                    className="w-9 h-9 rounded-full bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 flex items-center justify-center transition-all duration-150 hover-scale cursor-pointer"
+                    title="Editar Detalles"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setSelectedProductId(null);
+                    setIsEditingDetail(false);
+                  }}
+                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Content */}
@@ -1393,34 +1481,85 @@ export default function App() {
                 {/* Row 1: Nombre & Marca */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Nombre del Artículo</span>
-                    <span className="text-sm font-extrabold product-name-text block">{selectedProduct.name}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Nombre del Artículo *</span>
+                    {isEditingDetail ? (
+                      <input
+                        type="text"
+                        value={editDetailForm.name}
+                        onChange={(e) => setEditDetailForm({ ...editDetailForm, name: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
+                        required
+                      />
+                    ) : (
+                      <span className="text-sm font-extrabold product-name-text block">{selectedProduct.name}</span>
+                    )}
                   </div>
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Marca</span>
-                    <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.brand || "Sin Marca"}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Marca *</span>
+                    {isEditingDetail ? (
+                      <input
+                        type="text"
+                        value={editDetailForm.brand}
+                        onChange={(e) => setEditDetailForm({ ...editDetailForm, brand: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
+                        required
+                      />
+                    ) : (
+                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.brand || "Sin Marca"}</span>
+                    )}
                   </div>
                 </div>
 
                 {/* Row 2: Modelo & SKU */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Modelo</span>
-                    <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.model || "Sin Modelo"}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Modelo *</span>
+                    {isEditingDetail ? (
+                      <input
+                        type="text"
+                        value={editDetailForm.model}
+                        onChange={(e) => setEditDetailForm({ ...editDetailForm, model: e.target.value })}
+                        className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
+                        required
+                      />
+                    ) : (
+                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.model || "Sin Modelo"}</span>
+                    )}
                   </div>
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">SKU</span>
-                    <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-300 uppercase block">{selectedProduct.sku || "Sin SKU"}</span>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">SKU (9 Caracteres) *</span>
+                    {isEditingDetail ? (
+                      <input
+                        type="text"
+                        maxLength={9}
+                        value={editDetailForm.sku}
+                        onChange={(e) => setEditDetailForm({ ...editDetailForm, sku: e.target.value.toUpperCase() })}
+                        className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-mono font-bold uppercase outline-none focus:border-sky-500"
+                        required
+                      />
+                    ) : (
+                      <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-300 uppercase block">{selectedProduct.sku || "Sin SKU"}</span>
+                    )}
                   </div>
                 </div>
 
                 {/* Row 3: Ubicación Física */}
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
-                  <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Ubicación Física</span>
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                    <MapPin className="w-4 h-4 text-sky-500" />
-                    {selectedProduct.location || "Sin Ubicación registrada"}
-                  </span>
+                  <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Ubicación Física *</span>
+                  {isEditingDetail ? (
+                    <input
+                      type="text"
+                      value={editDetailForm.location}
+                      onChange={(e) => setEditDetailForm({ ...editDetailForm, location: e.target.value })}
+                      className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
+                      required
+                    />
+                  ) : (
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                      <MapPin className="w-4 h-4 text-sky-500" />
+                      {selectedProduct.location || "Sin Ubicación registrada"}
+                    </span>
+                  )}
                 </div>
 
                 {/* Row 4: Stock controls & Min stock */}
@@ -1461,14 +1600,40 @@ export default function App() {
             </div>
 
             {/* Modal Footer */}
-            <div className="pt-4 border-t border-slate-200/50 dark:border-slate-800/50 mt-4 shrink-0">
-              <button
-                type="button"
-                onClick={() => setSelectedProductId(null)}
-                className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover-scale transition-colors"
-              >
-                Cerrar Detalles
-              </button>
+            <div className="pt-4 border-t border-slate-200/50 dark:border-slate-800/50 mt-4 shrink-0 flex gap-3">
+              {isEditingDetail ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingDetail(false)}
+                    disabled={isSavingDetail}
+                    className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveProductDetails}
+                    disabled={isSavingDetail}
+                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-lg shadow-emerald-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isSavingDetail ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isSavingDetail ? "Guardando..." : "Guardar Cambios"}</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSelectedProductId(null)}
+                  className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover-scale transition-colors"
+                >
+                  Cerrar Detalles
+                </button>
+              )}
             </div>
 
           </div>
