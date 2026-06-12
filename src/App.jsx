@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { 
   collection, 
   addDoc, 
@@ -643,6 +643,16 @@ export default function App() {
   // Generate and download PDF for a daily report
   const handleDownloadPDF = (report) => {
     try {
+      // 1. Data Validation
+      if (!report) {
+        throw new Error("El reporte es nulo o indefinido");
+      }
+      
+      const createdBy = report.createdBy || "N/D";
+      const date = report.date || "N/D";
+      const activities = Array.isArray(report.activities) ? report.activities : [];
+      const userLevel = report.userLevel !== undefined ? report.userLevel : "N/D";
+
       const doc = new jsPDF();
 
       // Title
@@ -669,15 +679,19 @@ export default function App() {
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`Operador / Creador: ${report.createdBy}`, 14, 46);
-      doc.text(`Nivel de Permisos: Nivel ${report.userLevel} (${report.userLevel === 2 ? "Supervisor" : "Operador"})`, 14, 52);
-      doc.text(`Fecha del Turno: ${report.date}`, 14, 58);
+      doc.text(`Operador / Creador: ${createdBy}`, 14, 46);
+      doc.text(`Nivel de Permisos: Nivel ${userLevel} (${userLevel === 2 ? "Supervisor" : "Operador"})`, 14, 52);
+      doc.text(`Fecha del Turno: ${date}`, 14, 58);
 
       // Table of Activities
       const tableHeaders = [["Bloque de Tiempo", "Actividades Realizadas"]];
-      const tableRows = report.activities.map(act => [act.time, act.activity]);
+      const tableRows = activities.map(act => {
+        const time = (act && act.time) ? act.time.trim() : "N/D";
+        const activity = (act && act.activity) ? act.activity.trim() : "N/D";
+        return [time, activity];
+      });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 66,
         head: tableHeaders,
         body: tableRows,
@@ -703,10 +717,11 @@ export default function App() {
       });
 
       // Save PDF
-      const filename = `Reporte_${report.createdBy}_${report.date.replace(/\//g, "-")}.pdf`;
+      const sanitizeDate = date.replace(/\//g, "-");
+      const filename = `Reporte_${createdBy}_${sanitizeDate}.pdf`;
       doc.save(filename);
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Error detallado de jspdf:", error);
       alert("Ocurrió un error al generar el PDF.");
     }
   };
