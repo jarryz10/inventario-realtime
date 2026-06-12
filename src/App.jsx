@@ -72,6 +72,15 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const selectedProduct = products.find(p => p.id === selectedProductId) || null;
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredProducts = products.filter(product => {
+    const nameMatch = (product.name || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const brandMatch = (product.brand || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const skuMatch = (product.sku || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return nameMatch || brandMatch || skuMatch;
+  });
+
 
   // Component Details Edit State
   const [isEditingDetail, setIsEditingDetail] = useState(false);
@@ -448,17 +457,30 @@ export default function App() {
     }
   }, [currentUser, userLevel]);
 
-  // Generate SKU
+  // Helper to build a clean 9-character SKU from name, brand, and model
+  const buildSKUString = (name, brand, model) => {
+    const getPart = (val) => {
+      // Convert to uppercase, remove spaces, default to empty string
+      const clean = (val || "").toUpperCase().replace(/\s+/g, "");
+      // Pad with 'X' to 3 characters and slice
+      return clean.padEnd(3, "X").substring(0, 3);
+    };
+    return getPart(name) + getPart(brand) + getPart(model);
+  };
+
+  // Generate SKU for Add Component Form
   const handleGenerateSKU = () => {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let result = "";
-    for (let i = 0; i < 9; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setFormData(prev => ({ ...prev, sku: result }));
+    const sku = buildSKUString(formData.name, formData.brand, formData.model);
+    setFormData(prev => ({ ...prev, sku }));
     if (formErrors.sku) {
       setFormErrors(prev => ({ ...prev, sku: null }));
     }
+  };
+
+  // Generate SKU for Edit Component Form (Modal Details)
+  const handleGenerateEditSKU = () => {
+    const sku = buildSKUString(editDetailForm.name, editDetailForm.brand, editDetailForm.model);
+    setEditDetailForm(prev => ({ ...prev, sku }));
   };
 
   // Add Component Form Validation
@@ -723,6 +745,122 @@ export default function App() {
     } catch (error) {
       console.error("Error detallado de jspdf:", error);
       alert("Ocurrió un error al generar el PDF.");
+    }
+  };
+
+  // Generate and download PDF for a component's technical sheet
+  const handleDownloadTechnicalSheet = (product) => {
+    if (userLevel < 2) return;
+    try {
+      if (!product) {
+        throw new Error("El producto es nulo o indefinido");
+      }
+
+      const name = product.name || "N/D";
+      const brand = product.brand || "Sin Marca";
+      const model = product.model || "Sin Modelo";
+      const sku = product.sku || "Sin SKU";
+      const location = product.location || "Sin Ubicación";
+      const stock = product.stock !== undefined ? product.stock : 0;
+      const minStock = product.minStock !== undefined ? product.minStock : 0;
+
+      const doc = new jsPDF();
+
+      // Membrete / Top logo & brand
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(14, 165, 233); // Sky-500
+      doc.text("MasterInventory", 14, 20);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139); // Slate-500
+      doc.text("Sistema de Gestión de Almacén Real-time", 14, 25);
+
+      // Title of the document
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(30, 41, 59); // Slate-800
+      doc.text("Ficha Técnica de Componente", 14, 38);
+
+      // Horizontal divider line
+      doc.setDrawColor(203, 213, 225); // Slate-300
+      doc.setLineWidth(0.5);
+      doc.line(14, 43, 196, 43);
+
+      // Organized block/table with item details
+      const tableHeaders = [["Especificación", "Detalle de Componente"]];
+      const tableRows = [
+        ["Nombre del Artículo", name],
+        ["Marca", brand],
+        ["Modelo", model],
+        ["SKU (Código)", sku.toUpperCase()],
+        ["Ubicación Física", location],
+        ["Stock Actual", `${stock} unidades`],
+        ["Stock Mínimo Autorizado", `${minStock} unidades`],
+        ["Estado de Existencia", stock <= 0 ? "Agotado" : stock < minStock ? "Bajo Stock (Reabastecer)" : "Disponible"]
+      ];
+
+      autoTable(doc, {
+        startY: 48,
+        head: tableHeaders,
+        body: tableRows,
+        theme: "striped",
+        headStyles: {
+          fillColor: [30, 41, 59], // Slate-800
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 10
+        },
+        bodyStyles: {
+          fontSize: 9.5,
+          textColor: [51, 65, 85]
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // Slate-50
+        },
+        margin: { left: 14, right: 14 },
+        styles: {
+          overflow: "linebreak",
+          cellPadding: 6
+        }
+      });
+
+      // Position after the table
+      const finalY = doc.lastAutoTable.finalY + 15;
+
+      // Draw a neat box for the image placeholder
+      doc.setDrawColor(14, 165, 233); // Sky-500
+      doc.setLineWidth(0.5);
+      doc.setFillColor(248, 250, 252); // Slate-50 background for placeholder
+      doc.rect(14, finalY, 182, 50, "FD"); // border and fill
+
+      // Image placeholder text
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(14, 165, 233);
+      doc.text("Imagen / Foto Referencial del Componente", 14 + 48, finalY + 22);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text("MasterInventory - Control de Calidad y Trazabilidad", 14 + 52, finalY + 30);
+      
+      // Footer info
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // Slate-400
+      doc.text(`Documento generado el: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+      doc.text("Copia controlada - Prohibida su modificación externa", 140, pageHeight - 10);
+
+      // Save PDF
+      const sanitizeName = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+      const filename = `Ficha_Tecnica_${sanitizeName}.pdf`;
+      doc.save(filename);
+    } catch (error) {
+      console.error("Error al descargar ficha técnica:", error);
+      alert("Ocurrió un error al generar la ficha técnica en PDF.");
     }
   };
 
@@ -1099,11 +1237,47 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto justify-end">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20 select-none">
                 <Database className="w-3.5 h-3.5" />
                 <span>Conectado</span>
               </div>
+
+              {activeTab === "inventario" && (
+                <div className="relative w-48 sm:w-60 shrink-0">
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre, marca o SKU..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-8 pr-7 py-2 rounded-xl text-xs glass-input font-bold"
+                  />
+                  <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none">
+                    <svg
+                      className="h-3.5 w-3.5 text-slate-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </div>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="absolute inset-y-0 right-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                      type="button"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
 
               {activeTab === "inventario" && userLevel >= 2 && (
                 <button
@@ -1154,9 +1328,17 @@ export default function App() {
                         No se registran componentes. Presiona "Agregar Componente" para dar de alta uno.
                       </p>
                     </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
+                      <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">Sin coincidencias</h3>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                        No encontramos artículos que coincidan con "{searchTerm}". Intenta buscar otro término.
+                      </p>
+                    </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
-                      {products.map((product) => (
+                      {filteredProducts.map((product) => (
                         <div
                           key={product.id}
                           onClick={() => setSelectedProductId(product.id)}
@@ -2149,13 +2331,22 @@ export default function App() {
               </div>
               <div className="flex items-center gap-2">
                 {userLevel >= 2 && !isEditingDetail && (
-                  <button
-                    onClick={() => setIsEditingDetail(true)}
-                    className="w-9 h-9 rounded-full bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 flex items-center justify-center transition-all duration-150 hover-scale cursor-pointer"
-                    title="Editar Detalles"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleDownloadTechnicalSheet(selectedProduct)}
+                      className="w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 flex items-center justify-center transition-all duration-150 hover-scale cursor-pointer"
+                      title="Descargar Ficha Técnica PDF"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setIsEditingDetail(true)}
+                      className="w-9 h-9 rounded-full bg-sky-500/10 text-sky-600 hover:bg-sky-500/20 flex items-center justify-center transition-all duration-150 hover-scale cursor-pointer"
+                      title="Editar Detalles"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => {
@@ -2238,14 +2429,25 @@ export default function App() {
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
                     <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">SKU (9 Caracteres) *</span>
                     {isEditingDetail ? (
-                      <input
-                        type="text"
-                        maxLength={9}
-                        value={editDetailForm.sku}
-                        onChange={(e) => setEditDetailForm({ ...editDetailForm, sku: e.target.value.toUpperCase() })}
-                        className="w-full px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-mono font-bold uppercase outline-none focus:border-sky-500"
-                        required
-                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          maxLength={9}
+                          value={editDetailForm.sku}
+                          onChange={(e) => setEditDetailForm({ ...editDetailForm, sku: e.target.value.toUpperCase() })}
+                          className="flex-1 px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 text-[11px] border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-mono font-bold uppercase outline-none focus:border-sky-500"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={handleGenerateEditSKU}
+                          className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-[10px] hover-scale flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                          title="Generar SKU automáticamente"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Generar</span>
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-300 uppercase block">{selectedProduct.sku || "Sin SKU"}</span>
                     )}
