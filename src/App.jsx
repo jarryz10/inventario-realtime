@@ -9,6 +9,7 @@ import {
   getDoc,
   setDoc,
   query, 
+  where,
   serverTimestamp,
   updateDoc,
   increment
@@ -100,6 +101,8 @@ export default function App() {
   // Orders State (Órdenes y Pedidos)
   const [orders, setOrders] = useState([]);
   const [isOrdersLoading, setIsOrdersLoading] = useState(true);
+  const [orderHistory, setOrderHistory] = useState([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -347,6 +350,45 @@ export default function App() {
     }
   }, [currentUser]);
 
+  // Effect to fetch order history in real-time from Firestore (orders with status "recibido" or "rechazado")
+  useEffect(() => {
+    if (!currentUser) return;
+    setIsHistoryLoading(true);
+    try {
+      const q = query(
+        collection(db, "orders"),
+        where("status", "in", ["recibido", "rechazado"])
+      );
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const historyList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Sort locally by timestamp (newest first)
+          historyList.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
+          setOrderHistory(historyList);
+          setIsHistoryLoading(false);
+        },
+        (error) => {
+          console.error("Firestore order history query error:", error);
+          setIsHistoryLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup order history real-time listener:", error);
+      setIsHistoryLoading(false);
+    }
+  }, [currentUser]);
+
   // Generate SKU
   const handleGenerateSKU = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -505,8 +547,11 @@ export default function App() {
   const handleRejectOrder = async (orderId) => {
     if (userLevel < 3) return;
     try {
-      await deleteDoc(doc(db, "orders", orderId));
-      setAlertMessage({ type: "success", text: "Pedido rechazado y eliminado." });
+      const docRef = doc(db, "orders", orderId);
+      await updateDoc(docRef, {
+        status: "rechazado"
+      });
+      setAlertMessage({ type: "success", text: "Pedido rechazado." });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
       console.error("Error rejecting order:", error);
@@ -1111,15 +1156,16 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right Columns: Kanban Board (colspan 9) */}
-                <div className="md:col-span-9 flex flex-col h-full overflow-hidden">
-                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
-                    <div className="flex items-center justify-between mb-4 shrink-0">
+                {/* Right Columns: Kanban Board and History (colspan 9) */}
+                <div className="md:col-span-9 flex flex-col h-full overflow-hidden gap-4">
+                  {/* Kanban Board */}
+                  <div className="glass-card rounded-[2rem] p-5 shadow-lg h-[58%] flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30 shrink-0">
+                    <div className="flex items-center justify-between mb-3 shrink-0">
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                         Pedidos Pendientes y Seguimiento
                       </h2>
                       <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                        {orders.length} totales
+                        {orders.filter(o => o.status !== "recibido" && o.status !== "rechazado").length} pendientes
                       </span>
                     </div>
 
@@ -1216,11 +1262,11 @@ export default function App() {
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
                               <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Recibido</span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600">
-                                {orders.filter(o => o.status === "recibido").length}
+                                {orders.filter(o => o.status === "recibido").slice(0, 3).length} rec.
                               </span>
                             </div>
                             <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
-                              {orders.filter(o => o.status === "recibido").map(order => (
+                              {orders.filter(o => o.status === "recibido").slice(0, 3).map(order => (
                                 <div key={order.id} className="glass-card rounded-2xl p-3 border border-white/40 dark:border-slate-800/20 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm opacity-80">
                                   <div className="min-w-0">
                                     <h4 className="font-extrabold product-name-text text-xs truncate">{order.itemName}</h4>
@@ -1244,6 +1290,81 @@ export default function App() {
                             </div>
                           </div>
                         </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Historial de Pedidos */}
+                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                    <div className="flex items-center justify-between mb-3 shrink-0">
+                      <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                        Historial de Pedidos
+                      </h2>
+                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                        {orderHistory.length} finalizados
+                      </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-1 scroll-glass min-h-0">
+                      {isHistoryLoading ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <Loader2 className="w-6 h-6 text-sky-500 animate-spin mb-2" />
+                          <span className="text-[10px] text-slate-400 font-bold">Cargando historial...</span>
+                        </div>
+                      ) : orderHistory.length === 0 ? (
+                        <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                          No hay registros en el historial.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="border-b border-slate-200/40 dark:border-slate-800/30 text-[9px] text-slate-400 font-black uppercase tracking-wider">
+                                <th className="pb-2 font-black">Artículo</th>
+                                <th className="pb-2 font-black">Modelo</th>
+                                <th className="pb-2 font-black text-center">Cant</th>
+                                <th className="pb-2 font-black text-right">Costo Total</th>
+                                <th className="pb-2 font-black text-center">Estado</th>
+                                <th className="pb-2 font-black text-center">Fecha/Hora</th>
+                                <th className="pb-2 font-black text-center">Enlace</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100/30 dark:divide-slate-800/10 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                              {orderHistory.map((item) => {
+                                const dateStr = item.timestamp?.toDate
+                                  ? item.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
+                                  : (item.timestamp?.seconds ? new Date(item.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
+                                return (
+                                  <tr key={item.id} className="hover:bg-slate-500/5 transition-colors">
+                                    <td className="py-2.5 max-w-[150px] truncate pr-2 font-bold text-slate-800 dark:text-slate-100">{item.itemName}</td>
+                                    <td className="py-2.5 max-w-[120px] truncate pr-2 text-slate-400 dark:text-slate-500 font-mono text-[9px]">{item.itemModel}</td>
+                                    <td className="py-2.5 text-center font-bold text-slate-700 dark:text-slate-200">{item.quantity}</td>
+                                    <td className="py-2.5 text-right font-black text-sky-600 dark:text-sky-400">${item.cost?.toLocaleString("es-CL")}</td>
+                                    <td className="py-2.5 text-center">
+                                      {item.status === "recibido" ? (
+                                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Recibido</span>
+                                      ) : (
+                                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-red-500/10 text-red-600 dark:text-red-400">Rechazado</span>
+                                      )}
+                                    </td>
+                                    <td className="py-2.5 text-center text-[9px] text-slate-400 dark:text-slate-500 font-medium">{dateStr}</td>
+                                    <td className="py-2.5 text-center">
+                                      <a
+                                        href={item.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex p-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 hover:text-sky-500 transition-colors"
+                                        title="Ver producto"
+                                      >
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      </a>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
                       )}
                     </div>
                   </div>
