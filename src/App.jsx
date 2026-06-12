@@ -1782,14 +1782,14 @@ export default function App() {
                         </span>
                       </div>
                       
-                      <div className="flex-1 overflow-y-auto pr-1 scroll-glass grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                      <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-4">
                         {isReportsLoading ? (
-                          <div className="col-span-3 flex flex-col items-center justify-center py-20 text-center">
+                          <div className="flex flex-col items-center justify-center py-20 text-center w-full">
                             <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
                             <span className="text-xs text-slate-400 font-bold">Cargando reportes para auditoría...</span>
                           </div>
                         ) : dailyReports.length === 0 ? (
-                          <div className="col-span-3 text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                          <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold w-full">
                             No se registran reportes en el sistema.
                           </div>
                         ) : (
@@ -1799,9 +1799,7 @@ export default function App() {
                               <div 
                                 key={report.id} 
                                 onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
-                                className={`glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 cursor-pointer select-none animate-fade-in ${
-                                  isExpanded ? "md:col-span-2 lg:col-span-3 h-fit" : ""
-                                }`}
+                                className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
