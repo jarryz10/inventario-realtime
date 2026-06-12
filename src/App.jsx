@@ -1184,20 +1184,19 @@ export default function App() {
     try {
       const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
       
-      // Upload all rows concurrently in a single block
-      const uploadPromises = cleaningRows.map(row => 
-        addDoc(collection(db, "printer_cleaning"), {
-          station: row.station.trim(),
-          ip: row.ip.trim(),
-          printerType: row.printerType.trim(),
-          createdBy: currentUser.username,
-          userLevel: userLevel,
-          date: today,
-          timestamp: serverTimestamp()
-        })
-      );
-      
-      await Promise.all(uploadPromises);
+      const printersData = cleaningRows.map(row => ({
+        station: row.station.trim(),
+        ip: row.ip.trim(),
+        printerType: row.printerType.trim()
+      }));
+
+      await addDoc(collection(db, "printer_cleaning"), {
+        printers: printersData,
+        createdBy: currentUser.username,
+        userLevel: userLevel,
+        date: today,
+        timestamp: serverTimestamp()
+      });
 
       setCleaningRows([{ station: "", ip: "10.40.", printerType: "" }]);
       setAlertMessage({ type: "success", text: "¡Servicio(s) de limpieza registrado(s) exitosamente!" });
@@ -1217,12 +1216,15 @@ export default function App() {
         throw new Error("El registro es nulo o indefinido");
       }
 
-      const station = record.station || "N/D";
-      const ip = record.ip || "N/D";
-      const printerType = record.printerType || "N/D";
       const createdBy = record.createdBy || "N/D";
       const date = record.date || "N/D";
       const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/D";
+      
+      const printers = record.printers || (record.station ? [{
+        station: record.station,
+        ip: record.ip,
+        printerType: record.printerType
+      }] : []);
 
       const doc = new jsPDF();
 
@@ -1241,26 +1243,30 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59); // Slate-800
-      doc.text("Certificado de Limpieza de Impresora", 14, 38);
+      doc.text("Reporte Consolidado de Limpieza de Impresora", 14, 38);
+
+      // Subtitle with Metadata
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(71, 85, 105); // Slate-600
+      doc.text(`Técnico: ${createdBy} (Nivel ${recordUserLevel})`, 14, 46);
+      doc.text(`Fecha del Reporte: ${date}`, 140, 46);
 
       // Horizontal divider line
       doc.setDrawColor(203, 213, 225); // Slate-300
       doc.setLineWidth(0.5);
-      doc.line(14, 43, 196, 43);
+      doc.line(14, 50, 196, 50);
 
       // Organized table with item details
-      const tableHeaders = [["Detalle de Servicio", "Información Registrada"]];
-      const tableRows = [
-        ["Estación de Trabajo", station],
-        ["Dirección IP del Equipo", ip],
-        ["Tipo / Modelo de Impresora", printerType],
-        ["Técnico / Operador", createdBy],
-        ["Nivel del Técnico", `Nivel ${recordUserLevel} (${recordUserLevel === 2 ? "Supervisor" : "Operador"})`],
-        ["Fecha de Mantenimiento", date]
-      ];
+      const tableHeaders = [["Estación", "Dirección IP", "Tipo de Impresora"]];
+      const tableRows = printers.map(pr => [
+        pr.station || "N/D",
+        pr.ip || "N/D",
+        pr.printerType || "N/D"
+      ]);
 
       autoTable(doc, {
-        startY: 48,
+        startY: 55,
         head: tableHeaders,
         body: tableRows,
         theme: "striped",
@@ -1311,8 +1317,7 @@ export default function App() {
       doc.text("Registro oficial de mantenimiento - Confidencial", 130, pageHeight - 10);
 
       // Save PDF
-      const sanitizeStation = station.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-      const filename = `Limpieza_Impresora_${sanitizeStation}_${record.date.replace(/\//g, "-")}.pdf`;
+      const filename = `Reporte_Limpieza_${createdBy}_${date.replace(/\//g, "-")}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar PDF de limpieza:", error);
@@ -2833,7 +2838,7 @@ export default function App() {
                     <div className="w-full flex flex-col h-auto">
                       <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                          Registrar Limpieza de Impresora
+                          REGISTRAR LIMPIEZA DE IMPRESORA
                         </h2>
                         
                         <form onSubmit={handleSubmitCleaning} className="flex flex-col gap-5">
@@ -2918,15 +2923,18 @@ export default function App() {
 
                                 {/* Remover fila button */}
                                 <div className="md:col-span-1 flex justify-center pb-1">
-                                  <button
-                                    type="button"
-                                    disabled={cleaningRows.length === 1}
-                                    onClick={() => handleRemoveCleaningRow(index)}
-                                    className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white disabled:opacity-30 disabled:hover:bg-red-500/10 disabled:hover:text-red-500 transition-colors duration-200 hover-scale cursor-pointer"
-                                    title="Eliminar fila"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
+                                  {cleaningRows.length > 1 ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveCleaningRow(index)}
+                                      className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-colors duration-200 hover-scale cursor-pointer animate-fade-in"
+                                      title="Eliminar fila"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  ) : (
+                                    <div className="w-10 h-10" />
+                                  )}
                                 </div>
 
                               </div>
@@ -2977,13 +2985,19 @@ export default function App() {
                           {isCleaningLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-center">
                               <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                              <span className="text-xs text-slate-400 font-bold">Cargando limpiezas...</span>
+                              <span className="text-xs text-slate-400 font-bold">Cargando historial...</span>
                             </div>
                           ) : printerCleanings.length === 0 ? (
                             <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin registros de limpieza</span>
                           ) : (
                             printerCleanings.map((record) => {
                               const isExpanded = expandedCleaningId === record.id;
+                              const printersList = record.printers || (record.station ? [{
+                                station: record.station,
+                                ip: record.ip,
+                                printerType: record.printerType
+                              }] : []);
+
                               return (
                                 <div 
                                   key={record.id} 
@@ -2993,10 +3007,7 @@ export default function App() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <span className="font-extrabold text-xs text-slate-900">
-                                        Usuario: {record.createdBy} | Estación: {record.station}
-                                      </span>
-                                      <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900 text-sky-950 dark:text-white border border-sky-300 dark:border-sky-800 text-[10px] font-black uppercase shadow-sm">
-                                        {record.printerType}
+                                        Usuario: {record.createdBy}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -3006,23 +3017,41 @@ export default function App() {
                                   </div>
                                   
                                   {isExpanded && (
-                                    <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-                                      <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
-                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP</span>
-                                          <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
-                                        </div>
-                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
-                                          <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
-                                        </div>
-                                        <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Modelo del Equipo</span>
-                                          <span className="text-slate-700 dark:text-slate-300">{record.printerType}</span>
-                                        </div>
+                                    <div className="mt-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse text-xs">
+                                          <thead>
+                                            <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
+                                              <th className="py-2 px-3">Estación</th>
+                                              <th className="py-2 px-3">Dirección IP</th>
+                                              <th className="py-2 px-3">Tipo de Impresora</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
+                                            {printersList.map((pr, pIdx) => {
+                                              const stationVal = pr.station || "N/D";
+                                              const ipVal = pr.ip || "N/D";
+                                              const typeVal = pr.printerType || "N/D";
+                                              return (
+                                                <tr key={pIdx} className="hover:bg-slate-500/5 transition-colors">
+                                                  <td className="py-2 px-3 font-bold text-slate-900 dark:text-slate-100">{stationVal}</td>
+                                                  <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-400">{ipVal}</td>
+                                                  <td className="py-2 px-3">
+                                                    <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900 text-sky-955 dark:text-white border border-sky-300 dark:border-sky-800 text-[9px] font-black uppercase shadow-sm">
+                                                      {typeVal}
+                                                    </span>
+                                                  </td>
+                                                </tr>
+                                              );
+                                            })}
+                                          </tbody>
+                                        </table>
                                       </div>
                                       
-                                      <div className="flex justify-end pt-2">
+                                      <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                          Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                        </span>
                                         <button
                                           onClick={() => handleDownloadCleaningPDF(record)}
                                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
@@ -3071,6 +3100,12 @@ export default function App() {
                         ) : (
                           printerCleanings.map((record) => {
                             const isExpanded = expandedCleaningId === record.id;
+                            const printersList = record.printers || (record.station ? [{
+                              station: record.station,
+                              ip: record.ip,
+                              printerType: record.printerType
+                            }] : []);
+
                             return (
                               <div 
                                 key={record.id} 
@@ -3080,10 +3115,7 @@ export default function App() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-900">
-                                      Usuario: {record.createdBy} | Estación: {record.station}
-                                    </span>
-                                    <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900 text-sky-950 dark:text-white border border-sky-300 dark:border-sky-800 text-[10px] font-black uppercase shadow-sm">
-                                      {record.printerType}
+                                      Usuario: {record.createdBy}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -3093,23 +3125,41 @@ export default function App() {
                                 </div>
                                 
                                 {isExpanded && (
-                                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-                                    <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
-                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP</span>
-                                        <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
-                                      </div>
-                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
-                                        <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
-                                      </div>
-                                      <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Modelo del Equipo</span>
-                                        <span className="text-slate-700 dark:text-slate-300">{record.printerType}</span>
-                                      </div>
+                                  <div className="mt-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                          <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
+                                            <th className="py-2 px-3">Estación</th>
+                                            <th className="py-2 px-3">Dirección IP</th>
+                                            <th className="py-2 px-3">Tipo de Impresora</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
+                                          {printersList.map((pr, pIdx) => {
+                                            const stationVal = pr.station || "N/D";
+                                            const ipVal = pr.ip || "N/D";
+                                            const typeVal = pr.printerType || "N/D";
+                                            return (
+                                              <tr key={pIdx} className="hover:bg-slate-500/5 transition-colors">
+                                                <td className="py-2 px-3 font-bold text-slate-900 dark:text-slate-100">{stationVal}</td>
+                                                <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-400">{ipVal}</td>
+                                                <td className="py-2 px-3">
+                                                  <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900 text-sky-955 dark:text-white border border-sky-300 dark:border-sky-800 text-[9px] font-black uppercase shadow-sm">
+                                                    {typeVal}
+                                                  </span>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
                                     </div>
                                     
-                                    <div className="flex justify-end pt-2">
+                                    <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                        Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                      </span>
                                       <button
                                         onClick={() => handleDownloadCleaningPDF(record)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
