@@ -1090,8 +1090,12 @@ export default function App() {
 
   // Validate IPv4 Address starting with 10.40.
   const isValidIP = (ip) => {
-    const ipPattern = /^10\.40\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)$/;
-    return ipPattern.test(ip);
+    const ipPattern = /^10\.40\.\d{1,3}\.\d{1,3}$/;
+    if (!ipPattern.test(ip)) return false;
+    const parts = ip.split(".");
+    const octet3 = parseInt(parts[2], 10);
+    const octet4 = parseInt(parts[3], 10);
+    return octet3 >= 0 && octet3 <= 255 && octet4 >= 0 && octet4 <= 255;
   };
 
   // Validate RFID Lector IP Address (starting with 10.40. and last two octets between 0 and 255)
