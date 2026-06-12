@@ -288,7 +288,9 @@ export const translations = {
     err_stock_invalid: "Stock inicial inválido",
     err_qty_invalid: "Cantidad debe ser mayor que 0",
     err_cost_invalid: "Costo total debe ser mayor que 0",
-    err_url_invalid: "Ingresa un enlace válido que inicie con http"
+    err_url_invalid: "Ingresa un enlace válido que inicie con http",
+    alert_report_delete_error: "Error al eliminar el reporte de actividad.",
+    alert_order_delete_error: "Error al eliminar el pedido."
   },
   en: {
     // Navigation & Sidebar
@@ -579,6 +581,8 @@ export const translations = {
     err_stock_invalid: "Invalid initial stock",
     err_qty_invalid: "Quantity must be greater than 0",
     err_cost_invalid: "Total cost must be greater than 0",
-    err_url_invalid: "Enter a valid link starting with http"
+    err_url_invalid: "Enter a valid link starting with http",
+    alert_report_delete_error: "Error deleting the daily activity report.",
+    alert_order_delete_error: "Error deleting the purchase order."
   }
 };
