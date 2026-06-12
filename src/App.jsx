@@ -26,27 +26,34 @@ import {
   X,
   RefreshCw,
   UploadCloud,
-  FileText,
   MapPin,
-  TrendingDown,
-  Layers,
-  Link as LinkIcon,
-  Smile
+  ClipboardList,
+  DollarSign,
+  ExternalLink,
+  ShoppingBag,
+  ListCollapse
 } from "lucide-react";
 
 export default function App() {
-  // Products State
+  // Navigation State
+  const [activeTab, setActiveTab] = useState("inventario"); // 'inventario' | 'ordenes'
+
+  // Products State (Inventario)
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const selectedProduct = products.find(p => p.id === selectedProductId) || null;
+
+  // Orders State (Órdenes y Pedidos)
+  const [orders, setOrders] = useState([]);
+  const [isOrdersLoading, setIsOrdersLoading] = useState(true);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertMessage, setAlertMessage] = useState({ type: "", text: "" });
 
-  // Form State
+  // Form State: Add Component
   const [formData, setFormData] = useState({
     name: "",
     brand: "",
@@ -55,11 +62,21 @@ export default function App() {
     location: "",
     minStock: "",
     stock: "",
-    imageType: "upload", // 'upload' | 'icon' | 'url'
+    imageType: "upload",
     imageUrl: ""
   });
-
   const [formErrors, setFormErrors] = useState({});
+
+  // Form State: Add Order
+  const [orderForm, setOrderForm] = useState({
+    itemName: "",
+    itemModel: "",
+    quantity: "",
+    cost: "",
+    url: ""
+  });
+  const [orderErrors, setOrderErrors] = useState({});
+  const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
 
   // Theme State
   const [theme, setTheme] = useState("light");
@@ -74,12 +91,11 @@ export default function App() {
     }
   }, [theme]);
 
-  // Effect to fetch products in real-time from Firestore
+  // Effect to fetch products in real-time from Firestore (items)
   useEffect(() => {
     setIsLoading(true);
     try {
       const q = collection(db, "items");
-      
       const unsubscribe = onSnapshot(
         q, 
         (snapshot) => {
@@ -88,7 +104,7 @@ export default function App() {
             ...doc.data()
           }));
           
-          // Sort locally in JS by timestamp (newest first) to avoid query preconditions
+          // Sort locally in JS by timestamp (newest first)
           productsList.sort((a, b) => {
             const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
             const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
@@ -100,14 +116,9 @@ export default function App() {
         },
         (error) => {
           console.error("Firestore onSnapshot error:", error);
-          setAlertMessage({ 
-            type: "error", 
-            text: "Error de conexión con Firestore. Revisa tus credenciales en .env.local" 
-          });
           setIsLoading(false);
         }
       );
-
       return () => unsubscribe();
     } catch (error) {
       console.error("Failed to setup real-time listener:", error);
@@ -115,7 +126,42 @@ export default function App() {
     }
   }, []);
 
-  // Generate a random 9-character uppercase SKU
+  // Effect to fetch orders in real-time from Firestore (orders)
+  useEffect(() => {
+    setIsOrdersLoading(true);
+    try {
+      const q = collection(db, "orders");
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const ordersList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Sort locally by timestamp (newest first)
+          ordersList.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
+          setOrders(ordersList);
+          setIsOrdersLoading(false);
+        },
+        (error) => {
+          console.error("Firestore orders query error:", error);
+          setIsOrdersLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup orders real-time listener:", error);
+      setIsOrdersLoading(false);
+    }
+  }, []);
+
+  // Generate SKU
   const handleGenerateSKU = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let result = "";
@@ -123,20 +169,19 @@ export default function App() {
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setFormData(prev => ({ ...prev, sku: result }));
-    // Clear error for SKU if any
     if (formErrors.sku) {
       setFormErrors(prev => ({ ...prev, sku: null }));
     }
   };
 
-  // Validation
+  // Add Component Form Validation
   const validateForm = () => {
     const errors = {};
     if (!formData.name.trim()) errors.name = "Nombre obligatorio";
     if (!formData.brand.trim()) errors.brand = "Marca obligatoria";
     if (!formData.model.trim()) errors.model = "Modelo obligatorio";
     if (!formData.sku.trim() || formData.sku.trim().length !== 9) {
-      errors.sku = "El SKU debe tener exactamente 9 caracteres";
+      errors.sku = "El SKU debe tener 9 caracteres";
     }
     if (!formData.location.trim()) errors.location = "Ubicación obligatoria";
     if (formData.minStock === "" || parseInt(formData.minStock) < 0) {
@@ -149,7 +194,7 @@ export default function App() {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle Add Product
+  // Add Component Submission
   const handleAddProduct = (e) => {
     e.preventDefault();
     setAlertMessage({ type: "", text: "" });
@@ -158,17 +203,11 @@ export default function App() {
 
     setIsSubmitting(true);
     try {
-      // Define a fallback image URL if none is provided or chosen
       let finalImageUrl = formData.imageUrl.trim();
       if (!finalImageUrl) {
-        if (formData.imageType === "icon") {
-          finalImageUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80"; // nice abstract placeholder
-        } else {
-          finalImageUrl = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&auto=format&fit=crop&q=80"; // tech/industrial
-        }
+        finalImageUrl = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&auto=format&fit=crop&q=80";
       }
 
-      // Execute Firestore addition asynchronously
       addDoc(collection(db, "items"), {
         name: formData.name.trim(),
         brand: formData.brand.trim(),
@@ -180,11 +219,10 @@ export default function App() {
         image: finalImageUrl,
         timestamp: serverTimestamp()
       }).catch(error => {
-        console.error("Error adding document to Firestore:", error);
+        console.error("Error adding document:", error);
         setAlertMessage({ type: "error", text: "Error al guardar en Firestore." });
       });
 
-      // Clear form and close modal
       setFormData({
         name: "",
         brand: "",
@@ -197,29 +235,80 @@ export default function App() {
         imageUrl: ""
       });
       setIsAddModalOpen(false);
-      setAlertMessage({ type: "success", text: "¡Componente agregado en tiempo real!" });
+      setAlertMessage({ type: "success", text: "¡Componente agregado con éxito!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
-      console.error("Error in form submission:", error);
-      setAlertMessage({ type: "error", text: "Ocurrió un error inesperado." });
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle Delete Product
+  // Add Order Form Validation
+  const validateOrderForm = () => {
+    const errors = {};
+    if (!orderForm.itemName.trim()) errors.itemName = "Nombre del artículo obligatorio";
+    if (!orderForm.itemModel.trim()) errors.itemModel = "Modelo obligatorio";
+    if (!orderForm.quantity || parseInt(orderForm.quantity) <= 0) {
+      errors.quantity = "Cantidad debe ser mayor que 0";
+    }
+    if (!orderForm.cost || parseFloat(orderForm.cost) <= 0) {
+      errors.cost = "Costo total debe ser mayor que 0";
+    }
+    if (!orderForm.url.trim() || !orderForm.url.startsWith("http")) {
+      errors.url = "Ingresa un enlace válido que inicie con http";
+    }
+    setOrderErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Add Order Submission
+  const handleAddOrder = async (e) => {
+    e.preventDefault();
+    setAlertMessage({ type: "", text: "" });
+
+    if (!validateOrderForm()) return;
+
+    setIsOrderSubmitting(true);
+    try {
+      await addDoc(collection(db, "orders"), {
+        itemName: orderForm.itemName.trim(),
+        itemModel: orderForm.itemModel.trim(),
+        quantity: parseInt(orderForm.quantity) || 0,
+        cost: parseFloat(orderForm.cost) || 0,
+        url: orderForm.url.trim(),
+        timestamp: serverTimestamp()
+      });
+
+      setOrderForm({
+        itemName: "",
+        itemModel: "",
+        quantity: "",
+        cost: "",
+        url: ""
+      });
+      setAlertMessage({ type: "success", text: "¡Solicitud de compra registrada en tiempo real!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error saving order:", error);
+      setAlertMessage({ type: "error", text: "Error al registrar el pedido." });
+    } finally {
+      setIsOrderSubmitting(false);
+    }
+  };
+
+  // Handle Delete Component
   const handleDeleteProduct = async (productId) => {
     try {
       await deleteDoc(doc(db, "items", productId));
       setAlertMessage({ type: "success", text: "Componente eliminado correctamente." });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
-      console.error("Error deleting document from Firestore:", error);
-      setAlertMessage({ type: "error", text: "Error al eliminar el componente de Firestore." });
+      console.error(error);
     }
   };
 
-  // Handle Adjust Stock in Firestore
+  // Handle Adjust Stock
   const handleAdjustStock = async (productId, amount, currentStock) => {
     if (amount < 0 && currentStock <= 0) return;
     try {
@@ -228,7 +317,7 @@ export default function App() {
         stock: increment(amount)
       });
     } catch (error) {
-      console.error("Error adjusting stock in Firestore:", error);
+      console.error(error);
     }
   };
 
@@ -244,7 +333,6 @@ export default function App() {
     }
   };
 
-  // Preset mock icons for "Seleccionar Icono" tab
   const mockIcons = [
     { name: "CPU", url: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?w=100&auto=format&fit=crop&q=80" },
     { name: "RAM", url: "https://images.unsplash.com/photo-1562408590-e32931084e23?w=100&auto=format&fit=crop&q=80" },
@@ -265,193 +353,435 @@ export default function App() {
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />
 
-      {/* Main Glassmorphic Dashboard Card */}
-      <div className="w-full max-w-6xl h-[88vh] glass-container rounded-[2.5rem] flex flex-col p-6 sm:p-8 shadow-2xl relative z-10 transition-all duration-300">
+      {/* Floating Glassmorphic Main Dashboard Card */}
+      <div className="w-full max-w-6xl h-[88vh] glass-container rounded-[2.5rem] flex overflow-hidden shadow-2xl relative z-10 transition-all duration-300">
         
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20 text-white hover:scale-105 transition-transform duration-200 shrink-0">
+        {/* LEFT FIXED SIDEBAR */}
+        <div className="w-20 sm:w-24 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md border-r border-white/40 dark:border-slate-800/30 flex flex-col items-center py-8 justify-between shrink-0 select-none">
+          {/* Logo Area */}
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 hover-scale">
               <Boxes className="w-6 h-6" />
             </div>
+            <span className="text-[9px] font-black text-sky-600 dark:text-sky-400 mt-2 tracking-wider">REALTIME</span>
+          </div>
+
+          {/* Navigation Tabs (Inventario vs Ordenes) */}
+          <div className="flex flex-col gap-5">
+            <button
+              onClick={() => {
+                setActiveTab("inventario");
+                setAlertMessage({ type: "", text: "" });
+              }}
+              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                activeTab === "inventario"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              }`}
+              title="Inventario"
+            >
+              <Boxes className="w-5.5 h-5.5 mb-1" />
+              <span className="text-[10px] font-bold">Inventario</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("ordenes");
+                setAlertMessage({ type: "", text: "" });
+              }}
+              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                activeTab === "ordenes"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              }`}
+              title="Órdenes y Pedidos"
+            >
+              <ClipboardList className="w-5.5 h-5.5 mb-1" />
+              <span className="text-[10px] font-bold">Órdenes</span>
+            </button>
+          </div>
+
+          {/* Theme switcher */}
+          <button
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="w-10 h-10 rounded-xl flex items-center justify-center hover-scale transition-colors duration-200 cursor-pointer"
+            title={theme === "light" ? "Modo Oscuro" : "Modo Claro"}
+          >
+            {theme === "light" ? (
+              <Moon className="w-5 h-5 text-slate-500 hover:text-slate-900" />
+            ) : (
+              <Sun className="w-5 h-5 text-amber-400 hover:text-amber-300" />
+            )}
+          </button>
+        </div>
+
+        {/* RIGHT WORKSPACE */}
+        <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden">
+          
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                Inventario Real-time
+                {activeTab === "inventario" ? "Inventario Real-time" : "Órdenes y Pedidos de Compra"}
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                Sincronización instantánea con Firebase Firestore
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                {activeTab === "inventario" 
+                  ? "Supervisa y gestiona las existencias del almacén al instante" 
+                  : "Solicita adquisiciones y compras externas para reabastecimiento"}
               </p>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            {/* Database Connected Status */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
-              <Database className="w-3.5 h-3.5" />
-              <span>Conectado</span>
-            </div>
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20 select-none">
+                <Database className="w-3.5 h-3.5" />
+                <span>Conectado</span>
+              </div>
 
-            {/* Add Component Trigger Button */}
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 rounded-xl text-xs font-bold shadow-md shadow-sky-500/10 hover-scale"
-            >
-              <PlusCircle className="w-4.5 h-4.5" />
-              <span>Agregar Componente</span>
-            </button>
-
-            {/* Dark Mode Switcher */}
-            <button
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="w-10 h-10 rounded-xl glass-card flex items-center justify-center hover-scale transition-colors duration-200"
-              title={theme === "light" ? "Modo Oscuro" : "Modo Claro"}
-            >
-              {theme === "light" ? (
-                <Moon className="w-5 h-5 text-slate-600 hover:text-slate-900" />
-              ) : (
-                <Sun className="w-5 h-5 text-amber-400 hover:text-amber-300" />
+              {activeTab === "inventario" && (
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 rounded-xl text-xs font-bold shadow-md shadow-sky-500/10 hover-scale cursor-pointer"
+                >
+                  <PlusCircle className="w-4.5 h-4.5" />
+                  <span>Agregar Componente</span>
+                </button>
               )}
-            </button>
-          </div>
-        </div>
-
-        {/* Global Feedback Banner */}
-        {alertMessage.text && alertMessage.type === "success" && (
-          <div className="mx-1 mt-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fade-in shrink-0">
-            <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" />
-            <span>{alertMessage.text}</span>
-          </div>
-        )}
-
-        {/* Content Section: Wide Detailed List of Components */}
-        <div className="flex-1 flex flex-col overflow-hidden mt-6">
-          <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
-            
-            {/* List Title */}
-            <div className="flex items-center justify-between mb-4 shrink-0">
-              <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                Componentes en Inventario
-              </h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                {products.length} registrados
-              </span>
             </div>
+          </div>
 
-            {/* Scrollable Container */}
-            <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 min-h-[200px]">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                  <span className="text-xs text-slate-400 font-bold">Cargando base de datos...</span>
+          {/* Success Alerts */}
+          {alertMessage.text && alertMessage.type === "success" && (
+            <div className="mt-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fade-in shrink-0">
+              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" />
+              <span>{alertMessage.text}</span>
+            </div>
+          )}
+
+          {/* TAB CONTENT VIEWS */}
+          <div className="flex-1 overflow-hidden mt-6">
+            
+            {/* TAB 1: INVENTARIO */}
+            {activeTab === "inventario" && (
+              <div className="glass-card rounded-[2rem] p-5 shadow-lg h-full flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
+                <div className="flex items-center justify-between mb-4 shrink-0">
+                  <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                    Componentes en Almacén
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                    {products.length} registrados
+                  </span>
                 </div>
-              ) : products.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                  <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">Inventario vacío</h3>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                    No se registran componentes en Firestore. Haz clic en "Agregar Componente" para dar de alta uno.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
-                  {products.map((product) => (
-                    <div
-                      key={product.id}
-                      onClick={() => setSelectedProductId(product.id)}
-                      className="glass-card rounded-[2rem] p-4 shadow-sm border border-white/30 dark:border-slate-800/20 flex flex-col justify-between gap-4 transition-all duration-300 hover-scale hover:shadow-md cursor-pointer animate-fade-in"
-                    >
-                      {/* upper block: Image, name, brand, model */}
-                      <div className="flex gap-3">
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-inner shrink-0 border border-slate-200/55 dark:border-slate-800/50">
-                          <img
-                            src={product.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className="text-[9px] uppercase font-bold text-sky-600 dark:text-sky-400 tracking-wider">
-                            {product.brand || "Sin Marca"}
-                          </span>
-                          <h3 className="font-extrabold product-name-text text-sm truncate leading-snug">
-                            {product.name}
-                          </h3>
-                          <p className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">
-                            Mod: {product.model || "N/D"}
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* middle block: SKU badge & Location */}
-                      <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 text-[11px]">
-                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">SKU</span>
-                          <span className="font-mono font-bold text-[10px] text-slate-600 dark:text-slate-300 uppercase truncate">
-                            {product.sku || "N/A"}
-                          </span>
-                        </div>
-                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Ubicación</span>
-                          <span className="font-bold text-[10px] text-slate-600 dark:text-slate-300 truncate flex items-center gap-0.5">
-                            <MapPin className="w-3 h-3 text-sky-500" />
-                            {product.location || "N/D"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* footer block: Stock status & Quick Controls */}
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/30">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Estado de Stock</span>
-                          <div className="flex items-center gap-1.5">
-                            {getStockStatus(product.stock, product.minStock)}
-                            
-                            {/* Quick stock adjusters */}
-                            <div className="flex items-center gap-1 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAdjustStock(product.id, -1, product.stock);
-                                }}
-                                disabled={product.stock <= 0}
-                                className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-slate-100 dark:disabled:hover:bg-slate-800 hover-scale transition-colors cursor-pointer"
-                                title="Restar 1 unidad"
-                              >
-                                -
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAdjustStock(product.id, 1, product.stock);
-                                }}
-                                className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer"
-                                title="Sumar 1 unidad"
-                              >
-                                +
-                              </button>
+                <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 min-h-[200px]">
+                  {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                      <span className="text-xs text-slate-400 font-bold">Cargando base de datos...</span>
+                    </div>
+                  ) : products.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
+                      <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">Inventario vacío</h3>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                        No se registran componentes. Presiona "Agregar Componente" para dar de alta uno.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                      {products.map((product) => (
+                        <div
+                          key={product.id}
+                          onClick={() => setSelectedProductId(product.id)}
+                          className="glass-card rounded-[2rem] p-4 shadow-sm border border-white/30 dark:border-slate-800/20 flex flex-col justify-between gap-4 transition-all duration-300 hover-scale hover:shadow-md cursor-pointer animate-fade-in"
+                        >
+                          <div className="flex gap-3">
+                            <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-inner shrink-0 border border-slate-200/55 dark:border-slate-800/50">
+                              <img
+                                src={product.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[9px] uppercase font-bold text-sky-600 dark:text-sky-400 tracking-wider">
+                                {product.brand || "Sin Marca"}
+                              </span>
+                              <h3 className="font-extrabold product-name-text text-sm truncate leading-snug">
+                                {product.name}
+                              </h3>
+                              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">
+                                Mod: {product.model || "N/D"}
+                              </p>
                             </div>
                           </div>
-                        </div>
 
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProduct(product.id);
-                          }}
-                          className="w-8 h-8 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0 transition-colors duration-150"
-                          title="Eliminar de Firestore"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 text-[11px]">
+                            <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">SKU</span>
+                              <span className="font-mono font-bold text-[10px] text-slate-600 dark:text-slate-300 uppercase truncate">
+                                {product.sku || "N/A"}
+                              </span>
+                            </div>
+                            <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Ubicación</span>
+                              <span className="font-bold text-[10px] text-slate-600 dark:text-slate-300 truncate flex items-center gap-0.5">
+                                <MapPin className="w-3 h-3 text-sky-500" />
+                                {product.location || "N/D"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/30">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Estado de Stock</span>
+                              <div className="flex items-center gap-1.5">
+                                {getStockStatus(product.stock, product.minStock)}
+                                
+                                <div className="flex items-center gap-1 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAdjustStock(product.id, -1, product.stock);
+                                    }}
+                                    disabled={product.stock <= 0}
+                                    className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-slate-100 dark:disabled:hover:bg-slate-800 hover-scale transition-colors cursor-pointer"
+                                    title="Restar 1 unidad"
+                                  >
+                                    -
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAdjustStock(product.id, 1, product.stock);
+                                    }}
+                                    className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer"
+                                    title="Sumar 1 unidad"
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProduct(product.id);
+                              }}
+                              className="w-8 h-8 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0 transition-colors duration-150"
+                              title="Eliminar de Firestore"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
               </div>
-            </div>
+            )}
+
+            {/* TAB 2: ÓRDENES Y PEDIDOS */}
+            {activeTab === "ordenes" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
+                
+                {/* Left Form: place order (colspan 5) */}
+                <div className="md:col-span-5 flex flex-col h-full overflow-y-auto">
+                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                    <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
+                      Solicitud de Compra
+                    </h2>
+                    
+                    <form onSubmit={handleAddOrder} className="flex flex-col gap-4">
+                      {/* Nombre del Artículo */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                          Nombre del Artículo *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej. Memoria RAM DDR5 32GB"
+                          value={orderForm.itemName}
+                          onChange={(e) => setOrderForm({ ...orderForm, itemName: e.target.value })}
+                          disabled={isOrderSubmitting}
+                          className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                            orderErrors.itemName ? "border-red-500" : ""
+                          }`}
+                        />
+                        {orderErrors.itemName && <p className="text-[9px] text-red-500 font-bold mt-1">{orderErrors.itemName}</p>}
+                      </div>
+
+                      {/* Modelo */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                          Modelo *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej. Kingston Fury Beast"
+                          value={orderForm.itemModel}
+                          onChange={(e) => setOrderForm({ ...orderForm, itemModel: e.target.value })}
+                          disabled={isOrderSubmitting}
+                          className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                            orderErrors.itemModel ? "border-red-500" : ""
+                          }`}
+                        />
+                        {orderErrors.itemModel && <p className="text-[9px] text-red-500 font-bold mt-1">{orderErrors.itemModel}</p>}
+                      </div>
+
+                      {/* Cantidad y Costo Total */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Cantidad *
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="0"
+                            value={orderForm.quantity}
+                            onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value })}
+                            disabled={isOrderSubmitting}
+                            className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                              orderErrors.quantity ? "border-red-500" : ""
+                            }`}
+                          />
+                          {orderErrors.quantity && <p className="text-[9px] text-red-500 font-bold mt-1">{orderErrors.quantity}</p>}
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Costo Total (USD) *
+                          </label>
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0.00"
+                            value={orderForm.cost}
+                            onChange={(e) => setOrderForm({ ...orderForm, cost: e.target.value })}
+                            disabled={isOrderSubmitting}
+                            className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                              orderErrors.cost ? "border-red-500" : ""
+                            }`}
+                          />
+                          {orderErrors.cost && <p className="text-[9px] text-red-500 font-bold mt-1">{orderErrors.cost}</p>}
+                        </div>
+                      </div>
+
+                      {/* URL Enlace */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                          URL Enlace al Producto *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="https://..."
+                          value={orderForm.url}
+                          onChange={(e) => setOrderForm({ ...orderForm, url: e.target.value })}
+                          disabled={isOrderSubmitting}
+                          className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                            orderErrors.url ? "border-red-500" : ""
+                          }`}
+                        />
+                        {orderErrors.url && <p className="text-[9px] text-red-500 font-bold mt-1">{orderErrors.url}</p>}
+                      </div>
+
+                      {/* Submit button */}
+                      <button
+                        type="submit"
+                        disabled={isOrderSubmitting}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer"
+                      >
+                        {isOrderSubmitting ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                        )}
+                        <span>{isOrderSubmitting ? "Registrando..." : "Registrar Pedido"}</span>
+                      </button>
+
+                    </form>
+                  </div>
+                </div>
+
+                {/* Right List: registered orders (colspan 7) */}
+                <div className="md:col-span-7 flex flex-col overflow-hidden h-full">
+                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
+                    <div className="flex items-center justify-between mb-4 shrink-0">
+                      <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                        Historial de Compras Solicitadas
+                      </h2>
+                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                        {orders.length} pedidos
+                      </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 min-h-[200px]">
+                      {isOrdersLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                          <span className="text-xs text-slate-400 font-bold">Cargando pedidos...</span>
+                        </div>
+                      ) : orders.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-24 text-center">
+                          <ClipboardList className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
+                          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">Sin órdenes registradas</h3>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                            No hay pedidos cargados en Firestore. Rellena el formulario para solicitar uno.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-3">
+                          {orders.map((order) => (
+                            <div
+                              key={order.id}
+                              className="glass-card rounded-2xl p-4 shadow-sm border border-white/30 dark:border-slate-800/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-305 hover-scale animate-fade-in"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[8px] uppercase font-black text-sky-500 dark:text-sky-400 tracking-wider">
+                                  COMPRA SOLICITADA
+                                </span>
+                                <h4 className="font-extrabold product-name-text text-sm truncate leading-snug">
+                                  {order.itemName}
+                                </h4>
+                                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 font-semibold">
+                                  Mod: {order.itemModel} • Qty: <span className="text-slate-700 dark:text-slate-300 font-bold">{order.quantity}</span>
+                                </p>
+                              </div>
+
+                              <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-2 shrink-0">
+                                <div className="text-left sm:text-right">
+                                  <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Costo Total</span>
+                                  <span className="font-black text-sky-600 dark:text-sky-400 text-sm flex items-center">
+                                    <DollarSign className="w-3.5 h-3.5" />
+                                    {order.cost?.toLocaleString("es-CL")}
+                                  </span>
+                                </div>
+                                <a
+                                  href={order.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center hover-scale transition-colors"
+                                  title="Ver producto en la web"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                </a>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
           </div>
+
         </div>
+      </div>
 
       {/* POPUP MODAL: Agregar Nuevo Componente */}
       {isAddModalOpen && (
