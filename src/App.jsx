@@ -7,6 +7,7 @@ import {
   deleteDoc, 
   doc, 
   getDoc,
+  setDoc,
   query, 
   serverTimestamp,
   updateDoc,
@@ -52,6 +53,7 @@ export default function App() {
 
   // Static fallback credentials and role mapping configuration (offline/dev fallback)
   const LOCAL_CREDENTIALS = {
+    "1234": { password: "1234", level: 3 },
     "operador": { password: "123456", level: 1 },
     "supervisor": { password: "123456", level: 2 },
     "admin": { password: "123456", level: 3 }
@@ -113,7 +115,7 @@ export default function App() {
     }
   }, [theme]);
 
-  // Load user session from localStorage on mount
+  // Load user session from localStorage on mount and auto-initialize Master User
   useEffect(() => {
     setIsAuthChecking(true);
     try {
@@ -131,6 +133,26 @@ export default function App() {
     } finally {
       setIsAuthChecking(false);
     }
+
+    // Initialize Master User '1234' in Firestore users collection if it doesn't exist
+    const ensureMasterUser = async () => {
+      try {
+        const masterDocRef = doc(db, "users", "1234");
+        const masterDocSnap = await getDoc(masterDocRef);
+        if (!masterDocSnap.exists()) {
+          await setDoc(masterDocRef, {
+            password: "1234",
+            level: 3,
+            name: "Usuario Maestro",
+            role: "admin"
+          });
+          console.log("Master User '1234' initialized in Firestore users collection.");
+        }
+      } catch (err) {
+        console.error("Error ensuring Master User in Firestore:", err);
+      }
+    };
+    ensureMasterUser();
   }, []);
 
   // Login handler with Firestore users validation
@@ -587,6 +609,7 @@ export default function App() {
           <div className="mt-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 text-[10px] text-slate-400 font-semibold leading-relaxed">
             <span className="text-sky-500 font-bold block mb-1">Credenciales de Prueba:</span>
             <div className="grid grid-cols-1 gap-1 font-mono">
+              <div>• Usuario Maestro (Nivel 3): 1234 / 1234</div>
               <div>• Operador (Nivel 1): operador / 123456</div>
               <div>• Supervisor (Nivel 2): supervisor / 123456</div>
               <div>• Administrador (Nivel 3): admin / 123456</div>
