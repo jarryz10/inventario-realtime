@@ -1025,6 +1025,12 @@ export default function App() {
     return ipPattern.test(ip);
   };
 
+  // Validate RFID Lector IP Address (starting with 10.40. and last two octets between 0 and 255)
+  const isValidRfidIP = (ip) => {
+    const rfidIpPattern = /^10\.40\.(?:25[0-5]|2[0-4]\d|[0-1]?\d{1,2})\.(?:25[0-5]|2[0-4]\d|[0-1]?\d{1,2})$/;
+    return rfidIpPattern.test(ip);
+  };
+
   // Restrict IP Address editing to maintain 10.40. prefix and allow only numbers and dots for a specific row
   const handleIPChangeForRow = (index, val) => {
     const updated = [...cleaningRows];
@@ -1291,7 +1297,7 @@ export default function App() {
 
       if (!ip) {
         rowErrors.ip = "La dirección IP es obligatoria.";
-      } else if (!isValidIP(ip)) {
+      } else if (!isValidRfidIP(ip)) {
         rowErrors.ip = "IP inválida (ej. 10.40.85.12).";
       }
 
