@@ -169,11 +169,7 @@ export default function App() {
   // Printer Cleaning State
   const [printerCleanings, setPrinterCleanings] = useState([]);
   const [isCleaningLoading, setIsCleaningLoading] = useState(true);
-  const [cleaningForm, setCleaningForm] = useState({
-    station: "",
-    ip: "10.40.",
-    printerType: ""
-  });
+  const [cleaningRows, setCleaningRows] = useState([{ station: "", ip: "10.40.", printerType: "" }]);
   const [cleaningErrors, setCleaningErrors] = useState({});
   const [isCleaningSubmitting, setIsCleaningSubmitting] = useState(false);
   const [expandedCleaningId, setExpandedCleaningId] = useState(null);
@@ -970,45 +966,74 @@ export default function App() {
     return ipPattern.test(ip);
   };
 
-  // Restrict IP Address editing to maintain 10.40. prefix and allow only numbers and dots
-  const handleIPChange = (val) => {
+  // Restrict IP Address editing to maintain 10.40. prefix and allow only numbers and dots for a specific row
+  const handleIPChangeForRow = (index, val) => {
+    const updated = [...cleaningRows];
     if (!val.startsWith("10.40.")) {
-      setCleaningForm(prev => ({ ...prev, ip: "10.40." }));
+      updated[index].ip = "10.40.";
     } else {
       const suffix = val.substring(6);
       const cleanSuffix = suffix.replace(/[^0-9.]/g, "");
-      setCleaningForm(prev => ({ ...prev, ip: "10.40." + cleanSuffix }));
+      updated[index].ip = "10.40." + cleanSuffix;
+    }
+    setCleaningRows(updated);
+  };
+
+  // Add a new empty row to the cleaning list
+  const handleAddCleaningRow = () => {
+    setCleaningRows([...cleaningRows, { station: "", ip: "10.40.", printerType: "" }]);
+  };
+
+  // Remove a row from the cleaning list
+  const handleRemoveCleaningRow = (index) => {
+    if (cleaningRows.length > 1) {
+      const updated = cleaningRows.filter((_, i) => i !== index);
+      setCleaningRows(updated);
+      
+      const updatedErrors = { ...cleaningErrors };
+      delete updatedErrors[index];
+      setCleaningErrors(updatedErrors);
     }
   };
 
-  // Submit printer cleaning form to Firestore
+  // Submit printer cleaning form rows to Firestore
   const handleSubmitCleaning = async (e) => {
     e.preventDefault();
     if (userLevel >= 3) return;
     setAlertMessage({ type: "", text: "" });
 
-    const station = cleaningForm.station.trim();
-    const ip = cleaningForm.ip.trim();
-    const printerType = cleaningForm.printerType.trim();
-
     const errors = {};
-    if (!station) {
-      errors.station = "La estación es obligatoria.";
-    } else if (station.length > 3) {
-      errors.station = "Máximo de 3 caracteres.";
-    }
+    let hasErrors = false;
 
-    if (!ip) {
-      errors.ip = "La dirección IP es obligatoria.";
-    } else if (!isValidIP(ip)) {
-      errors.ip = "Dirección IP inválida (ej. 10.40.23.104).";
-    }
+    cleaningRows.forEach((row, index) => {
+      const station = row.station.trim();
+      const ip = row.ip.trim();
+      const printerType = row.printerType.trim();
+      const rowErrors = {};
 
-    if (!printerType) {
-      errors.printerType = "El modelo de impresora es obligatorio.";
-    }
+      if (!station) {
+        rowErrors.station = "La estación es obligatoria.";
+      } else if (station.length > 3) {
+        rowErrors.station = "Máximo de 3 caracteres.";
+      }
 
-    if (Object.keys(errors).length > 0) {
+      if (!ip) {
+        rowErrors.ip = "La dirección IP es obligatoria.";
+      } else if (!isValidIP(ip)) {
+        rowErrors.ip = "IP inválida (ej. 10.40.23.104).";
+      }
+
+      if (!printerType) {
+        rowErrors.printerType = "El modelo es obligatorio.";
+      }
+
+      if (Object.keys(rowErrors).length > 0) {
+        errors[index] = rowErrors;
+        hasErrors = true;
+      }
+    });
+
+    if (hasErrors) {
       setCleaningErrors(errors);
       return;
     }
@@ -1017,22 +1042,24 @@ export default function App() {
     setIsCleaningSubmitting(true);
     try {
       const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
-      await addDoc(collection(db, "printer_cleaning"), {
-        station,
-        ip,
-        printerType,
-        createdBy: currentUser.username,
-        userLevel: userLevel,
-        date: today,
-        timestamp: serverTimestamp()
-      });
+      
+      // Upload all rows concurrently in a single block
+      const uploadPromises = cleaningRows.map(row => 
+        addDoc(collection(db, "printer_cleaning"), {
+          station: row.station.trim(),
+          ip: row.ip.trim(),
+          printerType: row.printerType.trim(),
+          createdBy: currentUser.username,
+          userLevel: userLevel,
+          date: today,
+          timestamp: serverTimestamp()
+        })
+      );
+      
+      await Promise.all(uploadPromises);
 
-      setCleaningForm({
-        station: "",
-        ip: "10.40.",
-        printerType: ""
-      });
-      setAlertMessage({ type: "success", text: "¡Servicio de limpieza registrado exitosamente!" });
+      setCleaningRows([{ station: "", ip: "10.40.", printerType: "" }]);
+      setAlertMessage({ type: "success", text: "¡Servicio(s) de limpieza registrado(s) exitosamente!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
       console.error("Error submitting cleaning registry:", error);
@@ -2299,96 +2326,143 @@ export default function App() {
 
             {/* TAB 4: LIMPIEZA DE IMPRESORA */}
             {activeTab === "limpieza" && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass">
+              <div className="flex flex-col gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass">
                 {userLevel < 3 ? (
                   <>
-                    {/* Left Form: create cleaning log (colspan 5) */}
-                    <div className="md:col-span-5 flex flex-col h-auto pr-1">
-                      <div className="glass-card rounded-[2rem] p-5 pb-12 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                    {/* Form: create cleaning logs (full width) */}
+                    <div className="w-full flex flex-col h-auto">
+                      <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                           Registrar Limpieza de Impresora
                         </h2>
                         
-                        <form onSubmit={handleSubmitCleaning} className="flex flex-col gap-4">
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                              Estación de Trabajo *
-                            </label>
-                            <input
-                              type="text"
-                              maxLength={3}
-                              placeholder="Ej. A01, E-3"
-                              value={cleaningForm.station}
-                              onChange={(e) => setCleaningForm({ ...cleaningForm, station: e.target.value })}
-                              className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
-                                cleaningErrors.station ? "border-red-500" : ""
-                              }`}
-                              required
-                            />
-                            {cleaningErrors.station && <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors.station}</p>}
+                        <form onSubmit={handleSubmitCleaning} className="flex flex-col gap-5">
+                          {/* List of dynamic rows */}
+                          <div className="flex flex-col gap-4">
+                            {cleaningRows.map((row, index) => (
+                              <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border border-white/20 dark:border-slate-800/10 animate-fade-in">
+                                
+                                {/* Estación */}
+                                <div className="md:col-span-3">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    Estación de Trabajo *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    maxLength={3}
+                                    placeholder="Ej. A01"
+                                    value={row.station}
+                                    onChange={(e) => {
+                                      const updated = [...cleaningRows];
+                                      updated[index].station = e.target.value;
+                                      setCleaningRows(updated);
+                                    }}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                                      cleaningErrors[index]?.station ? "border-red-500" : ""
+                                    }`}
+                                    required
+                                  />
+                                  {cleaningErrors[index]?.station && (
+                                    <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].station}</p>
+                                  )}
+                                </div>
+
+                                {/* IP Address */}
+                                <div className="md:col-span-4">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    Dirección IP *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="Ej. 10.40.23.104"
+                                    value={row.ip}
+                                    onChange={(e) => handleIPChangeForRow(index, e.target.value)}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
+                                      cleaningErrors[index]?.ip ? "border-red-500" : ""
+                                    }`}
+                                    required
+                                  />
+                                  {cleaningErrors[index]?.ip && (
+                                    <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].ip}</p>
+                                  )}
+                                </div>
+
+                                {/* Tipo de Impresora */}
+                                <div className="md:col-span-4">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    Tipo de Impresora *
+                                  </label>
+                                  <select
+                                    value={row.printerType}
+                                    onChange={(e) => {
+                                      const updated = [...cleaningRows];
+                                      updated[index].printerType = e.target.value;
+                                      setCleaningRows(updated);
+                                    }}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold ${
+                                      cleaningErrors[index]?.printerType ? "border-red-500" : ""
+                                    }`}
+                                    required
+                                  >
+                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona modelo...</option>
+                                    {["Sato", "Zebra", "Lexmark"].map(model => (
+                                      <option key={model} value={model} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                        {model}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {cleaningErrors[index]?.printerType && (
+                                    <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].printerType}</p>
+                                  )}
+                                </div>
+
+                                {/* Remover fila button */}
+                                <div className="md:col-span-1 flex justify-center pb-1">
+                                  <button
+                                    type="button"
+                                    disabled={cleaningRows.length === 1}
+                                    onClick={() => handleRemoveCleaningRow(index)}
+                                    className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white disabled:opacity-30 disabled:hover:bg-red-500/10 disabled:hover:text-red-500 transition-colors duration-200 hover-scale cursor-pointer"
+                                    title="Eliminar fila"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+
+                              </div>
+                            ))}
                           </div>
 
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                              Dirección IP *
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="Ej. 10.40.23.104"
-                              value={cleaningForm.ip}
-                              onChange={(e) => handleIPChange(e.target.value)}
-                              className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
-                                cleaningErrors.ip ? "border-red-500" : ""
-                              }`}
-                              required
-                            />
-                            {cleaningErrors.ip && <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors.ip}</p>}
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                              Tipo de Impresora *
-                            </label>
-                            <select
-                              value={cleaningForm.printerType}
-                              onChange={(e) => setCleaningForm({ ...cleaningForm, printerType: e.target.value })}
-                              className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold ${
-                                cleaningErrors.printerType ? "border-red-500" : ""
-                              }`}
-                              required
+                          {/* Form actions */}
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                            <button
+                              type="button"
+                              onClick={handleAddCleaningRow}
+                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-sky-500/40 hover:border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer"
                             >
-                              <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona modelo...</option>
-                              {[
-                                "Sato",
-                                "Zebra",
-                                "Lexmark"
-                              ].map(model => (
-                                <option key={model} value={model} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-                                  {model}
-                                </option>
-                              ))}
-                            </select>
-                            {cleaningErrors.printerType && <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors.printerType}</p>}
-                          </div>
+                              <PlusCircle className="w-4 h-4" />
+                              <span>+ Agregar otra impresora</span>
+                            </button>
 
-                          <button
-                            type="submit"
-                            disabled={isCleaningSubmitting}
-                            className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer"
-                          >
-                            {isCleaningSubmitting ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <CheckCircle className="w-3.5 h-3.5" />
-                            )}
-                            <span>{isCleaningSubmitting ? "Guardando..." : "Guardar Registro"}</span>
-                          </button>
+                            <button
+                              type="submit"
+                              disabled={isCleaningSubmitting}
+                              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                            >
+                              {isCleaningSubmitting ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              )}
+                              <span>{isCleaningSubmitting ? "Guardando..." : "Guardar Registro"}</span>
+                            </button>
+                          </div>
                         </form>
                       </div>
                     </div>
                     
-                    {/* Right History: (colspan 7) */}
-                    <div className="md:col-span-7 flex flex-col h-auto">
+                    {/* Bottom History: (full width) */}
+                    <div className="w-full flex flex-col h-auto">
                       <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
@@ -2420,7 +2494,7 @@ export default function App() {
                                     <div className="flex items-center gap-2">
                                       <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">Estación: {record.station}</span>
                                       <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[8px] font-black uppercase">
-                                        {record.printerType.split(" ")[0]}
+                                        {record.printerType}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -2467,8 +2541,8 @@ export default function App() {
                     </div>
                   </>
                 ) : (
-                  /* Nivel 3: Audit View (colspan 12) */
-                  <div className="col-span-12 flex flex-col h-auto">
+                  /* Nivel 3: Audit View (full width) */
+                  <div className="w-full flex flex-col h-auto">
                     <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
@@ -2505,7 +2579,7 @@ export default function App() {
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">Estación: {record.station}</span>
                                     <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 text-[8px] font-black uppercase">
-                                      {record.printerType.split(" ")[0]}
+                                      {record.printerType}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
