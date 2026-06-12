@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import { 
   collection, 
   addDoc, 
   onSnapshot, 
   deleteDoc, 
   doc, 
+  getDoc,
   query, 
   serverTimestamp,
   updateDoc,
   increment
 } from "firebase/firestore";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "firebase/auth";
 import { 
   Boxes, 
   PlusCircle, 
@@ -31,10 +37,31 @@ import {
   DollarSign,
   ExternalLink,
   ShoppingBag,
-  ListCollapse
+  ListCollapse,
+  Mail,
+  Lock,
+  LogOut
 } from "lucide-react";
 
 export default function App() {
+  // Authentication & Roles State
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userLevel, setUserLevel] = useState(1); // 1 = Operador, 2 = Supervisor, 3 = Administrador
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // Login Form State
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Static fallback role mapping configuration
+  const ROLE_MAPPING = {
+    "operador@realtime.com": 1,
+    "supervisor@realtime.com": 2,
+    "admin@realtime.com": 3
+  };
+
   // Navigation State
   const [activeTab, setActiveTab] = useState("inventario"); // 'inventario' | 'ordenes'
 
@@ -91,8 +118,97 @@ export default function App() {
     }
   }, [theme]);
 
+  // Auth listener and role resolver
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setIsAuthChecking(true);
+      if (user) {
+        setCurrentUser(user);
+        
+        let roleLevel = 1;
+        const email = user.email ? user.email.toLowerCase() : "";
+        
+        // Try local email mapping first
+        if (ROLE_MAPPING[email] !== undefined) {
+          roleLevel = ROLE_MAPPING[email];
+        }
+
+        // Try reading role/level from Firestore /users/{userId}
+        try {
+          const userDocSnap = await getDoc(doc(db, "users", user.uid));
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            const val = userData.role || userData.level;
+            if (val !== undefined) {
+              if (val === 3 || val === "admin" || val === "administrator" || val === "Nivel 3") roleLevel = 3;
+              else if (val === 2 || val === "supervisor" || val === "Nivel 2") roleLevel = 2;
+              else if (val === 1 || val === "operator" || val === "operador" || val === "Nivel 1") roleLevel = 1;
+              else if (!isNaN(parseInt(val))) roleLevel = parseInt(val);
+            }
+          }
+        } catch (err) {
+          console.error("Firestore user doc role fetch error:", err);
+        }
+
+        setUserLevel(roleLevel);
+        // Operator redirection
+        if (roleLevel < 2) {
+          setActiveTab("inventario");
+        }
+      } else {
+        setCurrentUser(null);
+        setUserLevel(1);
+      }
+      setIsAuthChecking(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Login handler
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError("");
+
+    if (!loginEmail.trim() || !loginPassword) {
+      setLoginError("Por favor ingresa todos los campos obligatorios.");
+      return;
+    }
+
+    setIsLoggingIn(true);
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
+    } catch (error) {
+      console.error("Login authentication error:", error);
+      let errorMsg = "Error al iniciar sesión. Inténtalo de nuevo.";
+      if (
+        error.code === "auth/user-not-found" || 
+        error.code === "auth/wrong-password" || 
+        error.code === "auth/invalid-credential"
+      ) {
+        errorMsg = "Credenciales incorrectas. Revisa tu correo y contraseña.";
+      } else if (error.code === "auth/invalid-email") {
+        errorMsg = "El formato de correo no es válido.";
+      }
+      setLoginError(errorMsg);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setSelectedProductId(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   // Effect to fetch products in real-time from Firestore (items)
   useEffect(() => {
+    if (!currentUser) return;
     setIsLoading(true);
     try {
       const q = collection(db, "items");
@@ -128,6 +244,7 @@ export default function App() {
 
   // Effect to fetch orders in real-time from Firestore (orders)
   useEffect(() => {
+    if (!currentUser) return;
     setIsOrdersLoading(true);
     try {
       const q = collection(db, "orders");
@@ -197,6 +314,7 @@ export default function App() {
   // Add Component Submission
   const handleAddProduct = (e) => {
     e.preventDefault();
+    if (userLevel < 2) return;
     setAlertMessage({ type: "", text: "" });
 
     if (!validateForm()) return;
@@ -265,6 +383,7 @@ export default function App() {
   // Add Order Submission
   const handleAddOrder = async (e) => {
     e.preventDefault();
+    if (userLevel < 2) return;
     setAlertMessage({ type: "", text: "" });
 
     if (!validateOrderForm()) return;
@@ -299,6 +418,7 @@ export default function App() {
 
   // Handle Delete Component
   const handleDeleteProduct = async (productId) => {
+    if (userLevel < 2) return;
     try {
       await deleteDoc(doc(db, "items", productId));
       setAlertMessage({ type: "success", text: "Componente eliminado correctamente." });
@@ -339,6 +459,125 @@ export default function App() {
     { name: "Motherboard", url: "https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=100&auto=format&fit=crop&q=80" },
     { name: "GPU", url: "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=100&auto=format&fit=crop&q=80" }
   ];
+
+  if (isAuthChecking) {
+    return (
+      <div 
+        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative"
+        style={{
+          backgroundImage: "url('/mountain_background.png')",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat"
+        }}
+      >
+        <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px]" />
+        <div className="glass-card rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center border border-white/40 dark:border-slate-800/30">
+          <Loader2 className="w-12 h-12 text-sky-500 animate-spin mb-4" />
+          <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Verificando sesión...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div 
+        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in"
+        style={{
+          backgroundImage: "url('/mountain_background.png')",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat"
+        }}
+      >
+        <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] pointer-events-none" />
+        
+        <div className="w-full max-w-md glass-container rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative z-10 border border-white/50 dark:border-slate-800/30 animate-scale-in">
+          {/* Logo Area */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 hover-scale">
+              <Boxes className="w-8 h-8" />
+            </div>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 tracking-tight">Inventario Real-time</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">Control de existencias y pedidos de compra</p>
+          </div>
+
+          <h2 className="text-sm font-black text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200/50 dark:border-slate-800/50 pb-2">
+            Iniciar Sesión
+          </h2>
+
+          {loginError && (
+            <div className="mb-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2 animate-fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                Correo Electrónico *
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
+                <input
+                  type="email"
+                  placeholder="ej. operador@realtime.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  disabled={isLoggingIn}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                Contraseña *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  disabled={isLoggingIn}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer"
+            >
+              {isLoggingIn ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="w-3.5 h-3.5" />
+              )}
+              <span>{isLoggingIn ? "Autenticando..." : "Ingresar"}</span>
+            </button>
+          </form>
+
+          {/* Quick instructions / Demo credentials */}
+          <div className="mt-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 text-[10px] text-slate-400 font-semibold leading-relaxed">
+            <span className="text-sky-500 font-bold block mb-1">Credenciales de Prueba:</span>
+            <div className="grid grid-cols-1 gap-1 font-mono">
+              <div>• Operador (Nivel 1): operador@realtime.com / 123456</div>
+              <div>• Supervisor (Nivel 2): supervisor@realtime.com / 123456</div>
+              <div>• Administrador (Nivel 3): admin@realtime.com / 123456</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -383,35 +622,49 @@ export default function App() {
               <Boxes className="w-5.5 h-5.5 mb-1" />
               <span className="text-[10px] font-bold">Inventario</span>
             </button>
-            <button
-              onClick={() => {
-                setActiveTab("ordenes");
-                setAlertMessage({ type: "", text: "" });
-              }}
-              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
-                activeTab === "ordenes"
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
-                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              }`}
-              title="Órdenes y Pedidos"
-            >
-              <ClipboardList className="w-5.5 h-5.5 mb-1" />
-              <span className="text-[10px] font-bold">Órdenes</span>
-            </button>
+            {userLevel >= 2 && (
+              <button
+                onClick={() => {
+                  setActiveTab("ordenes");
+                  setAlertMessage({ type: "", text: "" });
+                }}
+                className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                  activeTab === "ordenes"
+                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
+                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                }`}
+                title="Órdenes y Pedidos"
+              >
+                <ClipboardList className="w-5.5 h-5.5 mb-1" />
+                <span className="text-[10px] font-bold">Órdenes</span>
+              </button>
+            )}
           </div>
 
-          {/* Theme switcher */}
-          <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="w-10 h-10 rounded-xl flex items-center justify-center hover-scale transition-colors duration-200 cursor-pointer"
-            title={theme === "light" ? "Modo Oscuro" : "Modo Claro"}
-          >
-            {theme === "light" ? (
-              <Moon className="w-5 h-5 text-slate-500 hover:text-slate-900" />
-            ) : (
-              <Sun className="w-5 h-5 text-amber-400 hover:text-amber-300" />
-            )}
-          </button>
+          {/* Theme & Logout */}
+          <div className="flex flex-col items-center gap-4">
+            {/* Theme switcher */}
+            <button
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover-scale transition-colors duration-200 cursor-pointer"
+              title={theme === "light" ? "Modo Oscuro" : "Modo Claro"}
+            >
+              {theme === "light" ? (
+                <Moon className="w-5 h-5 text-slate-500 hover:text-slate-900" />
+              ) : (
+                <Sun className="w-5 h-5 text-amber-400 hover:text-amber-300" />
+              )}
+            </button>
+
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-500/10 text-slate-400 hover:text-red-500 hover-scale transition-colors duration-200 cursor-pointer"
+              title="Cerrar Sesión"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* RIGHT WORKSPACE */}
@@ -436,7 +689,7 @@ export default function App() {
                 <span>Conectado</span>
               </div>
 
-              {activeTab === "inventario" && (
+              {activeTab === "inventario" && userLevel >= 2 && (
                 <button
                   onClick={() => setIsAddModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 rounded-xl text-xs font-bold shadow-md shadow-sky-500/10 hover-scale cursor-pointer"
@@ -562,16 +815,18 @@ export default function App() {
                               </div>
                             </div>
 
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteProduct(product.id);
-                              }}
-                              className="w-8 h-8 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0 transition-colors duration-150"
-                              title="Eliminar de Firestore"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {userLevel >= 2 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteProduct(product.id);
+                                }}
+                                className="w-8 h-8 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0 transition-colors duration-150"
+                                title="Eliminar de Firestore"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -582,7 +837,7 @@ export default function App() {
             )}
 
             {/* TAB 2: ÓRDENES Y PEDIDOS */}
-            {activeTab === "ordenes" && (
+            {activeTab === "ordenes" && userLevel >= 2 && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
                 
                 {/* Left Form: place order (colspan 5) */}

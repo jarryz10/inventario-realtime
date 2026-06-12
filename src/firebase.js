@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // Credenciales fijas de respaldo en caso de que las variables de entorno no estén disponibles (ej. en GitHub Actions)
 const REAL_FIREBASE_CONFIG = {
@@ -25,6 +26,9 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore and export
 export const db = getFirestore(app);
+
+// Initialize Auth and export
+export const auth = getAuth(app);
 
 // Flag indicating Firebase is fully configured
 export const isFirebaseConfigured = true;
