@@ -1031,6 +1031,13 @@ export default function App() {
     return rfidIpPattern.test(ip);
   };
 
+  // Check if an RFID status corresponds to 'Bueno' or 'Óptimo' (case insensitive)
+  const isStatusBueno = (status) => {
+    if (!status) return false;
+    const s = status.toLowerCase();
+    return s.includes("buen") || s.includes("optim") || s === "bueno";
+  };
+
   // Restrict IP Address editing to maintain 10.40. prefix and allow only numbers and dots for a specific row
   const handleIPChangeForRow = (index, val) => {
     const updated = [...cleaningRows];
@@ -1321,20 +1328,19 @@ export default function App() {
     try {
       const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
       
-      // Upload all rows concurrently in a single block
-      const uploadPromises = rfidRows.map(row => 
-        addDoc(collection(db, "rfid_verification"), {
-          station: row.station.trim(),
-          ip: row.ip.trim(),
-          antennaStatus: row.antennaStatus.trim(),
-          createdBy: currentUser.username,
-          userLevel: userLevel,
-          date: today,
-          timestamp: serverTimestamp()
-        })
-      );
-      
-      await Promise.all(uploadPromises);
+      const stationsData = rfidRows.map(row => ({
+        estacion: row.station.trim(),
+        ip: row.ip.trim(),
+        estado: row.antennaStatus.toLowerCase().trim()
+      }));
+
+      await addDoc(collection(db, "rfid_verification"), {
+        stations: stationsData,
+        createdBy: currentUser.username,
+        userLevel: userLevel,
+        date: today,
+        timestamp: serverTimestamp()
+      });
 
       setRfidRows([{ station: "", ip: "10.40.", antennaStatus: "" }]);
       setAlertMessage({ type: "success", text: "¡Verificación(es) de RFID registrada(s) exitosamente!" });
@@ -1354,12 +1360,14 @@ export default function App() {
         throw new Error("El registro es nulo o indefinido");
       }
 
-      const station = record.station || "N/D";
-      const ip = record.ip || "N/D";
-      const antennaStatus = record.antennaStatus || "N/D";
       const createdBy = record.createdBy || "N/D";
       const date = record.date || "N/D";
       const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/D";
+      const stations = record.stations || (record.station ? [{
+        estacion: record.station,
+        ip: record.ip,
+        estado: record.antennaStatus
+      }] : []);
 
       const doc = new jsPDF();
 
@@ -1378,26 +1386,36 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59); // Slate-800
-      doc.text("Certificado de Verificación de RFID", 14, 38);
+      doc.text("Reporte Consolidado de Verificación de RFID", 14, 38);
+
+      // Subtitle with Metadata
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(71, 85, 105); // Slate-600
+      doc.text(`Técnico: ${createdBy} (Nivel ${recordUserLevel})`, 14, 46);
+      doc.text(`Fecha del Reporte: ${date}`, 140, 46);
 
       // Horizontal divider line
       doc.setDrawColor(203, 213, 225); // Slate-300
       doc.setLineWidth(0.5);
-      doc.line(14, 43, 196, 43);
+      doc.line(14, 50, 196, 50);
 
       // Organized table with item details
-      const tableHeaders = [["Detalle de Verificación", "Información Registrada"]];
-      const tableRows = [
-        ["Estación de Trabajo", station],
-        ["Dirección IP del Lector", ip],
-        ["Estado de Antenas", antennaStatus],
-        ["Técnico / Operador", createdBy],
-        ["Nivel del Técnico", `Nivel ${recordUserLevel} (${recordUserLevel === 2 ? "Supervisor" : "Operador"})`],
-        ["Fecha de Verificación", date]
-      ];
+      const tableHeaders = [["Estación", "Dirección IP Lector", "Estado Antenas"]];
+      const tableRows = stations.map(st => {
+        const stationVal = st.estacion || st.station || "N/D";
+        const ipVal = st.ip || "N/D";
+        const statusVal = st.estado || st.antennaStatus || "";
+        const isBueno = isStatusBueno(statusVal);
+        return [
+          stationVal,
+          ipVal,
+          isBueno ? "Bueno (✔)" : "Fallo (❌)"
+        ];
+      });
 
       autoTable(doc, {
-        startY: 48,
+        startY: 55,
         head: tableHeaders,
         body: tableRows,
         theme: "striped",
@@ -1448,8 +1466,8 @@ export default function App() {
       doc.text("Registro oficial de verificación - Confidencial", 130, pageHeight - 10);
 
       // Save PDF
-      const sanitizeStation = station.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-      const filename = `Verificacion_RFID_${sanitizeStation}_${record.date.replace(/\//g, "-")}.pdf`;
+      const sanitizeUser = createdBy.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+      const filename = `Verificacion_RFID_${sanitizeUser}_${date.replace(/\//g, "-")}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar PDF de RFID:", error);
@@ -2991,11 +3009,8 @@ export default function App() {
                                     required
                                   >
                                     <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona estado...</option>
-                                    {["Óptimo", "Regular", "Fallo"].map(status => (
-                                      <option key={status} value={status} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
-                                        {status}
-                                      </option>
-                                    ))}
+                                    <option value="Bueno" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">✔ Bueno / Óptimo</option>
+                                    <option value="Fallo" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">❌ Mal / Fallo</option>
                                   </select>
                                   {rfidErrors[index]?.antennaStatus && (
                                     <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].antennaStatus}</p>
@@ -3070,6 +3085,12 @@ export default function App() {
                           ) : (
                             rfidVerifications.map((record) => {
                               const isExpanded = expandedRfidId === record.id;
+                              const stationsList = record.stations || (record.station ? [{
+                                estacion: record.station,
+                                ip: record.ip,
+                                estado: record.antennaStatus
+                              }] : []);
+
                               return (
                                 <div 
                                   key={record.id} 
@@ -3079,16 +3100,7 @@ export default function App() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <span className="font-extrabold text-xs text-slate-900">
-                                        Usuario: {record.createdBy} | Estación: {record.station}
-                                      </span>
-                                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase shadow-sm border ${
-                                        record.antennaStatus === "Óptimo" 
-                                          ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-350 border-emerald-300 dark:border-emerald-800/50" 
-                                          : record.antennaStatus === "Regular"
-                                          ? "bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-350 border-amber-300 dark:border-amber-800/50"
-                                          : "bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-350 border-rose-300 dark:border-rose-800/50"
-                                      }`}>
-                                        {record.antennaStatus}
+                                        Usuario: {record.createdBy}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -3098,23 +3110,46 @@ export default function App() {
                                   </div>
                                   
                                   {isExpanded && (
-                                    <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-                                      <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
-                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP Lector</span>
-                                          <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
-                                        </div>
-                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
-                                          <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
-                                        </div>
-                                        <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Estado de Antenas</span>
-                                          <span className="text-slate-700 dark:text-slate-300">{record.antennaStatus}</span>
-                                        </div>
+                                    <div className="mt-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse text-xs">
+                                          <thead>
+                                            <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
+                                              <th className="py-2 px-3">Estación</th>
+                                              <th className="py-2 px-3">Lector IP</th>
+                                              <th className="py-2 px-3 text-center">Estado Antenas</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
+                                            {stationsList.map((st, sIdx) => {
+                                              const stationVal = st.estacion || st.station || "N/D";
+                                              const ipVal = st.ip || "N/D";
+                                              const statusVal = st.estado || st.antennaStatus || "";
+                                              const isBueno = isStatusBueno(statusVal);
+                                              return (
+                                                <tr key={sIdx} className="hover:bg-slate-500/5 transition-colors">
+                                                  <td className="py-2 px-3 font-bold text-slate-900 dark:text-slate-100">{stationVal}</td>
+                                                  <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-400">{ipVal}</td>
+                                                  <td className="py-2 px-3 text-center">
+                                                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold ${
+                                                      isBueno 
+                                                        ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" 
+                                                        : "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
+                                                    }`} title={isBueno ? "Bueno / Óptimo" : "Mal / Fallo"}>
+                                                      {isBueno ? "✔" : "❌"}
+                                                    </span>
+                                                  </td>
+                                                </tr>
+                                              );
+                                            })}
+                                          </tbody>
+                                        </table>
                                       </div>
                                       
-                                      <div className="flex justify-end pt-2">
+                                      <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
+                                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                          Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                        </span>
                                         <button
                                           onClick={() => handleDownloadRfidPDF(record)}
                                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
@@ -3163,6 +3198,12 @@ export default function App() {
                         ) : (
                           rfidVerifications.map((record) => {
                             const isExpanded = expandedRfidId === record.id;
+                            const stationsList = record.stations || (record.station ? [{
+                              estacion: record.station,
+                              ip: record.ip,
+                              estado: record.antennaStatus
+                            }] : []);
+
                             return (
                               <div 
                                 key={record.id} 
@@ -3172,16 +3213,7 @@ export default function App() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-900">
-                                      Usuario: {record.createdBy} | Estación: {record.station}
-                                    </span>
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase shadow-sm border ${
-                                      record.antennaStatus === "Óptimo" 
-                                        ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-350 border-emerald-300 dark:border-emerald-800/50" 
-                                        : record.antennaStatus === "Regular"
-                                        ? "bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-350 border-amber-300 dark:border-amber-800/50"
-                                        : "bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-350 border-rose-300 dark:border-rose-800/50"
-                                    }`}>
-                                      {record.antennaStatus}
+                                      Usuario: {record.createdBy}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -3191,23 +3223,46 @@ export default function App() {
                                 </div>
                                 
                                 {isExpanded && (
-                                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-                                    <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
-                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP Lector</span>
-                                        <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
-                                      </div>
-                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
-                                        <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
-                                      </div>
-                                      <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
-                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Estado de Antenas</span>
-                                        <span className="text-slate-700 dark:text-slate-300">{record.antennaStatus}</span>
-                                      </div>
+                                  <div className="mt-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                          <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
+                                            <th className="py-2 px-3">Estación</th>
+                                            <th className="py-2 px-3">Lector IP</th>
+                                            <th className="py-2 px-3 text-center">Estado Antenas</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
+                                          {stationsList.map((st, sIdx) => {
+                                            const stationVal = st.estacion || st.station || "N/D";
+                                            const ipVal = st.ip || "N/D";
+                                            const statusVal = st.estado || st.antennaStatus || "";
+                                            const isBueno = isStatusBueno(statusVal);
+                                            return (
+                                              <tr key={sIdx} className="hover:bg-slate-500/5 transition-colors">
+                                                <td className="py-2 px-3 font-bold text-slate-900 dark:text-slate-100">{stationVal}</td>
+                                                <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-400">{ipVal}</td>
+                                                <td className="py-2 px-3 text-center">
+                                                  <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full font-bold ${
+                                                    isBueno 
+                                                      ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400" 
+                                                      : "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400"
+                                                  }`} title={isBueno ? "Bueno / Óptimo" : "Mal / Fallo"}>
+                                                    {isBueno ? "✔" : "❌"}
+                                                  </span>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
                                     </div>
                                     
-                                    <div className="flex justify-end pt-2">
+                                    <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                        Registrado por: {record.createdBy} (Nivel {record.userLevel})
+                                      </span>
                                       <button
                                         onClick={() => handleDownloadRfidPDF(record)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
