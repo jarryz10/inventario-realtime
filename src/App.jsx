@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db, auth } from "./firebase";
+import { db } from "./firebase";
 import { 
   collection, 
   addDoc, 
@@ -12,11 +12,6 @@ import {
   updateDoc,
   increment
 } from "firebase/firestore";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from "firebase/auth";
 import { 
   Boxes, 
   PlusCircle, 
@@ -50,16 +45,16 @@ export default function App() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Login Form State
-  const [loginEmail, setLoginEmail] = useState("");
+  const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Static fallback role mapping configuration
-  const ROLE_MAPPING = {
-    "operador@realtime.com": 1,
-    "supervisor@realtime.com": 2,
-    "admin@realtime.com": 3
+  // Static fallback credentials and role mapping configuration (offline/dev fallback)
+  const LOCAL_CREDENTIALS = {
+    "operador": { password: "123456", level: 1 },
+    "supervisor": { password: "123456", level: 2 },
+    "admin": { password: "123456", level: 3 }
   };
 
   // Navigation State
@@ -118,88 +113,111 @@ export default function App() {
     }
   }, [theme]);
 
-  // Auth listener and role resolver
+  // Load user session from localStorage on mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setIsAuthChecking(true);
-      if (user) {
-        setCurrentUser(user);
-        
-        let roleLevel = 1;
-        const email = user.email ? user.email.toLowerCase() : "";
-        
-        // Try local email mapping first
-        if (ROLE_MAPPING[email] !== undefined) {
-          roleLevel = ROLE_MAPPING[email];
-        }
-
-        // Try reading role/level from Firestore /users/{userId}
-        try {
-          const userDocSnap = await getDoc(doc(db, "users", user.uid));
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            const val = userData.role || userData.level;
-            if (val !== undefined) {
-              if (val === 3 || val === "admin" || val === "administrator" || val === "Nivel 3") roleLevel = 3;
-              else if (val === 2 || val === "supervisor" || val === "Nivel 2") roleLevel = 2;
-              else if (val === 1 || val === "operator" || val === "operador" || val === "Nivel 1") roleLevel = 1;
-              else if (!isNaN(parseInt(val))) roleLevel = parseInt(val);
-            }
-          }
-        } catch (err) {
-          console.error("Firestore user doc role fetch error:", err);
-        }
-
-        setUserLevel(roleLevel);
-        // Operator redirection
-        if (roleLevel < 2) {
+    setIsAuthChecking(true);
+    try {
+      const savedUser = localStorage.getItem("realtime_user");
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        setCurrentUser(parsed);
+        setUserLevel(parsed.level || 1);
+        if ((parsed.level || 1) < 2) {
           setActiveTab("inventario");
         }
-      } else {
-        setCurrentUser(null);
-        setUserLevel(1);
       }
+    } catch (err) {
+      console.error("Error reading session from localStorage:", err);
+    } finally {
       setIsAuthChecking(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, []);
 
-  // Login handler
+  // Login handler with Firestore users validation
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError("");
 
-    if (!loginEmail.trim() || !loginPassword) {
+    const username = loginUsername.trim().toLowerCase();
+    if (!username || !loginPassword) {
       setLoginError("Por favor ingresa todos los campos obligatorios.");
       return;
     }
 
     setIsLoggingIn(true);
     try {
-      await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
-    } catch (error) {
-      console.error("Login authentication error:", error);
-      let errorMsg = "Error al iniciar sesión. Inténtalo de nuevo.";
-      if (
-        error.code === "auth/user-not-found" || 
-        error.code === "auth/wrong-password" || 
-        error.code === "auth/invalid-credential"
-      ) {
-        errorMsg = "Credenciales incorrectas. Revisa tu correo y contraseña.";
-      } else if (error.code === "auth/invalid-email") {
-        errorMsg = "El formato de correo no es válido.";
+      let loggedUser = null;
+
+      // 1. Try fetching username document from Firestore /users/{username}
+      try {
+        const userDocRef = doc(db, "users", username);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          if (userData.password === loginPassword) {
+            let level = 1;
+            const val = userData.level || userData.role;
+            if (val === 3 || val === "admin" || val === "administrator" || val === "Nivel 3") level = 3;
+            else if (val === 2 || val === "supervisor" || val === "Nivel 2") level = 2;
+            else if (val === 1 || val === "operator" || val === "operador" || val === "Nivel 1") level = 1;
+            else if (!isNaN(parseInt(val))) level = parseInt(val);
+
+            loggedUser = { username, level };
+          } else {
+            setLoginError("Contraseña incorrecta.");
+            setIsLoggingIn(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Firestore user search error:", err);
       }
-      setLoginError(errorMsg);
+
+      // 2. If not found in Firestore, fallback to LOCAL_CREDENTIALS mapping
+      if (!loggedUser) {
+        if (LOCAL_CREDENTIALS[username]) {
+          const localCreds = LOCAL_CREDENTIALS[username];
+          if (localCreds.password === loginPassword) {
+            loggedUser = { username, level: localCreds.level };
+          } else {
+            setLoginError("Contraseña incorrecta.");
+            setIsLoggingIn(false);
+            return;
+          }
+        }
+      }
+
+      // 3. Evaluate login result
+      if (loggedUser) {
+        setCurrentUser(loggedUser);
+        setUserLevel(loggedUser.level);
+        localStorage.setItem("realtime_user", JSON.stringify(loggedUser));
+        
+        // Redirection for operator
+        if (loggedUser.level < 2) {
+          setActiveTab("inventario");
+        }
+        // Clean fields
+        setLoginUsername("");
+        setLoginPassword("");
+      } else {
+        setLoginError("Usuario no registrado en el sistema.");
+      }
+    } catch (error) {
+      console.error("Login verification error:", error);
+      setLoginError("Ocurrió un error al procesar el ingreso. Revisa tu conexión.");
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   // Logout handler
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      await signOut(auth);
+      localStorage.removeItem("realtime_user");
+      setCurrentUser(null);
+      setUserLevel(1);
       setSelectedProductId(null);
     } catch (error) {
       console.error("Logout error:", error);
@@ -517,15 +535,15 @@ export default function App() {
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div>
               <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                Correo Electrónico *
+                Nombre de Usuario *
               </label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
+                <Boxes className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
                 <input
-                  type="email"
-                  placeholder="ej. operador@realtime.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  type="text"
+                  placeholder="ej. operador"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
                   disabled={isLoggingIn}
                   className="w-full pl-11 pr-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
                   required
@@ -569,9 +587,9 @@ export default function App() {
           <div className="mt-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 text-[10px] text-slate-400 font-semibold leading-relaxed">
             <span className="text-sky-500 font-bold block mb-1">Credenciales de Prueba:</span>
             <div className="grid grid-cols-1 gap-1 font-mono">
-              <div>• Operador (Nivel 1): operador@realtime.com / 123456</div>
-              <div>• Supervisor (Nivel 2): supervisor@realtime.com / 123456</div>
-              <div>• Administrador (Nivel 3): admin@realtime.com / 123456</div>
+              <div>• Operador (Nivel 1): operador / 123456</div>
+              <div>• Supervisor (Nivel 2): supervisor / 123456</div>
+              <div>• Administrador (Nivel 3): admin / 123456</div>
             </div>
           </div>
         </div>
