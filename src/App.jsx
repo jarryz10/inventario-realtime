@@ -43,7 +43,8 @@ import {
   Edit3,
   FileText,
   Printer,
-  Radio
+  Radio,
+  Users
 } from "lucide-react";
 
 const TABS_CONFIG = [
@@ -81,6 +82,13 @@ const TABS_CONFIG = [
     description: "Registra y supervisa las lecturas y el estado de antenas y sensores RFID",
     shortTitle: "RFID",
     iconName: "Radio"
+  },
+  {
+    id: "usuario",
+    title: "Administración de Usuarios",
+    description: "Gestiona los asociados del equipo, sus niveles de acceso y credenciales de seguridad",
+    shortTitle: "Usuario",
+    iconName: "Users"
   }
 ];
 
@@ -89,7 +97,8 @@ const ICON_COMPONENTS = {
   ClipboardList,
   FileText,
   Printer,
-  Radio
+  Radio,
+  Users
 };
 
 export default function App() {
@@ -190,6 +199,29 @@ export default function App() {
   const [rfidErrors, setRfidErrors] = useState({});
   const [isRfidSubmitting, setIsRfidSubmitting] = useState(false);
   const [expandedRfidId, setExpandedRfidId] = useState(null);
+
+  // User Management State
+  const [usersList, setUsersList] = useState([]);
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
+  const [userForm, setUserForm] = useState({
+    name: "",
+    position: "",
+    shift: "Matutino",
+    level: 1,
+    username: "",
+    password: ""
+  });
+  const [userFormError, setUserFormError] = useState("");
+  const [isUserSubmitting, setIsUserSubmitting] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserForm, setEditUserForm] = useState({
+    name: "",
+    position: "",
+    shift: "Matutino",
+    level: 1,
+    password: ""
+  });
+  const [isUserSaving, setIsUserSaving] = useState(false);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -609,6 +641,43 @@ export default function App() {
       setIsRfidLoading(false);
     }
   }, [currentUser, userLevel]);
+
+  // Effect to fetch all users in real-time from Firestore for Nivel 3 (Admin)
+  useEffect(() => {
+    if (!currentUser || userLevel < 3) {
+      setIsUsersLoading(false);
+      return;
+    }
+    setIsUsersLoading(true);
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, "users"),
+        (snapshot) => {
+          const list = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setUsersList(list);
+          setIsUsersLoading(false);
+        },
+        (error) => {
+          console.error("Firestore users query error:", error);
+          setIsUsersLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup users list real-time listener:", error);
+      setIsUsersLoading(false);
+    }
+  }, [currentUser, userLevel]);
+
+  // Effect to protect and redirect unauthorized users from the User tab
+  useEffect(() => {
+    if (activeTab === "usuario" && userLevel < 3) {
+      setActiveTab("inventario");
+    }
+  }, [activeTab, userLevel]);
 
   // Helper to build a clean 9-character SKU from name, brand, and model
   const buildSKUString = (name, brand, model) => {
@@ -1353,6 +1422,141 @@ export default function App() {
     }
   };
 
+  // Create a new technical user in Firestore
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (userLevel < 3) return;
+    setUserFormError("");
+    setAlertMessage({ type: "", text: "" });
+
+    const name = userForm.name.trim();
+    const position = userForm.position.trim();
+    const shift = userForm.shift;
+    const level = Number(userForm.level);
+    const username = userForm.username.trim().toLowerCase();
+    const password = userForm.password;
+
+    if (!name || !position || !shift || !level || !username || !password) {
+      setUserFormError("Todos los campos marcados con asterisco (*) son obligatorios.");
+      return;
+    }
+
+    setIsUserSubmitting(true);
+    try {
+      // Check if user already exists
+      const userDocRef = doc(db, "users", username);
+      const userDocSnap = await getDoc(userDocRef);
+      if (userDocSnap.exists()) {
+        setUserFormError(`El Usuario / ID "${username}" ya está registrado en el sistema.`);
+        setIsUserSubmitting(false);
+        return;
+      }
+
+      // Determine default role based on level
+      const role = level === 3 ? "admin" : level === 2 ? "supervisor" : "operator";
+
+      await setDoc(userDocRef, {
+        name,
+        position,
+        shift,
+        level,
+        password,
+        role
+      });
+
+      setUserForm({
+        name: "",
+        position: "",
+        shift: "Matutino",
+        level: 1,
+        username: "",
+        password: ""
+      });
+
+      setAlertMessage({ type: "success", text: "¡Usuario creado exitosamente!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      setUserFormError("Error al registrar el nuevo usuario en Firestore.");
+    } finally {
+      setIsUserSubmitting(false);
+    }
+  };
+
+  // Open Edit User dialog modal
+  const handleEditUserClick = (user) => {
+    setEditingUser(user);
+    setEditUserForm({
+      name: user.name || "",
+      position: user.position || "",
+      shift: user.shift || "Matutino",
+      level: user.level || 1,
+      password: user.password || ""
+    });
+  };
+
+  // Save changes to edited user in Firestore
+  const handleSaveUserEdit = async (e) => {
+    e.preventDefault();
+    if (userLevel < 3 || !editingUser) return;
+    setIsUserSaving(true);
+    try {
+      const userDocRef = doc(db, "users", editingUser.id);
+      const levelNum = Number(editUserForm.level);
+      const role = levelNum === 3 ? "admin" : levelNum === 2 ? "supervisor" : "operator";
+
+      await updateDoc(userDocRef, {
+        name: editUserForm.name.trim(),
+        position: editUserForm.position.trim(),
+        shift: editUserForm.shift,
+        level: levelNum,
+        password: editUserForm.password,
+        role: role
+      });
+
+      setEditingUser(null);
+      setAlertMessage({ type: "success", text: "¡Usuario actualizado correctamente!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      alert("Ocurrió un error al guardar los cambios del usuario.");
+    } finally {
+      setIsUserSaving(false);
+    }
+  };
+
+  // Delete user from Firestore
+  const handleDeleteUser = async (user) => {
+    if (userLevel < 3) return;
+    
+    // Safety check: Prevent deleting self
+    if (user.id === currentUser.username) {
+      alert("No puedes eliminar tu propio usuario activo.");
+      return;
+    }
+
+    // Safety check: Prevent deleting master user '1234'
+    if (user.id === "1234") {
+      alert("No está permitido eliminar al Usuario Maestro del sistema.");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `¿Está completamente seguro de que desea eliminar al asociado "${user.name}" (${user.id})?\nEsta acción es irreversible y revocará su acceso de inmediato.`
+    );
+
+    if (confirmDelete) {
+      try {
+        await deleteDoc(doc(db, "users", user.id));
+        setAlertMessage({ type: "success", text: "Usuario eliminado del sistema correctamente." });
+        setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        alert("Ocurrió un error al intentar eliminar al usuario.");
+      }
+    }
+  };
+
   // Generate and download PDF for RFID verification service sheet
   const handleDownloadRfidPDF = (record) => {
     try {
@@ -1745,7 +1949,7 @@ export default function App() {
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />
 
       {/* Floating Glassmorphic Main Dashboard Card */}
-      <div className={`w-full max-w-6xl glass-container rounded-[2.5rem] flex shadow-2xl relative z-10 transition-all duration-300 ${(activeTab === "limpieza" || activeTab === "rfid") ? "h-auto min-h-[88vh] my-8 overflow-y-auto" : "h-[88vh] overflow-hidden"}`}>
+      <div className={`w-full max-w-6xl glass-container rounded-[2.5rem] flex shadow-2xl relative z-10 transition-all duration-300 ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "usuario") ? "h-auto min-h-[88vh] my-8 overflow-y-auto" : "h-[88vh] overflow-hidden"}`}>
         
         {/* LEFT FIXED SIDEBAR */}
         <div className="w-20 sm:w-24 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md border-r border-white/40 dark:border-slate-800/30 flex flex-col items-center py-8 justify-between shrink-0 select-none">
@@ -1759,7 +1963,7 @@ export default function App() {
 
           {/* Navigation Tabs (Dynamic modular configuration) */}
           <div className="flex flex-col gap-5">
-            {TABS_CONFIG.map((tab) => {
+            {TABS_CONFIG.filter(tab => tab.id !== "usuario" || userLevel >= 3).map((tab) => {
               const IconComponent = ICON_COMPONENTS[tab.iconName] || Boxes;
               return (
                 <button
@@ -3285,12 +3489,393 @@ export default function App() {
               </div>
             )}
 
+            {/* TAB 6: ADMINISTRACIÓN DE USUARIOS (Solo Nivel 3) */}
+            {activeTab === "usuario" && userLevel >= 3 && (
+              <div className="flex flex-col gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass w-full">
+                
+                {/* Two Column Layout: Register Form and Users List */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+                  
+                  {/* Column 1: Register Form */}
+                  <div className="lg:col-span-1 flex flex-col h-auto">
+                    <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
+                        Registrar Nuevo Asociado
+                      </h2>
+                      
+                      <form onSubmit={handleCreateUser} className="flex flex-col gap-4">
+                        {/* Nombre del Asociado */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Nombre del Asociado *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ej. Juan Pérez"
+                            value={userForm.name}
+                            onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))}
+                            className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                            required
+                          />
+                        </div>
+
+                        {/* Posición / Puesto */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Posición / Puesto *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ej. Técnico de Soporte"
+                            value={userForm.position}
+                            onChange={(e) => setUserForm(prev => ({ ...prev, position: e.target.value }))}
+                            className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                            required
+                          />
+                        </div>
+
+                        {/* Turno */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Turno *
+                          </label>
+                          <select
+                            value={userForm.shift}
+                            onChange={(e) => setUserForm(prev => ({ ...prev, shift: e.target.value }))}
+                            className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
+                            required
+                          >
+                            <option value="Matutino" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Matutino</option>
+                            <option value="Nocturno" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nocturno</option>
+                          </select>
+                        </div>
+
+                        {/* Nivel de Acceso */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Nivel de Acceso *
+                          </label>
+                          <select
+                            value={userForm.level}
+                            onChange={(e) => setUserForm(prev => ({ ...prev, level: Number(e.target.value) }))}
+                            className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
+                            required
+                          >
+                            <option value={1} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nivel 1 (Operador)</option>
+                            <option value={2} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nivel 2 (Supervisor)</option>
+                            <option value={3} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">Nivel 3 (Administrador)</option>
+                          </select>
+                        </div>
+
+                        {/* Usuario / ID (Texto único) */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Usuario / ID (Único) *
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ej. jperez"
+                            value={userForm.username}
+                            onChange={(e) => setUserForm(prev => ({ ...prev, username: e.target.value }))}
+                            className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                            required
+                          />
+                        </div>
+
+                        {/* Contraseña */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            Contraseña *
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="Introduce contraseña"
+                            value={userForm.password}
+                            onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
+                            className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                            required
+                          />
+                        </div>
+
+                        {userFormError && (
+                          <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-red-500/10 text-red-500 text-[10px] font-bold border border-red-500/20">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>{userFormError}</span>
+                          </div>
+                        )}
+
+                        <button
+                          type="submit"
+                          disabled={isUserSubmitting}
+                          className="w-full mt-2 px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                        >
+                          {isUserSubmitting ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <PlusCircle className="w-3.5 h-3.5" />
+                          )}
+                          <span>{isUserSubmitting ? "Creando..." : "Crear Usuario"}</span>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {/* Column 2: Users List */}
+                  <div className="lg:col-span-2 flex flex-col h-auto">
+                    <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30 w-full min-h-[400px]">
+                      <div className="flex items-center justify-between mb-4 shrink-0">
+                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                          Asociados Registrados
+                        </h2>
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          {usersList.length} asociados
+                        </span>
+                      </div>
+
+                      {isUsersLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center w-full my-auto">
+                          <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                          <span className="text-xs text-slate-400 font-bold">Cargando asociados...</span>
+                        </div>
+                      ) : usersList.length === 0 ? (
+                        <div className="text-center py-20 text-slate-400 dark:text-slate-500 text-xs font-semibold my-auto">
+                          No hay asociados registrados en el sistema.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto w-full">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className="border-b border-slate-200 dark:border-slate-800/50 text-[10px] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider">
+                                <th className="py-3 px-3">Asociado</th>
+                                <th className="py-3 px-3">Usuario / ID</th>
+                                <th className="py-3 px-3">Posición</th>
+                                <th className="py-3 px-3">Turno</th>
+                                <th className="py-3 px-3 text-center">Nivel</th>
+                                <th className="py-3 px-3 text-center">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/20 font-semibold text-slate-700 dark:text-slate-350">
+                              {usersList.map((user) => {
+                                const isSelf = user.id === currentUser.username;
+                                const isMaster = user.id === "1234";
+                                return (
+                                  <tr key={user.id} className="hover:bg-slate-500/5 transition-colors">
+                                    <td className="py-3 px-3 font-bold text-slate-900 dark:text-slate-100">
+                                      {user.name || "N/D"} {isSelf && <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-sky-500/10 text-sky-600 text-[9px] font-black uppercase">Tú</span>}
+                                    </td>
+                                    <td className="py-3 px-3 font-mono text-slate-500 dark:text-slate-400 font-bold">{user.id}</td>
+                                    <td className="py-3 px-3">{user.position || "N/D"}</td>
+                                    <td className="py-3 px-3">
+                                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${
+                                        user.shift === "Matutino"
+                                          ? "bg-amber-100/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-350 border-amber-300/30"
+                                          : "bg-indigo-100/70 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-350 border-indigo-300/30"
+                                      }`}>
+                                        {user.shift || "Matutino"}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-3 text-center font-bold">
+                                      <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
+                                        user.level === 3
+                                          ? "bg-purple-100 text-purple-900 dark:bg-purple-950/40 dark:text-purple-350 border-purple-300/30"
+                                          : user.level === 2
+                                          ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-350 border-emerald-300/30"
+                                          : "bg-slate-100 text-slate-900 dark:bg-slate-950/40 dark:text-slate-350 border-slate-300/30"
+                                      }`}>
+                                        Nivel {user.level || 1}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-3">
+                                      <div className="flex items-center justify-center gap-2">
+                                        {/* Edit Button */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleEditUserClick(user)}
+                                          className="p-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500 text-sky-600 hover:text-white transition-all cursor-pointer hover-scale flex items-center justify-center"
+                                          title="Editar Detalles / Acceso"
+                                        >
+                                          <Edit3 className="w-3.5 h-3.5" />
+                                        </button>
+                                        
+                                        {/* Delete Button */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteUser(user)}
+                                          disabled={isSelf || isMaster}
+                                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-50 text-red-500 hover:text-red-700 disabled:opacity-30 disabled:hover:bg-red-500/10 disabled:hover:text-red-500 transition-all cursor-pointer hover-scale flex items-center justify-center"
+                                          title={isSelf ? "No puedes auto-eliminarte" : isMaster ? "Usuario Maestro protegido" : "Eliminar Asociado"}
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                </div>
+                
+              </div>
+            )}
+
+
           </div>
 
         </div>
       </div>
 
+      {/* POPUP MODAL: Editar Asociado */}
+      {editingUser && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="glass-card w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col border border-white/50 dark:border-slate-800/40">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
+              <div>
+                <h2 className="text-lg font-black text-slate-800 dark:text-white">Configurar Detalles de Asociado</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Modifica los permisos o contraseña de {editingUser.id}.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleSaveUserEdit} className="flex flex-col gap-4">
+              {/* Usuario / ID (Read-only) */}
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">
+                  Usuario / ID (No Modificable)
+                </label>
+                <input
+                  type="text"
+                  value={editingUser.id}
+                  disabled
+                  className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold opacity-60 cursor-not-allowed"
+                />
+              </div>
+
+              {/* Nombre */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                  Nombre del Asociado *
+                </label>
+                <input
+                  type="text"
+                  value={editUserForm.name}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                  required
+                />
+              </div>
+
+              {/* Posición / Puesto */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                  Posición / Puesto *
+                </label>
+                <input
+                  type="text"
+                  value={editUserForm.position}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, position: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                  required
+                />
+              </div>
+
+              {/* Turno */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                  Turno *
+                </label>
+                <select
+                  value={editUserForm.shift}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, shift: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
+                  required
+                >
+                  <option value="Matutino">Matutino</option>
+                  <option value="Nocturno">Nocturno</option>
+                </select>
+              </div>
+
+              {/* Nivel de Acceso */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                  Nivel de Acceso *
+                </label>
+                <select
+                  value={editUserForm.level}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, level: Number(e.target.value) }))}
+                  disabled={editingUser.id === "1234"}
+                  className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold ${
+                    editingUser.id === "1234" ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
+                  required
+                >
+                  <option value={1}>Nivel 1 (Operador)</option>
+                  <option value={2}>Nivel 2 (Supervisor)</option>
+                  <option value={3}>Nivel 3 (Administrador)</option>
+                </select>
+                {editingUser.id === "1234" && (
+                  <p className="text-[9px] text-slate-400 font-bold mt-1">El nivel del Usuario Maestro está protegido.</p>
+                )}
+              </div>
+
+              {/* Contraseña */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                  Contraseña *
+                </label>
+                <input
+                  type="password"
+                  value={editUserForm.password}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, password: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                  required
+                />
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-200/50 dark:border-slate-800/50 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs hover-scale cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUserSaving}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-lg shadow-emerald-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {isUserSaving ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3 h-3" />
+                  )}
+                  <span>{isUserSaving ? "Guardando..." : "Guardar Cambios"}</span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* POPUP MODAL: Agregar Nuevo Componente */}
+
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
           <div className="glass-card w-full max-w-xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in max-h-[92vh] flex flex-col border border-white/50 dark:border-slate-800/40">
