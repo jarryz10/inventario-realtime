@@ -51,8 +51,8 @@ export default function App() {
   useEffect(() => {
     setIsLoading(true);
     try {
-      // Create a query to retrieve products ordered by their creation date
-      const q = query(collection(db, "productos"), orderBy("timestamp", "desc"));
+      // Query collection directly without orderBy to avoid index prerequisites and connection drops on other devices
+      const q = collection(db, "productos");
       
       const unsubscribe = onSnapshot(
         q, 
@@ -61,6 +61,14 @@ export default function App() {
             id: doc.id,
             ...doc.data()
           }));
+          
+          // Sort locally in JS by timestamp (newest first) to avoid query preconditions
+          productsList.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
           setProducts(productsList);
           setIsLoading(false);
         },
