@@ -42,7 +42,8 @@ import {
   LogOut,
   Edit3,
   FileText,
-  Printer
+  Printer,
+  Radio
 } from "lucide-react";
 
 const TABS_CONFIG = [
@@ -73,6 +74,13 @@ const TABS_CONFIG = [
     description: "Registra y supervisa los servicios de mantenimiento de equipos de impresión",
     shortTitle: "Limpieza",
     iconName: "Printer"
+  },
+  {
+    id: "rfid",
+    title: "Verificación de RFID",
+    description: "Registra y supervisa las lecturas y el estado de antenas y sensores RFID",
+    shortTitle: "RFID",
+    iconName: "Radio"
   }
 ];
 
@@ -80,7 +88,8 @@ const ICON_COMPONENTS = {
   Boxes,
   ClipboardList,
   FileText,
-  Printer
+  Printer,
+  Radio
 };
 
 export default function App() {
@@ -173,6 +182,14 @@ export default function App() {
   const [cleaningErrors, setCleaningErrors] = useState({});
   const [isCleaningSubmitting, setIsCleaningSubmitting] = useState(false);
   const [expandedCleaningId, setExpandedCleaningId] = useState(null);
+
+  // RFID Verification State
+  const [rfidVerifications, setRfidVerifications] = useState([]);
+  const [isRfidLoading, setIsRfidLoading] = useState(true);
+  const [rfidRows, setRfidRows] = useState([{ station: "", ip: "10.40.", antennaStatus: "" }]);
+  const [rfidErrors, setRfidErrors] = useState({});
+  const [isRfidSubmitting, setIsRfidSubmitting] = useState(false);
+  const [expandedRfidId, setExpandedRfidId] = useState(null);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -548,6 +565,48 @@ export default function App() {
     } catch (error) {
       console.error("Failed to setup printer cleanings real-time listener:", error);
       setIsCleaningLoading(false);
+    }
+  }, [currentUser, userLevel]);
+
+  // Effect to fetch RFID verifications in real-time from Firestore
+  useEffect(() => {
+    if (!currentUser) return;
+    setIsRfidLoading(true);
+    try {
+      let q = collection(db, "rfid_verification");
+      
+      // Filter in query for Nivel 1 (Operador)
+      if (userLevel === 1) {
+        q = query(collection(db, "rfid_verification"), where("createdBy", "==", currentUser.username));
+      }
+      
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          let rfidList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Sort by timestamp (newest first)
+          rfidList.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
+          setRfidVerifications(rfidList);
+          setIsRfidLoading(false);
+        },
+        (error) => {
+          console.error("Firestore RFID verifications query error:", error);
+          setIsRfidLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup RFID verifications real-time listener:", error);
+      setIsRfidLoading(false);
     }
   }, [currentUser, userLevel]);
 
@@ -1179,6 +1238,219 @@ export default function App() {
     }
   };
 
+  // Restrict RFID IP Address editing to maintain 10.40. prefix and allow only numbers and dots for a specific row
+  const handleRfidIPChangeForRow = (index, val) => {
+    const updated = [...rfidRows];
+    if (!val.startsWith("10.40.")) {
+      updated[index].ip = "10.40.";
+    } else {
+      const suffix = val.substring(6);
+      const cleanSuffix = suffix.replace(/[^0-9.]/g, "");
+      updated[index].ip = "10.40." + cleanSuffix;
+    }
+    setRfidRows(updated);
+  };
+
+  // Add a new empty row to the RFID verification list
+  const handleAddRfidRow = () => {
+    setRfidRows([...rfidRows, { station: "", ip: "10.40.", antennaStatus: "" }]);
+  };
+
+  // Remove a row from the RFID verification list
+  const handleRemoveRfidRow = (index) => {
+    if (rfidRows.length > 1) {
+      const updated = rfidRows.filter((_, i) => i !== index);
+      setRfidRows(updated);
+      
+      const updatedErrors = { ...rfidErrors };
+      delete updatedErrors[index];
+      setRfidErrors(updatedErrors);
+    }
+  };
+
+  // Submit RFID verification form rows to Firestore
+  const handleSubmitRfid = async (e) => {
+    e.preventDefault();
+    if (userLevel >= 3) return;
+    setAlertMessage({ type: "", text: "" });
+
+    const errors = {};
+    let hasErrors = false;
+
+    rfidRows.forEach((row, index) => {
+      const station = row.station.trim();
+      const ip = row.ip.trim();
+      const antennaStatus = row.antennaStatus.trim();
+      const rowErrors = {};
+
+      if (!station) {
+        rowErrors.station = "La estación es obligatoria.";
+      } else if (station.length > 3) {
+        rowErrors.station = "Máximo de 3 caracteres.";
+      }
+
+      if (!ip) {
+        rowErrors.ip = "La dirección IP es obligatoria.";
+      } else if (!isValidIP(ip)) {
+        rowErrors.ip = "IP inválida (ej. 10.40.85.12).";
+      }
+
+      if (!antennaStatus) {
+        rowErrors.antennaStatus = "El estado de antenas es obligatorio.";
+      }
+
+      if (Object.keys(rowErrors).length > 0) {
+        errors[index] = rowErrors;
+        hasErrors = true;
+      }
+    });
+
+    if (hasErrors) {
+      setRfidErrors(errors);
+      return;
+    }
+
+    setRfidErrors({});
+    setIsRfidSubmitting(true);
+    try {
+      const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+      
+      // Upload all rows concurrently in a single block
+      const uploadPromises = rfidRows.map(row => 
+        addDoc(collection(db, "rfid_verification"), {
+          station: row.station.trim(),
+          ip: row.ip.trim(),
+          antennaStatus: row.antennaStatus.trim(),
+          createdBy: currentUser.username,
+          userLevel: userLevel,
+          date: today,
+          timestamp: serverTimestamp()
+        })
+      );
+      
+      await Promise.all(uploadPromises);
+
+      setRfidRows([{ station: "", ip: "10.40.", antennaStatus: "" }]);
+      setAlertMessage({ type: "success", text: "¡Verificación(es) de RFID registrada(s) exitosamente!" });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error submitting RFID verification:", error);
+      setAlertMessage({ type: "error", text: "Error al registrar la verificación de RFID." });
+    } finally {
+      setIsRfidSubmitting(false);
+    }
+  };
+
+  // Generate and download PDF for RFID verification service sheet
+  const handleDownloadRfidPDF = (record) => {
+    try {
+      if (!record) {
+        throw new Error("El registro es nulo o indefinido");
+      }
+
+      const station = record.station || "N/D";
+      const ip = record.ip || "N/D";
+      const antennaStatus = record.antennaStatus || "N/D";
+      const createdBy = record.createdBy || "N/D";
+      const date = record.date || "N/D";
+      const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/D";
+
+      const doc = new jsPDF();
+
+      // Membrete / Top logo & brand
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(14, 165, 233); // Sky-500
+      doc.text("MasterInventory", 14, 20);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139); // Slate-500
+      doc.text("Sistema de Mantenimiento y Calidad de Almacén", 14, 25);
+
+      // Title of the document
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(30, 41, 59); // Slate-800
+      doc.text("Certificado de Verificación de RFID", 14, 38);
+
+      // Horizontal divider line
+      doc.setDrawColor(203, 213, 225); // Slate-300
+      doc.setLineWidth(0.5);
+      doc.line(14, 43, 196, 43);
+
+      // Organized table with item details
+      const tableHeaders = [["Detalle de Verificación", "Información Registrada"]];
+      const tableRows = [
+        ["Estación de Trabajo", station],
+        ["Dirección IP del Lector", ip],
+        ["Estado de Antenas", antennaStatus],
+        ["Técnico / Operador", createdBy],
+        ["Nivel del Técnico", `Nivel ${recordUserLevel} (${recordUserLevel === 2 ? "Supervisor" : "Operador"})`],
+        ["Fecha de Verificación", date]
+      ];
+
+      autoTable(doc, {
+        startY: 48,
+        head: tableHeaders,
+        body: tableRows,
+        theme: "striped",
+        headStyles: {
+          fillColor: [14, 165, 233], // Sky-500
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 10
+        },
+        bodyStyles: {
+          fontSize: 9.5,
+          textColor: [51, 65, 85]
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // Slate-50
+        },
+        margin: { left: 14, right: 14 },
+        styles: {
+          overflow: "linebreak",
+          cellPadding: 6
+        }
+      });
+
+      // Signature/Authorization section
+      const finalY = doc.lastAutoTable.finalY + 30;
+
+      doc.setDrawColor(203, 213, 225); // Slate-300
+      doc.line(14, finalY, 80, finalY);
+      doc.line(130, finalY, 196, finalY);
+
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(51, 65, 85);
+      doc.text("Firma del Técnico", 14 + 16, finalY + 5);
+      doc.text("Firma de Supervisión / Calidad", 130 + 10, finalY + 5);
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text(createdBy, 14 + 20, finalY + 10);
+      doc.text("MasterInventory QC", 130 + 20, finalY + 10);
+
+      // Footer
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // Slate-400
+      doc.text(`Documento generado el: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+      doc.text("Registro oficial de verificación - Confidencial", 130, pageHeight - 10);
+
+      // Save PDF
+      const sanitizeStation = station.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+      const filename = `Verificacion_RFID_${sanitizeStation}_${record.date.replace(/\//g, "-")}.pdf`;
+      doc.save(filename);
+    } catch (error) {
+      console.error("Error al descargar PDF de RFID:", error);
+      alert("Ocurrió un error al generar el PDF de verificación.");
+    }
+  };
+
   // Handle Approve Order (Level 3 only)
   const handleApproveOrder = async (orderId) => {
     if (userLevel < 3) return;
@@ -1449,7 +1721,7 @@ export default function App() {
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />
 
       {/* Floating Glassmorphic Main Dashboard Card */}
-      <div className={`w-full max-w-6xl glass-container rounded-[2.5rem] flex shadow-2xl relative z-10 transition-all duration-300 ${activeTab === "limpieza" ? "h-auto min-h-[88vh] my-8 overflow-y-auto" : "h-[88vh] overflow-hidden"}`}>
+      <div className={`w-full max-w-6xl glass-container rounded-[2.5rem] flex shadow-2xl relative z-10 transition-all duration-300 ${(activeTab === "limpieza" || activeTab === "rfid") ? "h-auto min-h-[88vh] my-8 overflow-y-auto" : "h-[88vh] overflow-hidden"}`}>
         
         {/* LEFT FIXED SIDEBAR */}
         <div className="w-20 sm:w-24 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md border-r border-white/40 dark:border-slate-800/30 flex flex-col items-center py-8 justify-between shrink-0 select-none">
@@ -1513,7 +1785,7 @@ export default function App() {
         </div>
 
         {/* RIGHT WORKSPACE */}
-        <div className={`flex-1 flex flex-col p-6 sm:p-8 ${activeTab === "limpieza" ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
+        <div className={`flex-1 flex flex-col p-6 sm:p-8 ${(activeTab === "limpieza" || activeTab === "rfid") ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
           
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
@@ -1589,7 +1861,7 @@ export default function App() {
           )}
 
           {/* TAB CONTENT VIEWS */}
-          <div className={`flex-1 mt-6 ${activeTab === "limpieza" ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
+          <div className={`flex-1 mt-6 ${(activeTab === "limpieza" || activeTab === "rfid") ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
             
             {/* TAB 1: INVENTARIO */}
             {activeTab === "inventario" && (
@@ -2614,6 +2886,326 @@ export default function App() {
                                         onClick={() => handleDownloadCleaningPDF(record)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
                                         title="Descargar Certificado en PDF"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-white" />
+                                        <span>Descargar PDF</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 5: VERIFICACIÓN DE RFID */}
+            {activeTab === "rfid" && (
+              <div className="flex flex-col gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass">
+                {userLevel < 3 ? (
+                  <>
+                    {/* Form: create RFID verification logs (full width) */}
+                    <div className="w-full flex flex-col h-auto">
+                      <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
+                          Registrar Verificación de RFID
+                        </h2>
+                        
+                        <form onSubmit={handleSubmitRfid} className="flex flex-col gap-5">
+                          {/* List of dynamic rows */}
+                          <div className="flex flex-col gap-4">
+                            {rfidRows.map((row, index) => (
+                              <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border border-white/20 dark:border-slate-800/10 animate-fade-in">
+                                
+                                {/* Estación */}
+                                <div className="md:col-span-3">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    Estación *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    maxLength={3}
+                                    placeholder="Ej. A01"
+                                    value={row.station}
+                                    onChange={(e) => {
+                                      const updated = [...rfidRows];
+                                      updated[index].station = e.target.value;
+                                      setRfidRows(updated);
+                                    }}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                                      rfidErrors[index]?.station ? "border-red-500" : ""
+                                    }`}
+                                    required
+                                  />
+                                  {rfidErrors[index]?.station && (
+                                    <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].station}</p>
+                                  )}
+                                </div>
+
+                                {/* Lector IP */}
+                                <div className="md:col-span-4">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    Lector IP *
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder="Ej. 10.40.85.12"
+                                    value={row.ip}
+                                    onChange={(e) => handleRfidIPChangeForRow(index, e.target.value)}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
+                                      rfidErrors[index]?.ip ? "border-red-500" : ""
+                                    }`}
+                                    required
+                                  />
+                                  {rfidErrors[index]?.ip && (
+                                    <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].ip}</p>
+                                  )}
+                                </div>
+
+                                {/* Estado de Antenas */}
+                                <div className="md:col-span-4">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    Estado de Antenas *
+                                  </label>
+                                  <select
+                                    value={row.antennaStatus}
+                                    onChange={(e) => {
+                                      const updated = [...rfidRows];
+                                      updated[index].antennaStatus = e.target.value;
+                                      setRfidRows(updated);
+                                    }}
+                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold ${
+                                      rfidErrors[index]?.antennaStatus ? "border-red-500" : ""
+                                    }`}
+                                    required
+                                  >
+                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">Selecciona estado...</option>
+                                    {["Óptimo", "Regular", "Fallo"].map(status => (
+                                      <option key={status} value={status} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                        {status}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {rfidErrors[index]?.antennaStatus && (
+                                    <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].antennaStatus}</p>
+                                  )}
+                                </div>
+
+                                {/* Remover fila button */}
+                                <div className="md:col-span-1 flex justify-center pb-1">
+                                  <button
+                                    type="button"
+                                    disabled={rfidRows.length === 1}
+                                    onClick={() => handleRemoveRfidRow(index)}
+                                    className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white disabled:opacity-30 disabled:hover:bg-red-500/10 disabled:hover:text-red-500 transition-colors duration-200 hover-scale cursor-pointer"
+                                    title="Eliminar fila"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Form actions */}
+                          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                            <button
+                              type="button"
+                              onClick={handleAddRfidRow}
+                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-sky-500/40 hover:border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <PlusCircle className="w-4 h-4" />
+                              <span>+ Agregar otra estación</span>
+                            </button>
+
+                            <button
+                              type="submit"
+                              disabled={isRfidSubmitting}
+                              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                            >
+                              {isRfidSubmitting ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              )}
+                              <span>{isRfidSubmitting ? "Guardando..." : "Guardar Registro"}</span>
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                    
+                    {/* Bottom History: (full width) */}
+                    <div className="w-full flex flex-col h-auto">
+                      <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                        <div className="flex items-center justify-between mb-4 shrink-0">
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            Historial de Verificación
+                          </h2>
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                            {rfidVerifications.length} reportes
+                          </span>
+                        </div>
+                        
+                        <div className="flex flex-col gap-3 pb-2">
+                          {isRfidLoading ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-center">
+                              <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                              <span className="text-xs text-slate-400 font-bold">Cargando verificaciones...</span>
+                            </div>
+                          ) : rfidVerifications.length === 0 ? (
+                            <span className="text-xs text-slate-400 dark:text-slate-500 text-center py-12 font-bold">Sin registros de verificación RFID</span>
+                          ) : (
+                            rfidVerifications.map((record) => {
+                              const isExpanded = expandedRfidId === record.id;
+                              return (
+                                <div 
+                                  key={record.id} 
+                                  onClick={() => setExpandedRfidId(isExpanded ? null : record.id)}
+                                  className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-extrabold text-xs text-slate-900">
+                                        Usuario: {record.createdBy} | Estación: {record.station}
+                                      </span>
+                                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase shadow-sm border ${
+                                        record.antennaStatus === "Óptimo" 
+                                          ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-350 border-emerald-300 dark:border-emerald-800/50" 
+                                          : record.antennaStatus === "Regular"
+                                          ? "bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-350 border-amber-300 dark:border-amber-800/50"
+                                          : "bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-350 border-rose-300 dark:border-rose-800/50"
+                                      }`}>
+                                        {record.antennaStatus}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-slate-800 font-bold">{record.date}</span>
+                                      <span className="text-[10px] text-slate-800 font-extrabold">{isExpanded ? "▲" : "▼"}</span>
+                                    </div>
+                                  </div>
+                                  
+                                  {isExpanded && (
+                                    <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                      <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
+                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP Lector</span>
+                                          <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
+                                        </div>
+                                        <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
+                                          <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
+                                        </div>
+                                        <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                          <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Estado de Antenas</span>
+                                          <span className="text-slate-700 dark:text-slate-300">{record.antennaStatus}</span>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex justify-end pt-2">
+                                        <button
+                                          onClick={() => handleDownloadRfidPDF(record)}
+                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                          title="Descargar Ficha en PDF"
+                                        >
+                                          <FileText className="w-3.5 h-3.5 text-white" />
+                                          <span>Descargar PDF</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* Nivel 3: Audit View (full width) */
+                  <div className="w-full flex flex-col h-auto">
+                    <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <div className="flex items-center justify-between mb-4 shrink-0">
+                        <div>
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            Supervisión de Verificación de RFID
+                          </h2>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">Auditoría del estado de antenas y lectores RFID en planta</p>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          {rfidVerifications.length} totales
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-col gap-3 pb-4">
+                        {isRfidLoading ? (
+                          <div className="flex flex-col items-center justify-center py-20 text-center w-full">
+                            <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
+                            <span className="text-xs text-slate-400 font-bold">Cargando verificaciones para supervisión...</span>
+                          </div>
+                        ) : rfidVerifications.length === 0 ? (
+                          <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-semibold w-full">
+                            No se registran verificaciones en el sistema.
+                          </div>
+                        ) : (
+                          rfidVerifications.map((record) => {
+                            const isExpanded = expandedRfidId === record.id;
+                            return (
+                              <div 
+                                key={record.id} 
+                                onClick={() => setExpandedRfidId(isExpanded ? null : record.id)}
+                                className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-extrabold text-xs text-slate-900">
+                                      Usuario: {record.createdBy} | Estación: {record.station}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase shadow-sm border ${
+                                      record.antennaStatus === "Óptimo" 
+                                        ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-350 border-emerald-300 dark:border-emerald-800/50" 
+                                        : record.antennaStatus === "Regular"
+                                        ? "bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-350 border-amber-300 dark:border-amber-800/50"
+                                        : "bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-350 border-rose-300 dark:border-rose-800/50"
+                                    }`}>
+                                      {record.antennaStatus}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-slate-800 font-bold">{record.date}</span>
+                                    <span className="text-[10px] text-slate-800 font-extrabold">{isExpanded ? "▲" : "▼"}</span>
+                                  </div>
+                                </div>
+                                
+                                {isExpanded && (
+                                  <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                    <div className="grid grid-cols-2 gap-3 text-xs leading-relaxed font-semibold">
+                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Dirección IP Lector</span>
+                                        <span className="font-mono text-slate-700 dark:text-slate-300">{record.ip}</span>
+                                      </div>
+                                      <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Técnico / Creador</span>
+                                        <span className="text-slate-700 dark:text-slate-300">{record.createdBy} (Nivel {record.userLevel})</span>
+                                      </div>
+                                      <div className="col-span-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Estado de Antenas</span>
+                                        <span className="text-slate-700 dark:text-slate-300">{record.antennaStatus}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-end pt-2">
+                                      <button
+                                        onClick={() => handleDownloadRfidPDF(record)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
+                                        title="Descargar Ficha en PDF"
                                       >
                                         <FileText className="w-3.5 h-3.5 text-white" />
                                         <span>Descargar PDF</span>
