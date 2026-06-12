@@ -93,9 +93,14 @@ export default function App() {
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "productos"), {
+      // Executing addDoc asynchronously without awaiting allows the UI to remain responsive
+      // and guarantees that the finally block runs immediately, resetting the loader.
+      addDoc(collection(db, "productos"), {
         nombre: newProductName.trim(),
         timestamp: serverTimestamp()
+      }).catch(error => {
+        console.error("Error adding document to Firestore:", error);
+        setAlertMessage({ type: "error", text: "Error al agregar el producto. Inténtalo de nuevo." });
       });
       
       setNewProductName("");
