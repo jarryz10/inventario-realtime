@@ -1449,7 +1449,7 @@ export default function App() {
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />
 
       {/* Floating Glassmorphic Main Dashboard Card */}
-      <div className="w-full max-w-6xl h-[88vh] glass-container rounded-[2.5rem] flex overflow-hidden shadow-2xl relative z-10 transition-all duration-300">
+      <div className={`w-full max-w-6xl glass-container rounded-[2.5rem] flex shadow-2xl relative z-10 transition-all duration-300 ${activeTab === "limpieza" ? "h-auto min-h-[88vh] my-8 overflow-y-auto" : "h-[88vh] overflow-hidden"}`}>
         
         {/* LEFT FIXED SIDEBAR */}
         <div className="w-20 sm:w-24 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md border-r border-white/40 dark:border-slate-800/30 flex flex-col items-center py-8 justify-between shrink-0 select-none">
@@ -1513,7 +1513,7 @@ export default function App() {
         </div>
 
         {/* RIGHT WORKSPACE */}
-        <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden">
+        <div className={`flex-1 flex flex-col p-6 sm:p-8 ${activeTab === "limpieza" ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
           
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
@@ -1589,7 +1589,7 @@ export default function App() {
           )}
 
           {/* TAB CONTENT VIEWS */}
-          <div className="flex-1 overflow-hidden mt-6">
+          <div className={`flex-1 mt-6 ${activeTab === "limpieza" ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
             
             {/* TAB 1: INVENTARIO */}
             {activeTab === "inventario" && (
@@ -2463,7 +2463,7 @@ export default function App() {
                     
                     {/* Bottom History: (full width) */}
                     <div className="w-full flex flex-col h-auto">
-                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             Historial de Limpieza
@@ -2543,7 +2543,7 @@ export default function App() {
                 ) : (
                   /* Nivel 3: Audit View (full width) */
                   <div className="w-full flex flex-col h-auto">
-                    <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                    <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
