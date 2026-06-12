@@ -38,6 +38,8 @@ export default function App() {
   // Products State
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const selectedProduct = products.find(p => p.id === selectedProductId) || null;
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -355,7 +357,8 @@ export default function App() {
                   {products.map((product) => (
                     <div
                       key={product.id}
-                      className="glass-card rounded-[2rem] p-4 shadow-sm border border-white/30 dark:border-slate-800/20 flex flex-col justify-between gap-4 transition-all duration-300 hover-scale hover:shadow-md animate-fade-in"
+                      onClick={() => setSelectedProductId(product.id)}
+                      className="glass-card rounded-[2rem] p-4 shadow-sm border border-white/30 dark:border-slate-800/20 flex flex-col justify-between gap-4 transition-all duration-300 hover-scale hover:shadow-md cursor-pointer animate-fade-in"
                     >
                       {/* upper block: Image, name, brand, model */}
                       <div className="flex gap-3">
@@ -404,9 +407,12 @@ export default function App() {
                             {getStockStatus(product.stock, product.minStock)}
                             
                             {/* Quick stock adjusters */}
-                            <div className="flex items-center gap-1 ml-1 shrink-0">
+                            <div className="flex items-center gap-1 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                               <button
-                                onClick={() => handleAdjustStock(product.id, -1, product.stock)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAdjustStock(product.id, -1, product.stock);
+                                }}
                                 disabled={product.stock <= 0}
                                 className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-slate-100 dark:disabled:hover:bg-slate-800 hover-scale transition-colors cursor-pointer"
                                 title="Restar 1 unidad"
@@ -414,7 +420,10 @@ export default function App() {
                                 -
                               </button>
                               <button
-                                onClick={() => handleAdjustStock(product.id, 1, product.stock)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAdjustStock(product.id, 1, product.stock);
+                                }}
                                 className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer"
                                 title="Sumar 1 unidad"
                               >
@@ -425,7 +434,10 @@ export default function App() {
                         </div>
 
                         <button
-                          onClick={() => handleDeleteProduct(product.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProduct(product.id);
+                          }}
                           className="w-8 h-8 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0 transition-colors duration-150"
                           title="Eliminar de Firestore"
                         >
@@ -711,6 +723,128 @@ export default function App() {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Detalle de Componente */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="glass-card w-full max-w-lg rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in max-h-[92vh] flex flex-col border border-white/50 dark:border-slate-800/40">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
+              <div>
+                <h2 className="text-lg font-black text-slate-800 dark:text-white">Detalles del Componente</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Información técnica y stock en tiempo real.</p>
+              </div>
+              <button
+                onClick={() => setSelectedProductId(null)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-5">
+              
+              {/* Large Featured Image */}
+              <div className="w-full h-56 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/40 shadow-inner shrink-0 relative">
+                <img
+                  src={selectedProduct.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&auto=format&fit=crop&q=80"}
+                  alt={selectedProduct.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-3 right-3">
+                  {getStockStatus(selectedProduct.stock, selectedProduct.minStock)}
+                </div>
+              </div>
+
+              {/* Information Grid */}
+              <div className="flex flex-col gap-4 text-xs font-semibold">
+                
+                {/* Row 1: Nombre & Marca */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Nombre del Artículo</span>
+                    <span className="text-sm font-extrabold product-name-text block">{selectedProduct.name}</span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Marca</span>
+                    <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.brand || "Sin Marca"}</span>
+                  </div>
+                </div>
+
+                {/* Row 2: Modelo & SKU */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Modelo</span>
+                    <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">{selectedProduct.model || "Sin Modelo"}</span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">SKU</span>
+                    <span className="text-sm font-mono font-bold text-slate-600 dark:text-slate-300 uppercase block">{selectedProduct.sku || "Sin SKU"}</span>
+                  </div>
+                </div>
+
+                {/* Row 3: Ubicación Física */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
+                  <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">Ubicación Física</span>
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                    <MapPin className="w-4 h-4 text-sky-500" />
+                    {selectedProduct.location || "Sin Ubicación registrada"}
+                  </span>
+                </div>
+
+                {/* Row 4: Stock controls & Min stock */}
+                <div className="p-4 rounded-2xl bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/40 dark:border-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex flex-col text-center sm:text-left">
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mb-0.5">Control de Stock</span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Ajusta el volumen en inventario.</span>
+                  </div>
+                  
+                  {/* Stock adjuster controls */}
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustStock(selectedProduct.id, -1, selectedProduct.stock)}
+                      disabled={selectedProduct.stock <= 0}
+                      className="w-8 h-8 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-black text-base disabled:opacity-40 hover-scale transition-colors cursor-pointer"
+                      title="Restar 1 unidad"
+                    >
+                      -
+                    </button>
+                    <div className="text-center min-w-[50px]">
+                      <span className="text-2xl font-black text-slate-800 dark:text-white block">{selectedProduct.stock}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">Min: {selectedProduct.minStock}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleAdjustStock(selectedProduct.id, 1, selectedProduct.stock)}
+                      className="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-black text-base hover-scale transition-colors cursor-pointer"
+                      title="Sumar 1 unidad"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-4 border-t border-slate-200/50 dark:border-slate-800/50 mt-4 shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedProductId(null)}
+                className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs hover-scale transition-colors"
+              >
+                Cerrar Detalles
+              </button>
+            </div>
+
           </div>
         </div>
       )}
