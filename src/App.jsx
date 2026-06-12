@@ -452,7 +452,7 @@ export default function App() {
   // Add Order Submission
   const handleAddOrder = async (e) => {
     e.preventDefault();
-    if (userLevel < 2) return;
+    if (!currentUser) return;
     setAlertMessage({ type: "", text: "" });
 
     if (!validateOrderForm()) return;
@@ -776,23 +776,21 @@ export default function App() {
               <Boxes className="w-5.5 h-5.5 mb-1" />
               <span className="text-[10px] font-bold">Inventario</span>
             </button>
-            {userLevel >= 2 && (
-              <button
-                onClick={() => {
-                  setActiveTab("ordenes");
-                  setAlertMessage({ type: "", text: "" });
-                }}
-                className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
-                  activeTab === "ordenes"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                }`}
-                title="Órdenes y Pedidos"
-              >
-                <ClipboardList className="w-5.5 h-5.5 mb-1" />
-                <span className="text-[10px] font-bold">Órdenes</span>
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setActiveTab("ordenes");
+                setAlertMessage({ type: "", text: "" });
+              }}
+              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-350 hover-scale cursor-pointer ${
+                activeTab === "ordenes"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
+                  : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              }`}
+              title="Órdenes y Pedidos"
+            >
+              <ClipboardList className="w-5.5 h-5.5 mb-1" />
+              <span className="text-[10px] font-bold">Órdenes</span>
+            </button>
           </div>
 
           {/* Theme & Logout */}
@@ -991,7 +989,7 @@ export default function App() {
             )}
 
             {/* TAB 2: ÓRDENES Y PEDIDOS */}
-            {activeTab === "ordenes" && userLevel >= 2 && (
+            {activeTab === "ordenes" && (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full overflow-hidden">
                 
                 {/* Left Form: place order (colspan 3) */}
