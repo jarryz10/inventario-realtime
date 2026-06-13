@@ -2065,17 +2065,6 @@ export default function App() {
               <span>{isLoggingIn ? t.authenticating : t.enter_btn}</span>
             </button>
           </form>
-
-          {/* Quick instructions / Demo credentials */}
-          <div className="mt-6 p-4 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 text-[10px] text-slate-400 font-semibold leading-relaxed">
-            <span className="text-sky-500 font-bold block mb-1">{t.demo_credentials}</span>
-            <div className="grid grid-cols-1 gap-1 font-mono">
-              <div>{t.master_user_demo}</div>
-              <div>{t.operator_demo}</div>
-              <div>{t.supervisor_demo}</div>
-              <div>{t.admin_demo}</div>
-            </div>
-          </div>
         </div>
       </div>
     );
