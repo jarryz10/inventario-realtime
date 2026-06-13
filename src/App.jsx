@@ -827,8 +827,11 @@ export default function App() {
         setUploadProgress(progress);
       },
       (error) => {
-        console.error("Error uploading file:", error);
-        alert(language === "es" ? "Error al subir la imagen." : "Error uploading image.");
+        console.error("Firebase Storage Upload Failed:", error);
+        alert(language === "es" 
+          ? `Falla al subir la imagen: ${error.message || error}` 
+          : `Image upload failed: ${error.message || error}`
+        );
         setIsUploading(false);
         setUploadProgress(null);
       },
@@ -844,8 +847,11 @@ export default function App() {
             setUploadProgress(null);
           })
           .catch((err) => {
-            console.error("Error getting download URL:", err);
-            alert(language === "es" ? "Error al obtener la URL de la imagen." : "Error getting image URL.");
+            console.error("Firebase Storage getDownloadURL Failed:", err);
+            alert(language === "es" 
+              ? `Falla al obtener la URL de la imagen: ${err.message || err}` 
+              : `Failed to get download URL: ${err.message || err}`
+            );
             setIsUploading(false);
             setUploadProgress(null);
           });
@@ -4660,7 +4666,7 @@ export default function App() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isUploading}
                   className="flex-1 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5"
                 >
                   {isSubmitting ? (
@@ -5048,7 +5054,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsEditingDetail(false)}
-                    disabled={isSavingDetail}
+                    disabled={isSavingDetail || isUploading}
                     className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors disabled:opacity-50"
                   >
                     {t.cancel}
@@ -5056,7 +5062,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleSaveProductDetails}
-                    disabled={isSavingDetail}
+                    disabled={isSavingDetail || isUploading}
                     className="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-lg shadow-emerald-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     {isSavingDetail ? (
