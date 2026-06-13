@@ -186,7 +186,7 @@ export default function App() {
   // Daily Reports State
   const [dailyReports, setDailyReports] = useState([]);
   const [isReportsLoading, setIsReportsLoading] = useState(true);
-  const [reportRows, setReportRows] = useState([{ time: "08:00 - 09:00", activity: "" }]);
+  const [reportRows, setReportRows] = useState([{ time: "08:00 AM - 09:00 AM", activity: "" }]);
   const [isReportSubmitting, setIsReportSubmitting] = useState(false);
   const [expandedReportId, setExpandedReportId] = useState(null);
 
@@ -849,13 +849,21 @@ export default function App() {
   // Add Daily Report Row
   const handleAddReportRow = () => {
     const standardBlocks = [
-      "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
-      "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00",
-      "16:00 - 17:00", "17:00 - 18:00", "18:00 - 19:00", "19:00 - 20:00"
+      "12:00 AM - 01:00 AM", "01:00 AM - 02:00 AM", "02:00 AM - 03:00 AM", "03:00 AM - 04:00 AM",
+      "04:00 AM - 05:00 AM", "05:00 AM - 06:00 AM", "06:00 AM - 07:00 AM", "07:00 AM - 08:00 AM",
+      "08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM",
+      "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM",
+      "04:00 PM - 05:00 PM", "05:00 PM - 06:00 PM", "06:00 PM - 07:00 PM", "07:00 PM - 08:00 PM",
+      "08:00 PM - 09:00 PM", "09:00 PM - 10:00 PM", "10:00 PM - 11:00 PM", "11:00 PM - 12:00 AM"
     ];
-    let nextIndex = reportRows.length;
-    if (nextIndex >= standardBlocks.length) nextIndex = standardBlocks.length - 1;
-    const nextTime = standardBlocks[nextIndex];
+    const lastRow = reportRows[reportRows.length - 1];
+    let nextTime = "08:00 AM - 09:00 AM";
+    if (lastRow) {
+      const lastIndex = standardBlocks.indexOf(lastRow.time);
+      if (lastIndex !== -1) {
+        nextTime = standardBlocks[(lastIndex + 1) % standardBlocks.length];
+      }
+    }
     setReportRows(prev => [...prev, { time: nextTime, activity: "" }]);
   };
 
@@ -888,7 +896,7 @@ export default function App() {
         timestamp: serverTimestamp()
       });
 
-      setReportRows([{ time: "08:00 - 09:00", activity: "" }]);
+      setReportRows([{ time: "08:00 AM - 09:00 AM", activity: "" }]);
       setAlertMessage({ type: "success", text: "¡Reporte diario enviado exitosamente!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -907,10 +915,10 @@ export default function App() {
         throw new Error("El reporte es nulo o indefinido");
       }
       
-      const createdBy = report.createdBy || "N/D";
-      const date = report.date || "N/D";
+      const createdBy = report.createdBy || "N/A";
+      const date = report.date || "N/A";
       const activities = Array.isArray(report.activities) ? report.activities : [];
-      const userLevel = report.userLevel !== undefined ? report.userLevel : "N/D";
+      const userLevel = report.userLevel !== undefined ? report.userLevel : "N/A";
 
       const doc = new jsPDF();
 
@@ -918,13 +926,13 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(22);
       doc.setTextColor(14, 165, 233); // Sky-500
-      doc.text("Reporte Diario de Actividades", 14, 20);
+      doc.text("Daily Activity Report", 14, 20);
 
       // Subtitle
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100, 116, 139); // Slate-500
-      doc.text("MasterInventory - Sistema de Almacén", 14, 26);
+      doc.text("MasterInventory - Warehouse System", 14, 26);
 
       // Divider line
       doc.setDrawColor(226, 232, 240); // Slate-200 border
@@ -934,19 +942,19 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(51, 65, 85); // Slate-700
-      doc.text("Detalles del Reporte:", 14, 40);
+      doc.text("Report Details:", 14, 40);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`Operador / Creador: ${createdBy}`, 14, 46);
-      doc.text(`Nivel de Permisos: Nivel ${userLevel} (${userLevel === 2 ? "Supervisor" : "Operador"})`, 14, 52);
-      doc.text(`Fecha del Turno: ${date}`, 14, 58);
+      doc.text(`Operator / Creator: ${createdBy}`, 14, 46);
+      doc.text(`Permission Level: Level ${userLevel} (${userLevel === 2 ? "Supervisor" : "Operator"})`, 14, 52);
+      doc.text(`Shift Date: ${date}`, 14, 58);
 
       // Table of Activities
-      const tableHeaders = [["Bloque de Tiempo", "Actividades Realizadas"]];
+      const tableHeaders = [["Time Block", "Activities Performed"]];
       const tableRows = activities.map(act => {
-        const time = (act && act.time) ? act.time.trim() : "N/D";
-        const activity = (act && act.activity) ? act.activity.trim() : "N/D";
+        const time = (act && act.time) ? act.time.trim() : "N/A";
+        const activity = (act && act.activity) ? act.activity.trim() : "N/A";
         return [time, activity];
       });
 
@@ -977,7 +985,7 @@ export default function App() {
 
       // Save PDF
       const sanitizeDate = date.replace(/\//g, "-");
-      const filename = `Reporte_${createdBy}_${sanitizeDate}.pdf`;
+      const filename = `Report_${createdBy}_${sanitizeDate}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error detallado de jspdf:", error);
@@ -993,11 +1001,11 @@ export default function App() {
         throw new Error("El producto es nulo o indefinido");
       }
 
-      const name = product.name || "N/D";
-      const brand = product.brand || "Sin Marca";
-      const model = product.model || "Sin Modelo";
-      const sku = product.sku || "Sin SKU";
-      const location = product.location || "Sin Ubicación";
+      const name = product.name || "N/A";
+      const brand = product.brand || "No Brand";
+      const model = product.model || "No Model";
+      const sku = product.sku || "No SKU";
+      const location = product.location || "No Location";
       const stock = product.stock !== undefined ? product.stock : 0;
       const minStock = product.minStock !== undefined ? product.minStock : 0;
 
@@ -1012,13 +1020,13 @@ export default function App() {
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100, 116, 139); // Slate-500
-      doc.text("Sistema de Gestión de Almacén Real-time", 14, 25);
+      doc.text("Real-time Warehouse Management System", 14, 25);
 
       // Title of the document
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59); // Slate-800
-      doc.text("Ficha Técnica de Componente", 14, 38);
+      doc.text("Component Technical Sheet", 14, 38);
 
       // Horizontal divider line
       doc.setDrawColor(203, 213, 225); // Slate-300
@@ -1026,16 +1034,16 @@ export default function App() {
       doc.line(14, 43, 196, 43);
 
       // Organized block/table with item details
-      const tableHeaders = [["Especificación", "Detalle de Componente"]];
+      const tableHeaders = [["Specification", "Component Detail"]];
       const tableRows = [
-        ["Nombre del Artículo", name],
-        ["Marca", brand],
-        ["Modelo", model],
-        ["SKU (Código)", sku.toUpperCase()],
-        ["Ubicación Física", location],
-        ["Stock Actual", `${stock} unidades`],
-        ["Stock Mínimo Autorizado", `${minStock} unidades`],
-        ["Estado de Existencia", stock <= 0 ? "Agotado" : stock < minStock ? "Bajo Stock (Reabastecer)" : "Disponible"]
+        ["Item Name", name],
+        ["Brand", brand],
+        ["Model", model],
+        ["SKU (Code)", sku.toUpperCase()],
+        ["Physical Location", location],
+        ["Current Stock", `${stock} units`],
+        ["Minimum Authorized Stock", `${minStock} units`],
+        ["Stock Status", stock <= 0 ? "Out of Stock" : stock < minStock ? "Low Stock (Replenish)" : "Available"]
       ];
 
       autoTable(doc, {
@@ -1076,24 +1084,24 @@ export default function App() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
       doc.setTextColor(14, 165, 233);
-      doc.text("Imagen / Foto Referencial del Componente", 14 + 48, finalY + 22);
+      doc.text("Reference Component Image / Photo", 14 + 48, finalY + 22);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(100, 116, 139);
-      doc.text("MasterInventory - Control de Calidad y Trazabilidad", 14 + 52, finalY + 30);
+      doc.text("MasterInventory - Quality Control and Traceability", 14 + 52, finalY + 30);
       
       // Footer info
       const pageHeight = doc.internal.pageSize.height;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // Slate-400
-      doc.text(`Documento generado el: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
-      doc.text("Copia controlada - Prohibida su modificación externa", 140, pageHeight - 10);
+      doc.text(`Document generated on: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+      doc.text("Controlled copy - External modification prohibited", 140, pageHeight - 10);
 
       // Save PDF
       const sanitizeName = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-      const filename = `Ficha_Tecnica_${sanitizeName}.pdf`;
+      const filename = `Technical_Sheet_${sanitizeName}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar ficha técnica:", error);
@@ -1233,9 +1241,9 @@ export default function App() {
         throw new Error("El registro es nulo o indefinido");
       }
 
-      const createdBy = record.createdBy || "N/D";
-      const date = record.date || "N/D";
-      const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/D";
+      const createdBy = record.createdBy || "N/A";
+      const date = record.date || "N/A";
+      const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/A";
       
       const printers = record.printers || (record.station ? [{
         station: record.station,
@@ -1254,20 +1262,20 @@ export default function App() {
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100, 116, 139); // Slate-500
-      doc.text("Sistema de Mantenimiento y Calidad de Almacén", 14, 25);
+      doc.text("Warehouse Maintenance and Quality System", 14, 25);
 
       // Title of the document
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59); // Slate-800
-      doc.text("Reporte Consolidado de Limpieza de Impresora", 14, 38);
+      doc.text("Printer Cleaning Consolidated Report", 14, 38);
 
       // Subtitle with Metadata
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(71, 85, 105); // Slate-600
-      doc.text(`Técnico: ${createdBy} (Nivel ${recordUserLevel})`, 14, 46);
-      doc.text(`Fecha del Reporte: ${date}`, 140, 46);
+      doc.text(`Technician: ${createdBy} (Level ${recordUserLevel})`, 14, 46);
+      doc.text(`Report Date: ${date}`, 140, 46);
 
       // Horizontal divider line
       doc.setDrawColor(203, 213, 225); // Slate-300
@@ -1275,11 +1283,11 @@ export default function App() {
       doc.line(14, 50, 196, 50);
 
       // Organized table with item details
-      const tableHeaders = [["Estación", "Dirección IP", "Tipo de Impresora"]];
+      const tableHeaders = [["Station", "IP Address", "Printer Type"]];
       const tableRows = printers.map(pr => [
-        pr.station || "N/D",
-        pr.ip || "N/D",
-        pr.printerType || "N/D"
+        pr.station || "N/A",
+        pr.ip || "N/A",
+        pr.printerType || "N/A"
       ]);
 
       autoTable(doc, {
@@ -1317,8 +1325,8 @@ export default function App() {
       doc.setFontSize(8.5);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(51, 65, 85);
-      doc.text("Firma del Técnico", 14 + 16, finalY + 5);
-      doc.text("Firma de Supervisión / Calidad", 130 + 10, finalY + 5);
+      doc.text("Technician Signature", 14 + 16, finalY + 5);
+      doc.text("Supervisor / Quality Signature", 130 + 10, finalY + 5);
 
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100, 116, 139);
@@ -1330,11 +1338,11 @@ export default function App() {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // Slate-400
-      doc.text(`Documento generado el: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
-      doc.text("Registro oficial de mantenimiento - Confidencial", 130, pageHeight - 10);
+      doc.text(`Document generated on: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+      doc.text("Official maintenance record - Confidential", 130, pageHeight - 10);
 
       // Save PDF
-      const filename = `Reporte_Limpieza_${createdBy}_${date.replace(/\//g, "-")}.pdf`;
+      const filename = `Cleaning_Report_${createdBy}_${date.replace(/\//g, "-")}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar PDF de limpieza:", error);
@@ -1693,9 +1701,9 @@ export default function App() {
         throw new Error("El registro es nulo o indefinido");
       }
 
-      const createdBy = record.createdBy || "N/D";
-      const date = record.date || "N/D";
-      const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/D";
+      const createdBy = record.createdBy || "N/A";
+      const date = record.date || "N/A";
+      const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/A";
       const stations = record.stations || (record.station ? [{
         estacion: record.station,
         ip: record.ip,
@@ -1713,20 +1721,20 @@ export default function App() {
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100, 116, 139); // Slate-500
-      doc.text("Sistema de Mantenimiento y Calidad de Almacén", 14, 25);
+      doc.text("Warehouse Maintenance and Quality System", 14, 25);
 
       // Title of the document
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(30, 41, 59); // Slate-800
-      doc.text("Reporte Consolidado de Verificación de RFID", 14, 38);
+      doc.text("RFID Verification Consolidated Report", 14, 38);
 
       // Subtitle with Metadata
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(71, 85, 105); // Slate-600
-      doc.text(`Técnico: ${createdBy} (Nivel ${recordUserLevel})`, 14, 46);
-      doc.text(`Fecha del Reporte: ${date}`, 140, 46);
+      doc.text(`Technician: ${createdBy} (Level ${recordUserLevel})`, 14, 46);
+      doc.text(`Report Date: ${date}`, 140, 46);
 
       // Horizontal divider line
       doc.setDrawColor(203, 213, 225); // Slate-300
@@ -1734,16 +1742,16 @@ export default function App() {
       doc.line(14, 50, 196, 50);
 
       // Organized table with item details
-      const tableHeaders = [["Estación", "Dirección IP Lector", "Estado Antenas"]];
+      const tableHeaders = [["Station", "Reader IP Address", "Antennas Status"]];
       const tableRows = stations.map(st => {
-        const stationVal = st.estacion || st.station || "N/D";
-        const ipVal = st.ip || "N/D";
+        const stationVal = st.estacion || st.station || "N/A";
+        const ipVal = st.ip || "N/A";
         const statusVal = st.estado || st.antennaStatus || "";
         const isBueno = isStatusBueno(statusVal);
         return [
           stationVal,
           ipVal,
-          isBueno ? "Bueno (✔)" : "Fallo (❌)"
+          isBueno ? "Good (✔)" : "Fail (❌)"
         ];
       });
 
@@ -1782,8 +1790,8 @@ export default function App() {
       doc.setFontSize(8.5);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(51, 65, 85);
-      doc.text("Firma del Técnico", 14 + 16, finalY + 5);
-      doc.text("Firma de Supervisión / Calidad", 130 + 10, finalY + 5);
+      doc.text("Technician Signature", 14 + 16, finalY + 5);
+      doc.text("Supervisor / Quality Signature", 130 + 10, finalY + 5);
 
       doc.setFont("helvetica", "normal");
       doc.setTextColor(100, 116, 139);
@@ -1795,12 +1803,12 @@ export default function App() {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // Slate-400
-      doc.text(`Documento generado el: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
-      doc.text("Registro oficial de verificación - Confidencial", 130, pageHeight - 10);
+      doc.text(`Document generated on: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+      doc.text("Official verification record - Confidential", 130, pageHeight - 10);
 
       // Save PDF
       const sanitizeUser = createdBy.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
-      const filename = `Verificacion_RFID_${sanitizeUser}_${date.replace(/\//g, "-")}.pdf`;
+      const filename = `RFID_Verification_${sanitizeUser}_${date.replace(/\//g, "-")}.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error al descargar PDF de RFID:", error);
@@ -2767,9 +2775,12 @@ export default function App() {
                                   className="w-full px-3 py-2 rounded-xl text-xs glass-input font-bold"
                                 >
                                   {[
-                                    "08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00",
-                                    "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00",
-                                    "16:00 - 17:00", "17:00 - 18:00", "18:00 - 19:00", "19:00 - 20:00"
+                                    "12:00 AM - 01:00 AM", "01:00 AM - 02:00 AM", "02:00 AM - 03:00 AM", "03:00 AM - 04:00 AM",
+                                    "04:00 AM - 05:00 AM", "05:00 AM - 06:00 AM", "06:00 AM - 07:00 AM", "07:00 AM - 08:00 AM",
+                                    "08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM",
+                                    "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM",
+                                    "04:00 PM - 05:00 PM", "05:00 PM - 06:00 PM", "06:00 PM - 07:00 PM", "07:00 PM - 08:00 PM",
+                                    "08:00 PM - 09:00 PM", "09:00 PM - 10:00 PM", "10:00 PM - 11:00 PM", "11:00 PM - 12:00 AM"
                                   ].map(block => (
                                     <option key={block} value={block} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                       {block}
