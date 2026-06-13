@@ -2154,7 +2154,7 @@ export default function App() {
 
   return (
     <div 
-      className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${
+      className={`min-h-screen w-screen flex transition-all duration-500 relative ${
         visualTheme === "nature" 
           ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
           : ""
@@ -2170,7 +2170,7 @@ export default function App() {
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />
 
       {/* Floating Glassmorphic Main Dashboard Card */}
-      <div className={`w-full max-w-6xl glass-container rounded-[2.5rem] flex shadow-2xl relative z-10 transition-all duration-300 ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "usuario") ? "h-auto min-h-[88vh] my-8 overflow-y-auto" : "h-[88vh] overflow-hidden"}`}>
+      <div className={`w-full h-screen glass-container rounded-none flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden`}>
         
         {/* LEFT FIXED SIDEBAR */}
         <div className="w-20 sm:w-24 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md border-r border-white/40 dark:border-slate-800/30 flex flex-col items-center py-8 justify-between shrink-0 select-none">
@@ -2236,7 +2236,7 @@ export default function App() {
         </div>
 
         {/* RIGHT WORKSPACE */}
-        <div className={`flex-1 flex flex-col p-6 sm:p-8 ${(activeTab === "limpieza" || activeTab === "rfid") ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
+        <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden">
           
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
@@ -2340,7 +2340,7 @@ export default function App() {
           )}
 
           {/* TAB CONTENT VIEWS */}
-          <div className={`flex-1 mt-6 ${(activeTab === "limpieza" || activeTab === "rfid") ? "overflow-y-auto h-auto" : "overflow-hidden"}`}>
+          <div className={`flex-1 mt-6 ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "usuario") ? "overflow-y-auto h-full pb-4" : "overflow-hidden"}`}>
             
             {/* TAB 1: INVENTARIO */}
             {activeTab === "inventario" && (
@@ -2379,7 +2379,7 @@ export default function App() {
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4">
                       {filteredProducts.map((product) => (
                         <div
                           key={product.id}

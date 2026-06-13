@@ -253,3 +253,10 @@ body {
   border-color: #76e043 !important;
   box-shadow: 0 0 0 2px rgba(118, 224, 67, 0.4) !important;
 }
+
+/* Estilo base para dashboard a pantalla completa */
+.dashboard-root {
+  border-radius: 0px !important;
+  border: none !important;
+}
+
