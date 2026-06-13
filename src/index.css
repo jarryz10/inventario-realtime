@@ -5,8 +5,8 @@
 body {
   margin: 0;
   font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-  color: #1e293b;
-  background-color: #0f172a;
+  color: #0f172a;
+  background-color: #f1f5f9;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -15,74 +15,84 @@ body {
 
 .dark body {
   color: #f8fafc;
-  background-color: #090d16;
+  background-color: #0b0f19;
 }
 
-/* Glassmorphism effects matching the reference UI */
+/* ==========================================
+   HOMOGENEOUS GLASSMORPHISM STYLE SYSTEM
+   ========================================== */
+
 .glass-container {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(20px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04) !important;
+  border-radius: 32px !important;
 }
 
 .dark .glass-container {
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  background: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(20px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+  background: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 8px 24px 0 rgba(31, 38, 135, 0.02) !important;
+  border-radius: 24px !important;
 }
 
 .dark .glass-card {
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  background: rgba(30, 41, 59, 0.4) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(203, 213, 225, 0.6);
+  background: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   outline: none;
-  transition: all 0.2s ease-in-out;
+  backdrop-filter: blur(5px) !important;
+  transition: all 0.2s ease-in-out !important;
 }
 
 .glass-input:focus {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+  background: rgba(255, 255, 255, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15) !important;
 }
 
 .dark .glass-input {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .dark .glass-input:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  background: rgba(15, 23, 42, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important;
 }
 
 .glass-sidebar {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.35) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
 .dark .glass-sidebar {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(10px);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.3) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Custom Scrollbar */
@@ -118,19 +128,11 @@ body {
 }
 
 .hover-scale:hover {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1.5px) scale(1.01);
 }
 
 .hover-scale:active {
-  transform: translateY(0) scale(0.98);
-}
-
-.hover-glow {
-  transition: box-shadow 0.2s ease-in-out;
-}
-
-.hover-glow:hover {
-  box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.15), 0 8px 10px -6px rgba(14, 165, 233, 0.15);
+  transform: translateY(0) scale(0.99);
 }
 
 .scroll-glass::-webkit-scrollbar-thumb {
@@ -148,7 +150,7 @@ body {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -160,197 +162,66 @@ body {
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Explicit text color overrides with !important */
+/* Unified clean product text */
 .product-name-text {
-  color: #111111 !important;
+  color: #0f172a !important;
 }
 
 .dark .product-name-text {
-  color: #ffffff !important;
+  color: #f8fafc !important;
 }
 
 /* ==========================================
-   NATURE THEME OVERRIDES (Green & Organic)
+   MINIMAL GLASS BUTTONS (Inner Glow & defined border)
    ========================================== */
 
-/* Glass Containers and Cards background */
-.theme-nature .glass-container {
-  background: rgba(255, 255, 255, 0.40) !important;
-  backdrop-filter: blur(16px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.20) !important;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
-}
-
-.theme-nature .dark .glass-container,
-.dark .theme-nature .glass-container {
-  background: rgba(15, 23, 42, 0.40) !important;
-  backdrop-filter: blur(16px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.theme-nature .glass-card {
-  background: rgba(255, 255, 255, 0.45) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-radius: 32px !important; /* Capsule organic shapes */
-  border: 1px solid rgba(255, 255, 255, 0.20) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
-}
-
-.theme-nature .dark .glass-card,
-.dark .theme-nature .glass-card {
-  background: rgba(30, 41, 59, 0.45) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-radius: 32px !important; /* Capsule organic shapes */
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Force extremely rounded capsule corners on common layouts */
-.theme-nature .rounded-\[2\.5rem\] {
-  border-radius: 32px !important;
-}
-.theme-nature .rounded-2xl {
-  border-radius: 32px !important;
-}
-.theme-nature .rounded-xl {
-  border-radius: 24px !important;
-}
-
-/* Action Buttons: Vibrant green gradient, white text, fully rounded (pill) */
-.theme-nature button[type="submit"],
-.theme-nature button.bg-gradient-to-r,
-.theme-nature button.bg-gradient-to-tr,
-.theme-nature button.bg-sky-500,
-.theme-nature button.bg-emerald-500,
-.theme-nature button.bg-sky-500\/10:hover {
-  background: linear-gradient(to right, #20a464, #3cd070) !important;
-  color: #ffffff !important;
-  border-radius: 9999px !important; /* rounded-full */
-  border: none !important;
-  box-shadow: 0 10px 15px -3px rgba(32, 164, 100, 0.3) !important;
-}
-
-/* Glass containers for Classic, Orange, Purple, and Red themes */
-.theme-classic .glass-container,
-.theme-orange .glass-container,
-.theme-purple .glass-container,
-.theme-red .glass-container {
-  background: rgba(255, 255, 255, 0.40) !important;
-  backdrop-filter: blur(16px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.20) !important;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
-}
-.theme-classic .glass-card,
-.theme-orange .glass-card,
-.theme-purple .glass-card,
-.theme-red .glass-card {
-  background: rgba(255, 255, 255, 0.45) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.20) !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
-}
-.theme-classic .dark .glass-container,
-.theme-orange .dark .glass-container,
-.theme-purple .dark .glass-container,
-.theme-red .dark .glass-container,
-.dark .theme-classic .glass-container,
-.dark .theme-orange .glass-container,
-.dark .theme-purple .glass-container,
-.dark .theme-red .glass-container {
-  background: rgba(15, 23, 42, 0.40) !important;
-  backdrop-filter: blur(16px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-.theme-classic .dark .glass-card,
-.theme-orange .dark .glass-card,
-.theme-purple .dark .glass-card,
-.theme-red .dark .glass-card,
-.dark .theme-classic .glass-card,
-.dark .theme-orange .glass-card,
-.dark .theme-purple .glass-card,
-.dark .theme-red .glass-card {
-  background: rgba(30, 41, 59, 0.45) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-/* Classic theme active buttons */
-.theme-classic button[type="submit"],
-.theme-classic button.bg-gradient-to-r {
-  background: linear-gradient(to right, #1e3a8a, #3b82f6) !important;
-  color: #ffffff !important;
+button[type="submit"],
+button.bg-gradient-to-r,
+button.bg-gradient-to-tr,
+button.bg-sky-500,
+button.bg-emerald-500 {
+  background: rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(255, 255, 255, 0.05) !important;
+  color: #0f172a !important;
   border-radius: 9999px !important;
-  border: none !important;
-  box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.3) !important;
+  transition: all 0.2s ease-in-out !important;
 }
-/* Orange theme active buttons */
-.theme-orange button[type="submit"],
-.theme-orange button.bg-gradient-to-r {
-  background: linear-gradient(to right, #7c2d12, #ea580c) !important;
+
+.dark button[type="submit"],
+.dark button.bg-gradient-to-r,
+.dark button.bg-gradient-to-tr,
+.dark button.bg-sky-500,
+.dark button.bg-emerald-500 {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  color: #f8fafc !important;
+}
+
+button[type="submit"]:hover,
+button.bg-gradient-to-r:hover,
+button.bg-gradient-to-tr:hover,
+button.bg-sky-500:hover,
+button.bg-emerald-500:hover {
+  background: rgba(255, 255, 255, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 6px 16px rgba(255, 255, 255, 0.1) !important;
+  color: #0f172a !important;
+  transform: translateY(-1px);
+}
+
+.dark button[type="submit"]:hover,
+.dark button.bg-gradient-to-r:hover,
+.dark button.bg-gradient-to-tr:hover,
+.dark button.bg-sky-500:hover,
+.dark button.bg-emerald-500:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25), 0 6px 16px rgba(0, 0, 0, 0.3) !important;
   color: #ffffff !important;
-  border-radius: 9999px !important;
-  border: none !important;
-  box-shadow: 0 10px 15px -3px rgba(124, 45, 18, 0.3) !important;
-}
-/* Purple theme active buttons */
-.theme-purple button[type="submit"],
-.theme-purple button.bg-gradient-to-r {
-  background: linear-gradient(to right, #4c1d95, #8b5cf6) !important;
-  color: #ffffff !important;
-  border-radius: 9999px !important;
-  border: none !important;
-  box-shadow: 0 10px 15px -3px rgba(76, 29, 149, 0.3) !important;
-}
-/* Red theme active buttons */
-.theme-red button[type="submit"],
-.theme-red button.bg-gradient-to-r {
-  background: linear-gradient(to right, #881337, #f43f5e) !important;
-  color: #ffffff !important;
-  border-radius: 9999px !important;
-  border: none !important;
-  box-shadow: 0 10px 15px -3px rgba(136, 19, 55, 0.3) !important;
-}
-
-
-/* For outline/soft buttons under nature theme (make them match the theme color scheme) */
-.theme-nature button.bg-sky-500\/10 {
-  background: rgba(46, 189, 89, 0.1) !important;
-  color: #2ebd59 !important;
-  border-color: rgba(46, 189, 89, 0.2) !important;
-}
-
-/* Text and accent color adaptations */
-.theme-nature .text-sky-600,
-.theme-nature .text-sky-500 {
-  color: #1e6f42 !important;
-}
-.theme-nature.dark .text-sky-400,
-.theme-nature .dark .text-sky-400,
-.dark .theme-nature .text-sky-400 {
-  color: #76e043 !important;
-}
-
-.theme-nature .bg-sky-500\/10 {
-  background-color: rgba(46, 189, 89, 0.1) !important;
-  color: #1e6f42 !important;
-}
-
-/* Focused inputs border and shadow */
-.theme-nature .glass-input:focus {
-  border-color: #76e043 !important;
-  box-shadow: 0 0 0 2px rgba(118, 224, 67, 0.4) !important;
 }
 
 /* Estilo base para dashboard a pantalla completa */
@@ -359,3 +230,62 @@ body {
   border: none !important;
 }
 
+/* ==========================================
+   THEME ACCENTS DEFINITION (Text & Icons only)
+   ========================================== */
+
+/* Classic theme accents */
+.theme-classic .text-sky-600,
+.theme-classic .text-sky-500 {
+  color: #2563eb !important;
+}
+.theme-classic.dark .text-sky-400,
+.theme-classic .dark .text-sky-400,
+.dark .theme-classic .text-sky-400 {
+  color: #60a5fa !important;
+}
+
+/* Nature theme accents */
+.theme-nature .text-\[\#20a464\],
+.theme-nature .text-sky-600,
+.theme-nature .text-\[\#3cd070\] {
+  color: #16a34a !important;
+}
+.theme-nature.dark .text-sky-400,
+.theme-nature .dark .text-sky-400,
+.dark .theme-nature .text-sky-400 {
+  color: #4ade80 !important;
+}
+
+/* Orange theme accents */
+.theme-orange .text-sky-600,
+.theme-orange .text-sky-500 {
+  color: #ea580c !important;
+}
+.theme-orange.dark .text-sky-400,
+.theme-orange .dark .text-sky-400,
+.dark .theme-orange .text-sky-400 {
+  color: #f97316 !important;
+}
+
+/* Purple theme accents */
+.theme-purple .text-sky-600,
+.theme-purple .text-sky-500 {
+  color: #7c3aed !important;
+}
+.theme-purple.dark .text-sky-400,
+.theme-purple .dark .text-sky-400,
+.dark .theme-purple .text-sky-400 {
+  color: #a78bfa !important;
+}
+
+/* Red theme accents */
+.theme-red .text-sky-600,
+.theme-red .text-sky-500 {
+  color: #e11d48 !important;
+}
+.theme-red.dark .text-sky-400,
+.theme-red .dark .text-sky-400,
+.dark .theme-red .text-sky-400 {
+  color: #fb7185 !important;
+}

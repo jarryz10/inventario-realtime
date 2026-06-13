@@ -7,6 +7,7 @@ import bgGreenWaves from "./assets/bg-green-waves.png";
 import bgOrangeWaves from "./assets/bg-orange-waves.png";
 import bgPurpleWaves from "./assets/bg-purple-waves.png";
 import bgRedWaves from "./assets/bg-red-waves.png";
+import bgBotanical from "./assets/bg-botanical.png";
 import { translations } from "./translations";
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
@@ -124,62 +125,45 @@ const ICON_COMPONENTS = {
 const getBackgroundClass = (theme) => {
   switch (theme) {
     case "nature":
-      return "bg-gradient-to-b from-[#0a2f1d] via-[#14532d] to-[#22c55e] theme-nature";
+      return "theme-nature";
     case "classic":
-      return "bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#3b82f6] theme-classic";
+      return "theme-classic";
     case "orange":
-      return "bg-gradient-to-b from-[#3b1502] via-[#7c2d12] to-[#ea580c] theme-orange";
+      return "theme-orange";
     case "purple":
-      return "bg-gradient-to-b from-[#1e0736] via-[#4c1d95] to-[#8b5cf6] theme-purple";
+      return "theme-purple";
     case "red":
-      return "bg-gradient-to-b from-[#3f0712] via-[#881337] to-[#f43f5e] theme-red";
+      return "theme-red";
     default:
-      return "bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#3b82f6] theme-classic";
+      return "theme-classic";
   }
 };
 
 const getBackgroundStyle = (theme) => {
-  if (theme === "classic") {
-    return {
-      backgroundImage: `url(${bgBlueWaves})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat"
-    };
+  return {
+    backgroundImage: `url(${bgBotanical})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed"
+  };
+};
+
+const getThemeActiveTabClass = (theme) => {
+  switch (theme) {
+    case "classic":
+      return "bg-white/60 border border-white/45 text-blue-600 shadow-sm dark:bg-white/10 dark:text-blue-400 dark:border-white/10";
+    case "nature":
+      return "bg-white/60 border border-white/45 text-[#20a464] shadow-sm dark:bg-white/10 dark:text-[#3cd070] dark:border-white/10";
+    case "orange":
+      return "bg-white/60 border border-white/45 text-orange-600 shadow-sm dark:bg-white/10 dark:text-orange-400 dark:border-white/10";
+    case "purple":
+      return "bg-white/60 border border-white/45 text-purple-600 shadow-sm dark:bg-white/10 dark:text-purple-400 dark:border-white/10";
+    case "red":
+      return "bg-white/60 border border-white/45 text-rose-600 shadow-sm dark:bg-white/10 dark:text-rose-400 dark:border-white/10";
+    default:
+      return "bg-white/60 border border-white/45 text-[#20a464] shadow-sm dark:bg-white/10 dark:text-[#3cd070] dark:border-white/10";
   }
-  if (theme === "nature") {
-    return {
-      backgroundImage: `url(${bgGreenWaves})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat"
-    };
-  }
-  if (theme === "orange") {
-    return {
-      backgroundImage: `url(${bgOrangeWaves})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat"
-    };
-  }
-  if (theme === "purple") {
-    return {
-      backgroundImage: `url(${bgPurpleWaves})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat"
-    };
-  }
-  if (theme === "red") {
-    return {
-      backgroundImage: `url(${bgRedWaves})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat"
-    };
-  }
-  return {};
 };
 
 const MOCK_ICONS = [
@@ -2407,7 +2391,7 @@ export default function App() {
         <div className="w-full max-w-md glass-container rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative z-10 border border-white/50 dark:border-slate-800/30 animate-scale-in">
           {/* Logo Area */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 hover-scale">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-white/60 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-white/40 dark:border-slate-800/25 flex items-center justify-center shadow-md hover-scale">
               <Boxes className="w-8 h-8" />
             </div>
             <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 tracking-tight">{language === "es" ? "Inventario Real-time" : "Real-time Inventory"}</h1>
@@ -2501,10 +2485,10 @@ export default function App() {
           <div className="flex flex-col gap-6 flex-1 min-h-0">
             {/* Logo Area */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#20a464] to-[#3cd070] flex items-center justify-center text-white shadow-md hover-scale shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-white/60 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-white/40 dark:border-slate-800/25 flex items-center justify-center shadow-sm hover-scale shrink-0">
                 <Boxes className="w-5 h-5" />
               </div>
-              <span className="text-sm font-black text-[#20a464] dark:text-[#3cd070] tracking-tight">MasterInventory</span>
+              <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">MasterInventory</span>
             </div>
 
             {/* Navigation Tabs (Dynamic modular configuration) */}
@@ -2523,8 +2507,8 @@ export default function App() {
                     }}
                     className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-full transition-all duration-300 hover-scale cursor-pointer text-xs font-bold text-left ${
                       isActive
-                        ? "bg-white text-[#20a464] shadow-md dark:bg-slate-800 dark:text-[#3cd070]"
-                        : "text-emerald-950/70 hover:text-emerald-950 hover:bg-white/20 dark:text-slate-300 dark:hover:text-white"
+                        ? getThemeActiveTabClass(visualTheme)
+                        : "text-slate-700/80 hover:text-slate-900 hover:bg-white/10 dark:text-slate-300/85 dark:hover:text-white"
                     }`}
                     title={tabTitle}
                   >
