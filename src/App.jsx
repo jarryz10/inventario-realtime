@@ -177,6 +177,21 @@ const getThemeActiveTabClass = (theme) => {
   }
 };
 
+const getThemeDotColorClass = (theme) => {
+  switch (theme) {
+    case "nature":
+      return "text-[#4ade80]";
+    case "redwood":
+      return "text-[#fb923c]";
+    case "coast":
+      return "text-[#2563eb]";
+    case "redrocks":
+      return "text-[#ea580c]";
+    default:
+      return "text-[#4ade80]";
+  }
+};
+
 const getMetallicFrameClass = (theme) => {
   if (theme === "redwood" || theme === "redrocks") {
     return "metallic-frame-bronze";
@@ -2428,7 +2443,10 @@ export default function App() {
             <div className="w-16 h-16 rounded-[1.5rem] bg-white/60 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-white/40 dark:border-slate-800/25 flex items-center justify-center shadow-md hover-scale">
               <Boxes className="w-8 h-8" />
             </div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white mt-4 tracking-tight">{language === "es" ? "Inventario Real-time" : "Real-time Inventory"}</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-4 tracking-tight font-serif-premium">
+              {language === "es" ? "Inventario Real-time" : "Real-time Inventory"}
+              <span className={getThemeDotColorClass(visualTheme)}>.</span>
+            </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">{t.login_description}</p>
           </div>
 
@@ -2521,7 +2539,9 @@ export default function App() {
               <div className="w-10 h-10 rounded-xl bg-white/10 text-slate-100 border border-white/15 flex items-center justify-center shadow-md hover-scale shrink-0">
                 <Boxes className={`w-5 h-5 ${getMetallicIconClass(visualTheme)}`} />
               </div>
-              <span className="text-xl font-bold font-serif-premium text-slate-100 tracking-tight">MasterInventory</span>
+              <span className="text-xl font-bold font-serif-premium text-slate-100 tracking-tight">
+                MasterInventory<span className={getThemeDotColorClass(visualTheme)}>.</span>
+              </span>
             </div>
 
             {/* Navigation Tabs (Dynamic modular configuration) */}
@@ -2659,10 +2679,11 @@ export default function App() {
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2 border-b border-white/10 dark:border-slate-800/10 shrink-0">
             <div>
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-tight">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight font-serif-premium">
                 {t[`tab_${activeTab}_title`] || "Panel de Control"}
+                <span className={getThemeDotColorClass(visualTheme)}>.</span>
               </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 opacity-80">
                 {t[`tab_${activeTab}_desc`] || ""}
               </p>
             </div>
@@ -4579,8 +4600,11 @@ export default function App() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white">{t.edit_user_title}</h2>
-                <p className="text-xs text-slate-400 mt-0.5">{t.edit_assoc_subtitle} {editingUser.id}.</p>
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
+                  {t.edit_user_title}
+                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5 opacity-80">{t.edit_assoc_subtitle} {editingUser.id}.</p>
               </div>
               <button
                 type="button"
@@ -4723,10 +4747,11 @@ export default function App() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
                   {language === "es" ? "Historial de Movimientos" : "Movement History"}
+                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 mt-0.5 opacity-80">
                   {language === "es"
                     ? "Registro de transacciones de inventario (Entradas, Salidas y Ajustes)"
                     : "Inventory transaction log (Entries, Outputs and Adjustments)"}
@@ -4835,8 +4860,11 @@ export default function App() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white">{t.add_new_component_title}</h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
+                  {t.add_new_component_title}
+                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5 opacity-80">
                   {language === "es" ? "Registra una nueva pieza en el inventario real-time." : "Register a new piece in the real-time inventory."}
                 </p>
               </div>
@@ -5160,10 +5188,11 @@ export default function App() {
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-black text-slate-800 dark:text-white">
+                <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
                   {isEditingDetail ? (language === "es" ? "Editar Componente" : "Edit Component") : t.details_modal_title}
+                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 mt-0.5 opacity-80">
                   {isEditingDetail ? (language === "es" ? "Modifica los campos técnicos del componente." : "Modify the technical fields of the component.") : (language === "es" ? "Información técnica y stock en tiempo real." : "Technical info and real-time stock.")}
                 </p>
               </div>

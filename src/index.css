@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* Base Body Styles */
 body {
   margin: 0;
-  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1e293b;
   min-height: 100vh;
   overflow-x: hidden;
@@ -18,7 +18,7 @@ body {
 
 /* Serif Font Class */
 .font-serif-premium {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 /* ==========================================
@@ -317,10 +317,14 @@ option {
 }
 
 .product-name-text {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-weight: 700 !important;
   color: #0f172a !important;
 }
 
 .dark .product-name-text {
+  font-family: 'Playfair Display', Georgia, serif !important;
+  font-weight: 700 !important;
   color: #f8fafc !important;
 }
 
