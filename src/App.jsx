@@ -117,26 +117,6 @@ export default function App() {
   // Authentication & Roles State
   const [currentUser, setCurrentUser] = useState(null);
   const [userLevel, setUserLevel] = useState(1); // 1 = Operador, 2 = Supervisor, 3 = Administrador
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [demoLevel, setDemoLevel] = useState(1);
-
-  const handleDemoToggle = (checked) => {
-    setIsDemoMode(checked);
-    if (checked) {
-      setUserLevel(demoLevel);
-    } else {
-      setUserLevel(currentUser?.level || 1);
-    }
-  };
-
-  const handleDemoLevelChange = (level) => {
-    const lvl = Number(level);
-    setDemoLevel(lvl);
-    if (isDemoMode) {
-      setUserLevel(lvl);
-    }
-  };
-
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Login Form State
@@ -2273,34 +2253,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Modo Demostración */}
-            <div className="p-3 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20 dark:border-slate-700/20 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-wider">
-                  {language === "es" ? "Modo Demostración" : "Demo Mode"}
-                </span>
-                <label className="relative inline-flex items-center cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={isDemoMode}
-                    onChange={(e) => handleDemoToggle(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-8 h-4 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-focus:ring-1 peer-focus:ring-[#20a464] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3.5 after:transition-all peer-checked:bg-[#20a464]"></div>
-                </label>
-              </div>
-              
-              <select
-                value={demoLevel}
-                onChange={(e) => handleDemoLevelChange(e.target.value)}
-                disabled={!isDemoMode}
-                className="w-full px-2 py-1 rounded-xl text-[9px] font-black bg-white/60 dark:bg-slate-900/60 border border-white/20 text-slate-700 dark:text-slate-300 disabled:opacity-50 cursor-pointer"
-              >
-                <option value={1}>{language === "es" ? "Nivel 1 - Operador" : "Level 1 - Operator"}</option>
-                <option value={2}>{language === "es" ? "Nivel 2 - Supervisor" : "Level 2 - Supervisor"}</option>
-                <option value={3}>{language === "es" ? "Nivel 3 - Administrador" : "Level 3 - Administrator"}</option>
-              </select>
-            </div>
 
             {/* Tema Visual */}
             <div>
