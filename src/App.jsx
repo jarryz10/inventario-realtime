@@ -106,6 +106,23 @@ const ICON_COMPONENTS = {
   Users
 };
 
+const getBackgroundClass = (theme) => {
+  switch (theme) {
+    case "nature":
+      return "bg-gradient-to-b from-[#0a2f1d] via-[#14532d] to-[#22c55e] theme-nature";
+    case "classic":
+      return "bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#3b82f6] theme-classic";
+    case "orange":
+      return "bg-gradient-to-b from-[#3b1502] via-[#7c2d12] to-[#ea580c] theme-orange";
+    case "purple":
+      return "bg-gradient-to-b from-[#1e0736] via-[#4c1d95] to-[#8b5cf6] theme-purple";
+    case "red":
+      return "bg-gradient-to-b from-[#3f0712] via-[#881337] to-[#f43f5e] theme-red";
+    default:
+      return "bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#3b82f6] theme-classic";
+  }
+};
+
 export default function App() {
   // Translation State
   const [language, setLanguage] = useState(() => localStorage.getItem("app_language") || "es");
@@ -2008,17 +2025,7 @@ export default function App() {
   if (isAuthChecking) {
     return (
       <div 
-        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${
-          visualTheme === "nature" 
-            ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
-            : ""
-        }`}
-        style={visualTheme === "classic" ? {
-          backgroundImage: "url('/mountain_background.png')",
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat"
-        } : {}}
+        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px]" />
         <div className="glass-card rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center border border-white/40 dark:border-slate-800/30">
@@ -2032,17 +2039,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div 
-        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in ${
-          visualTheme === "nature" 
-            ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
-            : ""
-        }`}
-        style={visualTheme === "classic" ? {
-          backgroundImage: "url('/mountain_background.png')",
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat"
-        } : {}}
+        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in ${getBackgroundClass(visualTheme)}`}
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] pointer-events-none" />
         
@@ -2160,23 +2157,7 @@ export default function App() {
 
   return (
     <div 
-      className={`min-h-screen w-screen flex transition-all duration-500 relative ${
-        visualTheme === "nature" 
-          ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
-          : visualTheme === "orange"
-          ? "bg-gradient-to-b from-[#4a2306] via-[#9e4f12] to-[#f97316] theme-orange"
-          : visualTheme === "purple"
-          ? "bg-gradient-to-b from-[#2e0854] via-[#5b1f9c] to-[#a855f7] theme-purple"
-          : visualTheme === "red"
-          ? "bg-gradient-to-b from-[#5c0618] via-[#a81335] to-[#f43f5e] theme-red"
-          : ""
-      }`}
-      style={visualTheme === "classic" ? {
-        backgroundImage: "url('/mountain_background.png')",
-        backgroundPosition: "center",
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat"
-      } : {}}
+      className={`min-h-screen w-screen flex transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
     >
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />

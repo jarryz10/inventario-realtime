@@ -235,7 +235,8 @@ body {
   box-shadow: 0 10px 15px -3px rgba(32, 164, 100, 0.3) !important;
 }
 
-/* Glass containers for Orange, Purple, and Red themes */
+/* Glass containers for Classic, Orange, Purple, and Red themes */
+.theme-classic .glass-container,
 .theme-orange .glass-container,
 .theme-purple .glass-container,
 .theme-red .glass-container {
@@ -244,7 +245,9 @@ body {
   -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
   border-radius: 32px !important;
   border: 1px solid rgba(255, 255, 255, 0.20) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
 }
+.theme-classic .glass-card,
 .theme-orange .glass-card,
 .theme-purple .glass-card,
 .theme-red .glass-card {
@@ -253,39 +256,71 @@ body {
   -webkit-backdrop-filter: blur(16px) !important;
   border-radius: 32px !important;
   border: 1px solid rgba(255, 255, 255, 0.20) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
 }
+.theme-classic .dark .glass-container,
 .theme-orange .dark .glass-container,
 .theme-purple .dark .glass-container,
 .theme-red .dark .glass-container,
+.dark .theme-classic .glass-container,
 .dark .theme-orange .glass-container,
 .dark .theme-purple .glass-container,
 .dark .theme-red .glass-container {
   background: rgba(15, 23, 42, 0.40) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+  border-radius: 32px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.theme-classic .dark .glass-card,
+.theme-orange .dark .glass-card,
+.theme-purple .dark .glass-card,
+.theme-red .dark .glass-card,
+.dark .theme-classic .glass-card,
+.dark .theme-orange .glass-card,
+.dark .theme-purple .glass-card,
+.dark .theme-red .glass-card {
+  background: rgba(30, 41, 59, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+/* Classic theme active buttons */
+.theme-classic button[type="submit"],
+.theme-classic button.bg-gradient-to-r {
+  background: linear-gradient(to right, #1e3a8a, #3b82f6) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.3) !important;
 }
 /* Orange theme active buttons */
 .theme-orange button[type="submit"],
 .theme-orange button.bg-gradient-to-r {
-  background: linear-gradient(to right, #ea580c, #f97316) !important;
+  background: linear-gradient(to right, #7c2d12, #ea580c) !important;
   color: #ffffff !important;
   border-radius: 9999px !important;
   border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(124, 45, 18, 0.3) !important;
 }
 /* Purple theme active buttons */
 .theme-purple button[type="submit"],
 .theme-purple button.bg-gradient-to-r {
-  background: linear-gradient(to right, #7c3aed, #a855f7) !important;
+  background: linear-gradient(to right, #4c1d95, #8b5cf6) !important;
   color: #ffffff !important;
   border-radius: 9999px !important;
   border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(76, 29, 149, 0.3) !important;
 }
 /* Red theme active buttons */
 .theme-red button[type="submit"],
 .theme-red button.bg-gradient-to-r {
-  background: linear-gradient(to right, #e11d48, #f43f5e) !important;
+  background: linear-gradient(to right, #881337, #f43f5e) !important;
   color: #ffffff !important;
   border-radius: 9999px !important;
   border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(136, 19, 55, 0.3) !important;
 }
 
 
