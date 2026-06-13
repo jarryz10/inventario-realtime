@@ -6,6 +6,7 @@ import bgBlueWaves from "./assets/bg-blue-waves.png";
 import bgGreenWaves from "./assets/bg-green-waves.png";
 import bgOrangeWaves from "./assets/bg-orange-waves.png";
 import bgPurpleWaves from "./assets/bg-purple-waves.png";
+import bgRedWaves from "./assets/bg-red-waves.png";
 import { translations } from "./translations";
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
@@ -155,6 +156,14 @@ const getBackgroundStyle = (theme) => {
   if (theme === "purple") {
     return {
       backgroundImage: `url(${bgPurpleWaves})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat"
+    };
+  }
+  if (theme === "red") {
+    return {
+      backgroundImage: `url(${bgRedWaves})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat"
