@@ -123,6 +123,13 @@ const getBackgroundClass = (theme) => {
   }
 };
 
+const MOCK_ICONS = [
+  { name: "CPU", url: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?w=100&auto=format&fit=crop&q=80" },
+  { name: "RAM", url: "https://images.unsplash.com/photo-1562408590-e32931084e23?w=100&auto=format&fit=crop&q=80" },
+  { name: "Motherboard", url: "https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=100&auto=format&fit=crop&q=80" },
+  { name: "GPU", url: "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=100&auto=format&fit=crop&q=80" }
+];
+
 export default function App() {
   // Translation State
   const [language, setLanguage] = useState(() => localStorage.getItem("app_language") || "es");
@@ -177,7 +184,9 @@ export default function App() {
     sku: "",
     location: "",
     minStock: "",
-    description: ""
+    description: "",
+    image: "",
+    imageType: "upload"
   });
   const [isSavingDetail, setIsSavingDetail] = useState(false);
 
@@ -185,6 +194,16 @@ export default function App() {
   useEffect(() => {
     if (selectedProduct) {
       if (!isEditingDetail) {
+        let detectedImageType = "upload";
+        if (selectedProduct.image) {
+          if (MOCK_ICONS.some(ic => ic.url === selectedProduct.image)) {
+            detectedImageType = "icon";
+          } else if (selectedProduct.image.startsWith("https://firebasestorage.googleapis.com/")) {
+            detectedImageType = "upload";
+          } else {
+            detectedImageType = "url";
+          }
+        }
         setEditDetailForm({
           name: selectedProduct.name || "",
           brand: selectedProduct.brand || "",
@@ -192,7 +211,9 @@ export default function App() {
           sku: selectedProduct.sku || "",
           location: selectedProduct.location || "",
           minStock: selectedProduct.minStock !== undefined ? selectedProduct.minStock.toString() : "",
-          description: selectedProduct.description || ""
+          description: selectedProduct.description || "",
+          image: selectedProduct.image || "",
+          imageType: detectedImageType
         });
       }
     } else {
@@ -259,6 +280,7 @@ export default function App() {
 
   // Refs & States for Firebase Storage file upload
   const fileInputRef = useRef(null);
+  const editFileInputRef = useRef(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(null);
 
@@ -779,7 +801,7 @@ export default function App() {
     uploadTask.on(
       "state_changed",
       (snapshot) => {
-        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        const progress = Math.round((snapshot.bytesTransferred / (snapshot.totalBytes || 1)) * 100);
         setUploadProgress(progress);
       },
       (error) => {
@@ -789,16 +811,34 @@ export default function App() {
         setUploadProgress(null);
       },
       () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          setFormData((prev) => ({ ...prev, imageUrl: downloadURL }));
-          setIsUploading(false);
-          setUploadProgress(null);
-        });
+        getDownloadURL(uploadTask.snapshot.ref)
+          .then((downloadURL) => {
+            if (isEditingDetail) {
+              setEditDetailForm((prev) => ({ ...prev, image: downloadURL }));
+            } else {
+              setFormData((prev) => ({ ...prev, imageUrl: downloadURL }));
+            }
+            setIsUploading(false);
+            setUploadProgress(null);
+          })
+          .catch((err) => {
+            console.error("Error getting download URL:", err);
+            alert(language === "es" ? "Error al obtener la URL de la imagen." : "Error getting image URL.");
+            setIsUploading(false);
+            setUploadProgress(null);
+          });
       }
     );
   };
 
   const onFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
+
+  const onEditFileSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
       handleFileUpload(file);
@@ -1987,7 +2027,8 @@ export default function App() {
         sku: editDetailForm.sku.trim().toUpperCase(),
         location: editDetailForm.location.trim(),
         minStock: parseInt(editDetailForm.minStock) || 0,
-        description: (editDetailForm.description || "").trim()
+        description: (editDetailForm.description || "").trim(),
+        image: (editDetailForm.image || "").trim()
       });
       setIsEditingDetail(false);
       setAlertMessage({
@@ -2015,12 +2056,6 @@ export default function App() {
     }
   };
 
-  const mockIcons = [
-    { name: "CPU", url: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?w=100&auto=format&fit=crop&q=80" },
-    { name: "RAM", url: "https://images.unsplash.com/photo-1562408590-e32931084e23?w=100&auto=format&fit=crop&q=80" },
-    { name: "Motherboard", url: "https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=100&auto=format&fit=crop&q=80" },
-    { name: "GPU", url: "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=100&auto=format&fit=crop&q=80" }
-  ];
 
   if (isAuthChecking) {
     return (
@@ -4530,15 +4565,19 @@ export default function App() {
                         </div>
                       </div>
                     ) : formData.imageUrl ? (
-                      <>
-                        <CheckCircle className="w-7 h-7 text-emerald-500 mb-1.5 animate-scale-in" />
-                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      <div className="flex flex-col items-center gap-1.5 animate-scale-in">
+                        <img 
+                          src={formData.imageUrl} 
+                          alt="Preview" 
+                          className="w-12 h-12 object-cover rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm"
+                        />
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                           {language === "es" ? "¡Imagen cargada correctamente!" : "Image uploaded successfully!"}
                         </span>
-                        <span className="text-[8px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 max-w-[240px] truncate">
+                        <span className="text-[8px] text-slate-400 font-semibold max-w-[240px] truncate">
                           {formData.imageUrl}
                         </span>
-                      </>
+                      </div>
                     ) : (
                       <>
                         <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-sky-500 transition-colors mb-1.5" />
@@ -4553,7 +4592,7 @@ export default function App() {
                 {/* Tab Content 2: Select Icon */}
                 {formData.imageType === "icon" && (
                   <div className="p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800/40 grid grid-cols-4 gap-2 bg-slate-50/50 dark:bg-slate-900/10">
-                    {mockIcons.map((ic) => (
+                    {MOCK_ICONS.map((ic) => (
                       <button
                         key={ic.name}
                         type="button"
@@ -4665,14 +4704,146 @@ export default function App() {
               {/* Large Featured Image */}
               <div className="w-full h-56 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/40 shadow-inner shrink-0 relative">
                 <img
-                  src={selectedProduct.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&auto=format&fit=crop&q=80"}
-                  alt={selectedProduct.name}
+                  src={isEditingDetail ? (editDetailForm.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&auto=format&fit=crop&q=80") : (selectedProduct.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&auto=format&fit=crop&q=80")}
+                  alt={isEditingDetail ? editDetailForm.name : selectedProduct.name}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-3 right-3">
                   {getStockStatus(selectedProduct.stock, selectedProduct.minStock)}
                 </div>
               </div>
+
+              {/* Edit Image Tabs */}
+              {isEditingDetail && (
+                <div className="p-4 rounded-2xl bg-white/40 dark:bg-slate-800/40 border border-white/20 dark:border-slate-800/20 backdrop-blur-md shrink-0 flex flex-col gap-3 animate-fade-in">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-400 uppercase font-black tracking-wider block mb-1">
+                    {language === "es" ? "Imagen del Artículo" : "Item Image"}
+                  </span>
+                  
+                  {/* Tabs */}
+                  <div className="flex gap-4 border-b border-slate-200/50 dark:border-slate-800/50 text-[10px] font-black uppercase tracking-wider mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditDetailForm({ ...editDetailForm, imageType: "upload" })}
+                      className={`pb-2 px-3 transition-colors cursor-pointer ${
+                        editDetailForm.imageType === "upload"
+                          ? "border-b-2 border-sky-500 text-sky-600 dark:text-sky-400 font-extrabold"
+                          : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      }`}
+                    >
+                      {t.upload_file}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditDetailForm({ ...editDetailForm, imageType: "icon" })}
+                      className={`pb-2 px-3 transition-colors cursor-pointer ${
+                        editDetailForm.imageType === "icon"
+                          ? "border-b-2 border-sky-500 text-sky-600 dark:text-sky-400 font-extrabold"
+                          : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      }`}
+                    >
+                      {t.select_icon}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditDetailForm({ ...editDetailForm, imageType: "url" })}
+                      className={`pb-2 px-3 transition-colors cursor-pointer ${
+                        editDetailForm.imageType === "url"
+                          ? "border-b-2 border-sky-500 text-sky-600 dark:text-sky-400 font-extrabold"
+                          : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      }`}
+                    >
+                      {t.url_label}
+                    </button>
+                  </div>
+
+                  {/* Tab Content 1: Upload */}
+                  {editDetailForm.imageType === "upload" && (
+                    <div 
+                      onClick={() => !isUploading && editFileInputRef.current?.click()}
+                      className="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700/50 hover:border-sky-500 dark:hover:border-sky-500 transition-colors flex flex-col items-center justify-center text-center cursor-pointer bg-slate-50/50 dark:bg-slate-900/10 group min-h-[110px]"
+                    >
+                      <input
+                        type="file"
+                        ref={editFileInputRef}
+                        onChange={onEditFileSelect}
+                        style={{ display: "none" }}
+                        accept="image/*"
+                      />
+                      
+                      {isUploading ? (
+                        <div className="w-full flex flex-col items-center justify-center">
+                          <Loader2 className="w-7 h-7 text-sky-500 animate-spin mb-2" />
+                          <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                            {language === "es" ? `Subiendo: ${uploadProgress}%` : `Uploading: ${uploadProgress}%`}
+                          </span>
+                          <div className="w-32 bg-slate-200 dark:bg-slate-800 rounded-full h-1 mt-2 overflow-hidden">
+                            <div className="bg-sky-500 h-1 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                          </div>
+                        </div>
+                      ) : editDetailForm.image ? (
+                        <div className="flex flex-col items-center gap-1.5 animate-scale-in">
+                          <img 
+                            src={editDetailForm.image} 
+                            alt="Preview" 
+                            className="w-12 h-12 object-cover rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm"
+                          />
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                            {language === "es" ? "¡Imagen cargada correctamente!" : "Image uploaded successfully!"}
+                          </span>
+                          <span className="text-[8px] text-slate-400 font-semibold max-w-[240px] truncate">
+                            {editDetailForm.image}
+                          </span>
+                        </div>
+                      ) : (
+                        <>
+                          <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-sky-500 transition-colors mb-1.5" />
+                          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            {language === "es" ? "Haz clic para seleccionar una imagen" : "Click to select an image"}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Tab Content 2: Select Icon */}
+                  {editDetailForm.imageType === "icon" && (
+                    <div className="p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800/40 grid grid-cols-4 gap-2 bg-slate-50/50 dark:bg-slate-900/10">
+                      {MOCK_ICONS.map((ic) => (
+                        <button
+                          key={ic.name}
+                          type="button"
+                          onClick={() => setEditDetailForm({ ...editDetailForm, image: ic.url })}
+                          className={`p-2 rounded-xl flex flex-col items-center gap-1 border transition-all duration-150 hover-scale cursor-pointer ${
+                            editDetailForm.image === ic.url
+                              ? "bg-sky-500/15 border-sky-500 text-sky-600 dark:text-sky-400 font-extrabold"
+                              : "border-slate-200/50 dark:border-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300"
+                          }`}
+                        >
+                          <img src={ic.url} alt={ic.name} className="w-10 h-10 object-cover rounded-lg" />
+                          <span className="text-[9px] font-extrabold">{ic.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tab Content 3: URL */}
+                  {editDetailForm.imageType === "url" && (
+                    <div className="flex flex-col gap-1 bg-slate-50/50 dark:bg-slate-900/10 p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800/40">
+                      <label className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">
+                        {language === "es" ? "URL de la Imagen" : "Image URL"}
+                      </label>
+                      <input
+                        type="url"
+                        value={editDetailForm.image}
+                        onChange={(e) => setEditDetailForm({ ...editDetailForm, image: e.target.value })}
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 text-xs border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-white font-semibold outline-none focus:border-sky-500"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Information Grid */}
               <div className="flex flex-col gap-4 text-xs font-semibold">
