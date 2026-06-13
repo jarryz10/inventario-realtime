@@ -26,6 +26,8 @@ export const translations = {
     tab_usuario_short: "Usuario",
 
     // General Words & Actions
+    theme_classic: "Clásico",
+    theme_nature: "Naturaleza",
     connected: "Conectado",
     disconnected: "Desconectado",
     user_label: "Usuario",
@@ -319,6 +321,8 @@ export const translations = {
     tab_usuario_short: "Users",
 
     // General Words & Actions
+    theme_classic: "Classic",
+    theme_nature: "Nature",
     connected: "Connected",
     disconnected: "Disconnected",
     user_label: "User",

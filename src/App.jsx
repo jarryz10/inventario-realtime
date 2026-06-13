@@ -46,7 +46,8 @@ import {
   Printer,
   Radio,
   Users,
-  Globe
+  Globe,
+  Palette
 } from "lucide-react";
 
 const TABS_CONFIG = [
@@ -107,6 +108,9 @@ export default function App() {
   // Translation State
   const [language, setLanguage] = useState(() => localStorage.getItem("app_language") || "es");
   const t = translations[language];
+
+  // Visual Theme State
+  const [visualTheme, setVisualTheme] = useState(() => localStorage.getItem("app_theme") || "classic");
 
   // Authentication & Roles State
   const [currentUser, setCurrentUser] = useState(null);
@@ -1958,13 +1962,17 @@ export default function App() {
   if (isAuthChecking) {
     return (
       <div 
-        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative"
-        style={{
+        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${
+          visualTheme === "nature" 
+            ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
+            : ""
+        }`}
+        style={visualTheme === "classic" ? {
           backgroundImage: "url('/mountain_background.png')",
           backgroundPosition: "center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat"
-        }}
+        } : {}}
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px]" />
         <div className="glass-card rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center border border-white/40 dark:border-slate-800/30">
@@ -1978,29 +1986,50 @@ export default function App() {
   if (!currentUser) {
     return (
       <div 
-        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in"
-        style={{
+        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in ${
+          visualTheme === "nature" 
+            ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
+            : ""
+        }`}
+        style={visualTheme === "classic" ? {
           backgroundImage: "url('/mountain_background.png')",
           backgroundPosition: "center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat"
-        }}
+        } : {}}
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] pointer-events-none" />
         
-        {/* Language selector in top-right corner of login screen */}
-        <button
-          onClick={() => {
-            const nextLang = language === "es" ? "en" : "es";
-            setLanguage(nextLang);
-            localStorage.setItem("app_language", nextLang);
-          }}
-          className="absolute top-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-slate-900/40 hover:bg-white/60 dark:hover:bg-slate-900/60 text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-white/20 dark:border-slate-800/10 select-none hover-scale cursor-pointer transition-colors duration-200 backdrop-blur-md"
-          title={language === "es" ? "Switch to English" : "Cambiar a Español"}
-        >
-          <Globe className="w-3.5 h-3.5 text-sky-500" />
-          <span>{language === "es" ? "ES" : "EN"}</span>
-        </button>
+        {/* Controls in top-right corner of login screen */}
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          {/* Theme Selector */}
+          <button
+            onClick={() => {
+              const nextTheme = visualTheme === "classic" ? "nature" : "classic";
+              setVisualTheme(nextTheme);
+              localStorage.setItem("app_theme", nextTheme);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-slate-900/40 hover:bg-white/60 dark:hover:bg-slate-900/60 text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-white/20 dark:border-slate-800/10 select-none hover-scale cursor-pointer transition-colors duration-200 backdrop-blur-md"
+            title={visualTheme === "classic" ? (language === "es" ? "Cambiar a Naturaleza" : "Switch to Nature") : (language === "es" ? "Cambiar a Clásico" : "Switch to Classic")}
+          >
+            <Palette className="w-3.5 h-3.5 text-sky-500" />
+            <span>{visualTheme === "classic" ? (language === "es" ? "Clásico" : "Classic") : (language === "es" ? "Naturaleza" : "Nature")}</span>
+          </button>
+
+          {/* Language Selector */}
+          <button
+            onClick={() => {
+              const nextLang = language === "es" ? "en" : "es";
+              setLanguage(nextLang);
+              localStorage.setItem("app_language", nextLang);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-slate-900/40 hover:bg-white/60 dark:hover:bg-slate-900/60 text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-white/20 dark:border-slate-800/10 select-none hover-scale cursor-pointer transition-colors duration-200 backdrop-blur-md"
+            title={language === "es" ? "Switch to English" : "Cambiar a Español"}
+          >
+            <Globe className="w-3.5 h-3.5 text-sky-500" />
+            <span>{language === "es" ? "ES" : "EN"}</span>
+          </button>
+        </div>
 
         <div className="w-full max-w-md glass-container rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative z-10 border border-white/50 dark:border-slate-800/30 animate-scale-in">
           {/* Logo Area */}
@@ -2080,13 +2109,17 @@ export default function App() {
 
   return (
     <div 
-      className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative"
-      style={{
+      className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${
+        visualTheme === "nature" 
+          ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
+          : ""
+      }`}
+      style={visualTheme === "classic" ? {
         backgroundImage: "url('/mountain_background.png')",
         backgroundPosition: "center",
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat"
-      }}
+      } : {}}
     >
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />
@@ -2172,6 +2205,21 @@ export default function App() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto justify-end">
+              {/* Theme Toggle */}
+              <button
+                onClick={() => {
+                  const nextTheme = visualTheme === "classic" ? "nature" : "classic";
+                  setVisualTheme(nextTheme);
+                  localStorage.setItem("app_theme", nextTheme);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-extrabold border border-sky-500/20 select-none hover-scale cursor-pointer transition-colors duration-200"
+                title={visualTheme === "classic" ? (language === "es" ? "Cambiar a Naturaleza" : "Switch to Nature") : (language === "es" ? "Cambiar a Clásico" : "Switch to Classic")}
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span>{visualTheme === "classic" ? (language === "es" ? "Clásico" : "Classic") : (language === "es" ? "Naturaleza" : "Nature")}</span>
+              </button>
+
+              {/* Language Selector */}
               <button
                 onClick={() => {
                   const nextLang = language === "es" ? "en" : "es";

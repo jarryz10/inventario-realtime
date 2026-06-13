@@ -168,3 +168,88 @@ body {
 .dark .product-name-text {
   color: #ffffff !important;
 }
+
+/* ==========================================
+   NATURE THEME OVERRIDES (Green & Organic)
+   ========================================== */
+
+/* Glass Containers and Cards background */
+.theme-nature .glass-container {
+  background: rgba(255, 255, 255, 0.90) !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+}
+
+.theme-nature .dark .glass-container,
+.dark .theme-nature .glass-container {
+  background: rgba(15, 23, 42, 0.90) !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.theme-nature .glass-card {
+  background: rgba(255, 255, 255, 0.90) !important;
+  border-radius: 32px !important; /* Capsule organic shapes */
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+}
+
+.theme-nature .dark .glass-card,
+.dark .theme-nature .glass-card {
+  background: rgba(30, 41, 59, 0.90) !important;
+  border-radius: 32px !important; /* Capsule organic shapes */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Force extremely rounded capsule corners on common layouts */
+.theme-nature .rounded-\[2\.5rem\] {
+  border-radius: 32px !important;
+}
+.theme-nature .rounded-2xl {
+  border-radius: 32px !important;
+}
+.theme-nature .rounded-xl {
+  border-radius: 24px !important;
+}
+
+/* Action Buttons: Vibrant green gradient, white text, fully rounded (pill) */
+.theme-nature button[type="submit"],
+.theme-nature button.bg-gradient-to-r,
+.theme-nature button.bg-gradient-to-tr,
+.theme-nature button.bg-sky-500,
+.theme-nature button.bg-emerald-500,
+.theme-nature button.bg-sky-500\/10:hover {
+  background: linear-gradient(to right, #2ebd59, #a0ec33) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important; /* rounded-full */
+  border: none !important;
+  box-shadow: 0 10px 15px -3px rgba(46, 189, 89, 0.3) !important;
+}
+
+/* For outline/soft buttons under nature theme (make them match the theme color scheme) */
+.theme-nature button.bg-sky-500\/10 {
+  background: rgba(46, 189, 89, 0.1) !important;
+  color: #2ebd59 !important;
+  border-color: rgba(46, 189, 89, 0.2) !important;
+}
+
+/* Text and accent color adaptations */
+.theme-nature .text-sky-600,
+.theme-nature .text-sky-500 {
+  color: #1e6f42 !important;
+}
+.theme-nature.dark .text-sky-400,
+.theme-nature .dark .text-sky-400,
+.dark .theme-nature .text-sky-400 {
+  color: #76e043 !important;
+}
+
+.theme-nature .bg-sky-500\/10 {
+  background-color: rgba(46, 189, 89, 0.1) !important;
+  color: #1e6f42 !important;
+}
+
+/* Focused inputs border and shadow */
+.theme-nature .glass-input:focus {
+  border-color: #76e043 !important;
+  box-shadow: 0 0 0 2px rgba(118, 224, 67, 0.4) !important;
+}
