@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { db, storage } from "./firebase";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import bgBlueWaves from "./assets/bg-blue-waves.png";
 import { translations } from "./translations";
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
@@ -121,6 +122,18 @@ const getBackgroundClass = (theme) => {
     default:
       return "bg-gradient-to-b from-[#0f172a] via-[#1e3a8a] to-[#3b82f6] theme-classic";
   }
+};
+
+const getBackgroundStyle = (theme) => {
+  if (theme === "classic") {
+    return {
+      backgroundImage: `url(${bgBlueWaves})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat"
+    };
+  }
+  return {};
 };
 
 const MOCK_ICONS = [
@@ -2061,6 +2074,7 @@ export default function App() {
     return (
       <div 
         className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
+        style={getBackgroundStyle(visualTheme)}
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px]" />
         <div className="glass-card rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center border border-white/40 dark:border-slate-800/30">
@@ -2075,6 +2089,7 @@ export default function App() {
     return (
       <div 
         className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in ${getBackgroundClass(visualTheme)}`}
+        style={getBackgroundStyle(visualTheme)}
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] pointer-events-none" />
         
@@ -2193,6 +2208,7 @@ export default function App() {
   return (
     <div 
       className={`min-h-screen w-screen flex transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
+      style={getBackgroundStyle(visualTheme)}
     >
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px] transition-colors duration-500 pointer-events-none" />
