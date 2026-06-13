@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { db } from "./firebase";
+import React, { useState, useEffect, useRef } from "react";
+import { db, storage } from "./firebase";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { translations } from "./translations";
+import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
   collection, 
   addDoc, 
@@ -237,6 +238,11 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertMessage, setAlertMessage] = useState({ type: "", text: "" });
+
+  // Refs & States for Firebase Storage file upload
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   // Form State: Add Component
   const [formData, setFormData] = useState({
@@ -740,6 +746,45 @@ export default function App() {
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  // Handle File Upload to Firebase Storage
+  const handleFileUpload = (file) => {
+    if (!file) return;
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    const uniqueFileName = `${Date.now()}_${file.name}`;
+    const fileRef = storageRef(storage, `inventory_images/${uniqueFileName}`);
+    const uploadTask = uploadBytesResumable(fileRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+        setUploadProgress(progress);
+      },
+      (error) => {
+        console.error("Error uploading file:", error);
+        alert(language === "es" ? "Error al subir la imagen." : "Error uploading image.");
+        setIsUploading(false);
+        setUploadProgress(null);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          setFormData((prev) => ({ ...prev, imageUrl: downloadURL }));
+          setIsUploading(false);
+          setUploadProgress(null);
+        });
+      }
+    );
+  };
+
+  const onFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleFileUpload(file);
+    }
   };
 
   // Add Component Submission
@@ -4422,17 +4467,48 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Tab Content 1: Upload (Mock Drag & Drop) */}
+                {/* Tab Content 1: Upload (Firebase Storage integration) */}
                 {formData.imageType === "upload" && (
                   <div 
-                    onClick={() => setFormData({ ...formData, imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=300&auto=format&fit=crop&q=80" })}
-                    className="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700/50 hover:border-sky-500 dark:hover:border-sky-500 transition-colors flex flex-col items-center justify-center text-center cursor-pointer bg-slate-50/50 dark:bg-slate-900/10 group"
+                    onClick={() => !isUploading && fileInputRef.current?.click()}
+                    className="p-5 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700/50 hover:border-sky-500 dark:hover:border-sky-500 transition-colors flex flex-col items-center justify-center text-center cursor-pointer bg-slate-50/50 dark:bg-slate-900/10 group min-h-[110px]"
                   >
-                    <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-sky-500 transition-colors mb-1.5" />
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                      {formData.imageUrl ? (language === "es" ? "¡Imagen cargada correctamente!" : "Image uploaded successfully!") : t.drag_drop_placeholder}
-                    </span>
-                    {formData.imageUrl && <span className="text-[8px] text-emerald-500 font-semibold mt-0.5">{language === "es" ? "Mock: Placa de Hardware Cargada" : "Mock: Hardware Board Loaded"}</span>}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={onFileSelect}
+                      style={{ display: "none" }}
+                      accept="image/*"
+                    />
+                    
+                    {isUploading ? (
+                      <div className="w-full flex flex-col items-center justify-center">
+                        <Loader2 className="w-7 h-7 text-sky-500 animate-spin mb-2" />
+                        <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">
+                          {language === "es" ? `Subiendo: ${uploadProgress}%` : `Uploading: ${uploadProgress}%`}
+                        </span>
+                        <div className="w-32 bg-slate-200 dark:bg-slate-800 rounded-full h-1 mt-2 overflow-hidden">
+                          <div className="bg-sky-500 h-1 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                        </div>
+                      </div>
+                    ) : formData.imageUrl ? (
+                      <>
+                        <CheckCircle className="w-7 h-7 text-emerald-500 mb-1.5 animate-scale-in" />
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                          {language === "es" ? "¡Imagen cargada correctamente!" : "Image uploaded successfully!"}
+                        </span>
+                        <span className="text-[8px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 max-w-[240px] truncate">
+                          {formData.imageUrl}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-sky-500 transition-colors mb-1.5" />
+                        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                          {language === "es" ? "Haz clic para seleccionar una imagen" : "Click to select an image"}
+                        </span>
+                      </>
+                    )}
                   </div>
                 )}
 
