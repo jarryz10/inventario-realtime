@@ -25,78 +25,218 @@ body {
    NEO-FROSTED GLASS SYSTEM (Advanced Glassmorphism)
    ========================================== */
 
+/* ==========================================
+   DYNAMIC ADAPTIVE THEME SYSTEM VARIABLES
+   ========================================== */
+
+/* Tema Clásico (Azul) - Fondo Claro / Contraste */
+.theme-classic {
+  --glass-bg: rgba(239, 246, 255, 0.35); /* Soft light blue tint */
+  --glass-border: rgba(59, 130, 246, 0.25);
+  --text-main: #1e3a8a; /* Dark navy */
+  --text-muted: #3b5998; /* Navy */
+  --sidebar-bg: rgba(15, 23, 42, 0.65);
+}
+
+/* Tema Clásico (Azul) - Modo Noche / Oscuro */
+.dark .theme-classic,
+.theme-classic.dark {
+  --glass-bg: rgba(30, 58, 138, 0.25); /* Dark translucent blue */
+  --glass-border: rgba(96, 165, 250, 0.2);
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --sidebar-bg: rgba(10, 15, 28, 0.75);
+}
+
+/* Tema Naturaleza (Verde) - Fondo Claro / Contraste */
+.theme-nature {
+  --glass-bg: rgba(236, 253, 245, 0.35); /* Soft light green tint */
+  --glass-border: rgba(16, 185, 129, 0.25);
+  --text-main: #064e3b; /* Forest green */
+  --text-muted: #047857;
+  --sidebar-bg: rgba(15, 23, 42, 0.65);
+}
+
+/* Tema Naturaleza (Verde) - Modo Noche / Oscuro */
+.dark .theme-nature,
+.theme-nature.dark {
+  --glass-bg: rgba(6, 78, 59, 0.25);
+  --glass-border: rgba(52, 211, 153, 0.2);
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --sidebar-bg: rgba(10, 15, 28, 0.75);
+}
+
+/* Tema Naranja - Fondo Claro / Contraste */
+.theme-orange {
+  --glass-bg: rgba(255, 247, 237, 0.35); /* Soft orange tint */
+  --glass-border: rgba(249, 115, 22, 0.25);
+  --text-main: #7c2d12; /* Dark bronze/orange */
+  --text-muted: #c2410c;
+  --sidebar-bg: rgba(15, 23, 42, 0.65);
+}
+
+/* Tema Naranja - Modo Noche / Oscuro */
+.dark .theme-orange,
+.theme-orange.dark {
+  --glass-bg: rgba(124, 45, 18, 0.25);
+  --glass-border: rgba(251, 146, 60, 0.2);
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --sidebar-bg: rgba(10, 15, 28, 0.75);
+}
+
+/* Tema Morado/Lavanda - Fondo Claro / Contraste */
+.theme-purple {
+  --glass-bg: rgba(250, 245, 255, 0.35); /* Soft purple tint */
+  --glass-border: rgba(168, 85, 247, 0.25);
+  --text-main: #581c87; /* Dark lavender */
+  --text-muted: #7e22ce;
+  --sidebar-bg: rgba(15, 23, 42, 0.65);
+}
+
+/* Tema Morado/Lavanda - Modo Noche / Oscuro */
+.dark .theme-purple,
+.theme-purple.dark {
+  --glass-bg: rgba(88, 28, 135, 0.25);
+  --glass-border: rgba(192, 132, 252, 0.2);
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --sidebar-bg: rgba(10, 15, 28, 0.75);
+}
+
+/* Tema Rojo - Fondo Claro / Contraste */
+.theme-red {
+  --glass-bg: rgba(254, 242, 242, 0.35); /* Soft red tint */
+  --glass-border: rgba(239, 68, 68, 0.25);
+  --text-main: #881337; /* Dark rose/red */
+  --text-muted: #be123c;
+  --sidebar-bg: rgba(15, 23, 42, 0.65);
+}
+
+/* Tema Rojo - Modo Noche / Oscuro */
+.dark .theme-red,
+.theme-red.dark {
+  --glass-bg: rgba(136, 19, 55, 0.25);
+  --glass-border: rgba(248, 113, 113, 0.2);
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --sidebar-bg: rgba(10, 15, 28, 0.75);
+}
+
+/* Dynamic Contrast Rules for Typography under Active Themes */
+[class*="theme-"] .text-slate-900,
+[class*="theme-"] .text-slate-800,
+[class*="theme-"] .text-slate-700,
+[class*="theme-"] .text-slate-200,
+[class*="theme-"] h1,
+[class*="theme-"] h2,
+[class*="theme-"] h3,
+[class*="theme-"] h4,
+[class*="theme-"] th {
+  color: var(--text-main) !important;
+}
+
+[class*="theme-"] .text-slate-600,
+[class*="theme-"] .text-slate-500,
+[class*="theme-"] .text-slate-400,
+[class*="theme-"] p,
+[class*="theme-"] td,
+[class*="theme-"] label {
+  color: var(--text-muted) !important;
+}
+
+/* Sidebar text override to keep sidebar readable */
+.glass-sidebar .text-slate-300,
+.glass-sidebar .text-slate-300\/80 {
+  color: rgba(203, 213, 225, 0.8) !important;
+}
+.glass-sidebar .text-slate-100 {
+  color: #f8fafc !important;
+}
+.glass-sidebar .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
 .glass-container {
-  background: rgba(255, 255, 255, 0.28) !important;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.28)) !important;
   backdrop-filter: blur(25px) saturate(110%) !important;
   -webkit-backdrop-filter: blur(25px) saturate(110%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.3)) !important;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.04) !important;
   border-radius: 28px !important;
 }
 
 .dark .glass-container {
-  background: rgba(15, 23, 42, 0.25) !important;
+  background: var(--glass-bg, rgba(15, 23, 42, 0.25)) !important;
   backdrop-filter: blur(25px) saturate(110%) !important;
   -webkit-backdrop-filter: blur(25px) saturate(110%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2) !important;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.35) !important;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.35)) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.35) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.35)) !important;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 8px 32px 0 rgba(31, 38, 135, 0.02) !important;
   border-radius: 24px !important;
 }
 
 .dark .glass-card {
-  background: rgba(30, 41, 59, 0.3) !important;
+  background: var(--glass-bg, rgba(30, 41, 59, 0.3)) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.25)) !important;
+  color: var(--text-main) !important;
   outline: none;
   backdrop-filter: blur(10px) !important;
   transition: all 0.2s ease-in-out !important;
 }
 
+.glass-input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.6;
+}
+
 .glass-input:focus {
-  background: rgba(255, 255, 255, 0.45) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: var(--glass-border, rgba(255, 255, 255, 0.5)) !important;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12) !important;
 }
 
 .dark .glass-input {
   background: rgba(15, 23, 42, 0.4) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
+  color: var(--text-main) !important;
 }
 
 .dark .glass-input:focus {
   background: rgba(15, 23, 42, 0.55) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
+  border-color: var(--glass-border, rgba(255, 255, 255, 0.18)) !important;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04) !important;
 }
 
 /* Sidebar: Frosted Glass Oscuro */
 .glass-sidebar {
-  background: rgba(15, 23, 42, 0.65) !important;
+  background: var(--sidebar-bg, rgba(15, 23, 42, 0.65)) !important;
   backdrop-filter: blur(30px) !important;
   -webkit-backdrop-filter: blur(30px) !important;
-  border-right: 1px solid rgba(163, 130, 92, 0.25) !important; /* Bronze fine edge */
+  border-right: 1px solid var(--glass-border, rgba(163, 130, 92, 0.25)) !important; /* Bronze fine edge */
 }
 
 .dark .glass-sidebar {
-  background: rgba(10, 15, 28, 0.75) !important;
+  background: var(--sidebar-bg, rgba(10, 15, 28, 0.75)) !important;
   backdrop-filter: blur(30px) !important;
   -webkit-backdrop-filter: blur(30px) !important;
-  border-right: 1px solid rgba(163, 130, 92, 0.15) !important;
+  border-right: 1px solid var(--glass-border, rgba(163, 130, 92, 0.15)) !important;
 }
 
 /* Custom Scrollbar */
