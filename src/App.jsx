@@ -827,11 +827,9 @@ export default function App() {
         setUploadProgress(progress);
       },
       (error) => {
-        console.error("Firebase Storage Upload Failed:", error);
-        alert(language === "es" 
-          ? `Falla al subir la imagen: ${error.message || error}` 
-          : `Image upload failed: ${error.message || error}`
-        );
+        console.error("Código de error de Firebase Storage:", error.code);
+        console.error("Mensaje completo de error:", error.message);
+        alert(`Error al iniciar subida (0%): ${error.code} - Revisa la consola.`);
         setIsUploading(false);
         setUploadProgress(null);
       },
