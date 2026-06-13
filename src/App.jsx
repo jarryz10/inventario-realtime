@@ -2,12 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { db, storage } from "./firebase";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import bgBlueWaves from "./assets/bg-blue-waves.png";
-import bgGreenWaves from "./assets/bg-green-waves.png";
-import bgOrangeWaves from "./assets/bg-orange-waves.png";
-import bgPurpleWaves from "./assets/bg-purple-waves.png";
-import bgRedWaves from "./assets/bg-red-waves.png";
 import bgBotanicalGradient from "./assets/bg-botanical-gradient.png";
+import bgRedwoodForest from "./assets/bg-redwood-forest.png";
+import bgPacificCoast from "./assets/bg-pacific-coast.png";
+import bgRedRocks from "./assets/bg-red-rocks.png";
 import { translations } from "./translations";
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
@@ -126,22 +124,37 @@ const getBackgroundClass = (theme) => {
   switch (theme) {
     case "nature":
       return "theme-nature";
-    case "classic":
-      return "theme-classic";
-    case "orange":
-      return "theme-orange";
-    case "purple":
-      return "theme-purple";
-    case "red":
-      return "theme-red";
+    case "redwood":
+      return "theme-redwood";
+    case "coast":
+      return "theme-coast";
+    case "redrocks":
+      return "theme-redrocks";
     default:
-      return "theme-classic";
+      return "theme-nature";
   }
 };
 
 const getBackgroundStyle = (theme) => {
+  let bgImage;
+  switch (theme) {
+    case "nature":
+      bgImage = bgBotanicalGradient;
+      break;
+    case "redwood":
+      bgImage = bgRedwoodForest;
+      break;
+    case "coast":
+      bgImage = bgPacificCoast;
+      break;
+    case "redrocks":
+      bgImage = bgRedRocks;
+      break;
+    default:
+      bgImage = bgBotanicalGradient;
+  }
   return {
-    backgroundImage: `url(${bgBotanicalGradient})`,
+    backgroundImage: `url(${bgImage})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
@@ -151,30 +164,28 @@ const getBackgroundStyle = (theme) => {
 
 const getThemeActiveTabClass = (theme) => {
   switch (theme) {
-    case "classic":
-      return "bg-white/60 border border-white/45 text-blue-600 shadow-sm dark:bg-white/10 dark:text-blue-400 dark:border-white/10";
     case "nature":
-      return "bg-white/60 border border-white/45 text-[#20a464] shadow-sm dark:bg-white/10 dark:text-[#3cd070] dark:border-white/10";
-    case "orange":
-      return "bg-white/60 border border-white/45 text-orange-600 shadow-sm dark:bg-white/10 dark:text-orange-400 dark:border-white/10";
-    case "purple":
-      return "bg-white/60 border border-white/45 text-purple-600 shadow-sm dark:bg-white/10 dark:text-purple-400 dark:border-white/10";
-    case "red":
-      return "bg-white/60 border border-white/45 text-rose-600 shadow-sm dark:bg-white/10 dark:text-rose-400 dark:border-white/10";
+      return "bg-white/20 border border-white/30 text-[#4ade80] dark:text-[#4ade80] shadow-md";
+    case "redwood":
+      return "bg-white/20 border border-white/30 text-[#fb923c] dark:text-[#fb923c] shadow-md";
+    case "coast":
+      return "bg-white/20 border border-white/30 text-[#2563eb] dark:text-[#2563eb] shadow-md";
+    case "redrocks":
+      return "bg-white/20 border border-white/30 text-[#ea580c] dark:text-[#ea580c] shadow-md";
     default:
-      return "bg-white/60 border border-white/45 text-[#20a464] shadow-sm dark:bg-white/10 dark:text-[#3cd070] dark:border-white/10";
+      return "bg-white/20 border border-white/30 text-white shadow-md";
   }
 };
 
 const getMetallicFrameClass = (theme) => {
-  if (theme === "orange" || theme === "red") {
+  if (theme === "redwood" || theme === "redrocks") {
     return "metallic-frame-bronze";
   }
   return "metallic-frame-silver";
 };
 
 const getMetallicIconClass = (theme) => {
-  if (theme === "orange" || theme === "red") {
+  if (theme === "redwood" || theme === "redrocks") {
     return "metallic-icon-bronze";
   }
   return "metallic-icon-silver";
@@ -2377,15 +2388,23 @@ export default function App() {
           {/* Theme Selector */}
           <button
             onClick={() => {
-              const nextTheme = visualTheme === "classic" ? "nature" : "classic";
+              const themeCycle = ["nature", "redwood", "coast", "redrocks"];
+              const currentIndex = themeCycle.indexOf(visualTheme);
+              const nextIndex = (currentIndex + 1) % themeCycle.length;
+              const nextTheme = themeCycle[nextIndex] || "nature";
               setVisualTheme(nextTheme);
               localStorage.setItem("app_theme", nextTheme);
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-slate-900/40 hover:bg-white/60 dark:hover:bg-slate-900/60 text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-white/20 dark:border-slate-800/10 select-none hover-scale cursor-pointer transition-colors duration-200 backdrop-blur-md"
-            title={visualTheme === "classic" ? (language === "es" ? "Cambiar a Naturaleza" : "Switch to Nature") : (language === "es" ? "Cambiar a Clásico" : "Switch to Classic")}
+            title={language === "es" ? "Cambiar Fondo de Pantalla" : "Switch Wallpaper"}
           >
             <Palette className="w-3.5 h-3.5 text-sky-500" />
-            <span>{visualTheme === "classic" ? (language === "es" ? "Clásico" : "Classic") : (language === "es" ? "Naturaleza" : "Nature")}</span>
+            <span>
+              {visualTheme === "nature" && (language === "es" ? "Helechos" : "Ferns")}
+              {visualTheme === "redwood" && (language === "es" ? "Secuoyas" : "Redwoods")}
+              {visualTheme === "coast" && (language === "es" ? "Costa Pacífica" : "Coast")}
+              {visualTheme === "redrocks" && (language === "es" ? "Rocas Rojas" : "Red Rocks")}
+            </span>
           </button>
 
           {/* Language Selector */}
@@ -2493,7 +2512,7 @@ export default function App() {
       <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 transition-colors duration-500 pointer-events-none" />
 
       {/* Floating Glassmorphic Main Dashboard Card */}
-      <div className={`w-full h-screen glass-container rounded-none flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden`}>
+      <div className={`w-full h-screen flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden`}>
         
         {/* LEFT FIXED SIDEBAR */}
         <div className="w-64 sm:w-72 glass-sidebar flex flex-col p-6 justify-between shrink-0 select-none shadow-xl">
@@ -2572,11 +2591,10 @@ export default function App() {
               </span>
               <div className="flex items-center gap-2">
                 {[
-                  { name: "classic", color: "bg-blue-500", ring: "ring-blue-300" },
-                  { name: "nature", color: "bg-emerald-500", ring: "ring-emerald-300" },
-                  { name: "orange", color: "bg-orange-500", ring: "ring-orange-300" },
-                  { name: "purple", color: "bg-purple-500", ring: "ring-purple-300" },
-                  { name: "red", color: "bg-rose-500", ring: "ring-rose-300" }
+                  { name: "nature", color: "bg-emerald-500", ring: "ring-emerald-300", label: { es: "Helechos", en: "Ferns" } },
+                  { name: "redwood", color: "bg-amber-800", ring: "ring-amber-500", label: { es: "Secuoyas", en: "Redwoods" } },
+                  { name: "coast", color: "bg-sky-400", ring: "ring-sky-300", label: { es: "Costa Pacífica", en: "Pacific Coast" } },
+                  { name: "redrocks", color: "bg-red-500", ring: "ring-red-300", label: { es: "Rocas Rojas", en: "Red Rocks" } }
                 ].map((tOption) => (
                   <button
                     key={tOption.name}
@@ -2589,7 +2607,7 @@ export default function App() {
                         ? `ring-2 ring-offset-2 dark:ring-offset-slate-950 ${tOption.ring}`
                         : ""
                     }`}
-                    title={tOption.name}
+                    title={tOption.label[language]}
                   />
                 ))}
               </div>
@@ -2727,7 +2745,7 @@ export default function App() {
                   <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                     {t.components_warehouse}
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                     {products.length} {t.registered_suffix}
                   </span>
                 </div>
@@ -2785,14 +2803,14 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 text-[11px]">
-                            <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10 dark:border-slate-800/30 text-[11px]">
+                            <div className="p-2 rounded-xl bg-white/5 dark:bg-slate-950/20 border border-white/10 dark:border-slate-800/20 flex flex-col">
                               <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">SKU</span>
                               <span className="font-mono font-bold text-[10px] text-slate-600 dark:text-slate-300 uppercase truncate">
                                 {product.sku || "N/A"}
                               </span>
                             </div>
-                            <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 flex flex-col">
+                            <div className="p-2 rounded-xl bg-white/5 dark:bg-slate-950/20 border border-white/10 dark:border-slate-800/20 flex flex-col">
                               <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">{language === "es" ? "Ubicación" : "Location"}</span>
                               <span className="font-bold text-[10px] text-slate-600 dark:text-slate-300 truncate flex items-center gap-0.5">
                                 <MapPin className="w-3 h-3 text-sky-500" />
@@ -2985,7 +3003,7 @@ export default function App() {
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                         {t.pending_orders}
                       </h2>
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                      <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                         {orders.filter(o => o.status !== "recibido" && o.status !== "rechazado").length} {t.pending_suffix}
                       </span>
                     </div>
@@ -3121,7 +3139,7 @@ export default function App() {
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                         {t.orders_history_title}
                       </h2>
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                      <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                         {orderHistory.length} {t.finished_suffix}
                       </span>
                     </div>
@@ -3310,7 +3328,7 @@ export default function App() {
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             {t.recent_reports_title}
                           </h2>
-                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                             {dailyReports.length} {t.reports_suffix}
                           </span>
                         </div>
@@ -3402,7 +3420,7 @@ export default function App() {
                           </h2>
                           <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{t.audit_reports_subtitle}</p>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                           {dailyReports.length} {t.total_suffix}
                         </span>
                       </div>
@@ -3635,7 +3653,7 @@ export default function App() {
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             {t.cleaning_history_title}
                           </h2>
-                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                             {printerCleanings.length} {t.reports_suffix}
                           </span>
                         </div>
@@ -3753,7 +3771,7 @@ export default function App() {
                           </h2>
                           <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{t.cleaning_supervision_subtitle}</p>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                           {printerCleanings.length} {t.total_suffix}
                         </span>
                       </div>
@@ -4006,7 +4024,7 @@ export default function App() {
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             {t.rfid_history_title}
                           </h2>
-                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                          <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                             {rfidVerifications.length} {t.reports_suffix}
                           </span>
                         </div>
@@ -4129,7 +4147,7 @@ export default function App() {
                           </h2>
                           <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">{t.rfid_supervision_subtitle}</p>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                           {rfidVerifications.length} {t.total_suffix}
                         </span>
                       </div>
@@ -4384,7 +4402,7 @@ export default function App() {
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                           {t.assoc_list_title}
                         </h2>
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                        <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
                           {usersList.length} {t.associates_suffix}
                         </span>
                       </div>
