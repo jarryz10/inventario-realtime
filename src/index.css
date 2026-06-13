@@ -1,12 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* Base Body Styles */
 body {
   margin: 0;
   font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
-  color: #0f172a;
-  background-color: #f1f5f9;
+  color: #1e293b;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -15,84 +14,89 @@ body {
 
 .dark body {
   color: #f8fafc;
-  background-color: #0b0f19;
+}
+
+/* Serif Font Class */
+.font-serif-premium {
+  font-family: 'Cormorant Garamond', Georgia, serif;
 }
 
 /* ==========================================
-   HOMOGENEOUS GLASSMORPHISM STYLE SYSTEM
+   NEO-FROSTED GLASS SYSTEM (Advanced Glassmorphism)
    ========================================== */
 
 .glass-container {
-  background: rgba(255, 255, 255, 0.4) !important;
-  backdrop-filter: blur(20px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+  background: rgba(255, 255, 255, 0.28) !important;
+  backdrop-filter: blur(25px) saturate(110%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(110%) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04) !important;
-  border-radius: 32px !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 28px !important;
 }
 
 .dark .glass-container {
-  background: rgba(15, 23, 42, 0.35) !important;
-  backdrop-filter: blur(20px) saturate(120%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(120%) !important;
+  background: rgba(15, 23, 42, 0.25) !important;
+  backdrop-filter: blur(25px) saturate(110%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(110%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2) !important;
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.5) !important;
+  background: rgba(255, 255, 255, 0.35) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 8px 24px 0 rgba(31, 38, 135, 0.02) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 8px 32px 0 rgba(31, 38, 135, 0.02) !important;
   border-radius: 24px !important;
 }
 
 .dark .glass-card {
-  background: rgba(30, 41, 59, 0.4) !important;
+  background: rgba(30, 41, 59, 0.3) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.15) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
 .glass-input {
-  background: rgba(255, 255, 255, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
   outline: none;
-  backdrop-filter: blur(5px) !important;
+  backdrop-filter: blur(10px) !important;
   transition: all 0.2s ease-in-out !important;
 }
 
 .glass-input:focus {
-  background: rgba(255, 255, 255, 0.65) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12) !important;
 }
 
 .dark .glass-input {
-  background: rgba(15, 23, 42, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(15, 23, 42, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .dark .glass-input:focus {
-  background: rgba(15, 23, 42, 0.65) !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05) !important;
+  background: rgba(15, 23, 42, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04) !important;
 }
 
+/* Sidebar: Frosted Glass Oscuro */
 .glass-sidebar {
-  background: rgba(255, 255, 255, 0.35) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(30px) !important;
+  -webkit-backdrop-filter: blur(30px) !important;
+  border-right: 1px solid rgba(163, 130, 92, 0.25) !important; /* Bronze fine edge */
 }
 
 .dark .glass-sidebar {
-  background: rgba(15, 23, 42, 0.3) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: rgba(10, 15, 28, 0.75) !important;
+  backdrop-filter: blur(30px) !important;
+  -webkit-backdrop-filter: blur(30px) !important;
+  border-right: 1px solid rgba(163, 130, 92, 0.15) !important;
 }
 
 /* Custom Scrollbar */
@@ -106,41 +110,41 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.25);
   border-radius: 9999px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.15);
+  background: rgba(148, 163, 184, 0.1);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
+  background: rgba(148, 163, 184, 0.4);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.2);
 }
 
-/* Micro-animations and effects */
+/* Animations */
 .hover-scale {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
 }
 
 .hover-scale:hover {
-  transform: translateY(-1.5px) scale(1.01);
+  transform: translateY(-1px) scale(1.005);
 }
 
 .hover-scale:active {
-  transform: translateY(0) scale(0.99);
+  transform: translateY(0) scale(0.995);
 }
 
 .scroll-glass::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.15);
 }
 
 .scroll-glass::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(148, 163, 184, 0.3);
 }
 
 /* Animation Utilities */
@@ -150,19 +154,18 @@ body {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.98); }
+  from { opacity: 0; transform: scale(0.99); }
   to { opacity: 1; transform: scale(1); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: scaleIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Unified clean product text */
 .product-name-text {
   color: #0f172a !important;
 }
@@ -172,120 +175,197 @@ body {
 }
 
 /* ==========================================
-   MINIMAL GLASS BUTTONS (Inner Glow & defined border)
+   BRUSHED METAL FRAMES & BORDERS (Bronze & Silver)
    ========================================== */
 
+.metallic-frame-bronze {
+  border: 1px solid rgba(163, 130, 92, 0.4) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .metallic-frame-bronze {
+  border: 1px solid rgba(163, 130, 92, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.metallic-frame-silver {
+  border: 1px solid rgba(186, 196, 190, 0.4) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+}
+
+.dark .metallic-frame-silver {
+  border: 1px solid rgba(186, 196, 190, 0.25) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ==========================================
+   POLISHED METALLIC FINISHED ICONS
+   ========================================== */
+
+.metallic-icon-bronze {
+  color: #b89774 !important;
+  filter: drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.2)) !important;
+}
+
+.metallic-icon-silver {
+  color: #bac4be !important;
+  filter: drop-shadow(0px 1px 1px rgba(255, 255, 255, 0.2)) !important;
+}
+
+/* ==========================================
+   METALLIC FINISHED BUTTONS
+   ========================================== */
+
+/* Bronze Metallic Button */
+button.btn-metallic-bronze,
+.theme-orange button[type="submit"],
+.theme-orange button.bg-gradient-to-r,
+.theme-red button[type="submit"],
+.theme-red button.bg-gradient-to-r {
+  background: rgba(163, 130, 92, 0.12) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1.5px solid rgba(163, 130, 92, 0.45) !important;
+  color: #a3825c !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 10px rgba(163, 130, 92, 0.08) !important;
+  border-radius: 9999px !important;
+  font-weight: 700 !important;
+  transition: all 0.25s ease-in-out !important;
+}
+
+button.btn-metallic-bronze:hover,
+.theme-orange button[type="submit"]:hover,
+.theme-orange button.bg-gradient-to-r:hover,
+.theme-red button[type="submit"]:hover,
+.theme-red button.bg-gradient-to-r:hover {
+  background: rgba(163, 130, 92, 0.2) !important;
+  border-color: rgba(163, 130, 92, 0.65) !important;
+  color: #8c6a43 !important;
+  box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.4), 0 6px 14px rgba(163, 130, 92, 0.15) !important;
+  transform: translateY(-0.5px);
+}
+
+.dark button.btn-metallic-bronze,
+.dark .theme-orange button[type="submit"],
+.dark .theme-orange button.bg-gradient-to-r,
+.dark .theme-red button[type="submit"],
+.dark .theme-red button.bg-gradient-to-r {
+  background: rgba(163, 130, 92, 0.15) !important;
+  border-color: rgba(163, 130, 92, 0.35) !important;
+  color: #dcbfa2 !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4) !important;
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.1), 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark button.btn-metallic-bronze:hover,
+.dark .theme-orange button[type="submit"]:hover,
+.dark .theme-orange button.bg-gradient-to-r:hover,
+.dark .theme-red button[type="submit"]:hover,
+.dark .theme-red button.bg-gradient-to-r:hover {
+  background: rgba(163, 130, 92, 0.25) !important;
+  border-color: rgba(163, 130, 92, 0.55) !important;
+  color: #f7e6d5 !important;
+}
+
+/* Silver Metallic Button */
+button.btn-metallic-silver,
 button[type="submit"],
 button.bg-gradient-to-r,
 button.bg-gradient-to-tr,
 button.bg-sky-500,
-button.bg-emerald-500 {
-  background: rgba(255, 255, 255, 0.5) !important;
+button.bg-emerald-500,
+.theme-nature button[type="submit"],
+.theme-nature button.bg-gradient-to-r,
+.theme-classic button[type="submit"],
+.theme-classic button.bg-gradient-to-r,
+.theme-purple button[type="submit"],
+.theme-purple button.bg-gradient-to-r {
+  background: rgba(186, 196, 190, 0.12) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(255, 255, 255, 0.05) !important;
-  color: #0f172a !important;
+  border: 1.5px solid rgba(186, 196, 190, 0.45) !important;
+  color: #6d7872 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.3), 0 4px 10px rgba(186, 196, 190, 0.08) !important;
   border-radius: 9999px !important;
-  transition: all 0.2s ease-in-out !important;
+  font-weight: 700 !important;
+  transition: all 0.25s ease-in-out !important;
 }
 
-.dark button[type="submit"],
-.dark button.bg-gradient-to-r,
-.dark button.bg-gradient-to-tr,
-.dark button.bg-sky-500,
-.dark button.bg-emerald-500 {
-  background: rgba(255, 255, 255, 0.18) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-  color: #f8fafc !important;
-}
-
+button.btn-metallic-silver:hover,
 button[type="submit"]:hover,
 button.bg-gradient-to-r:hover,
 button.bg-gradient-to-tr:hover,
 button.bg-sky-500:hover,
-button.bg-emerald-500:hover {
-  background: rgba(255, 255, 255, 0.65) !important;
-  border-color: rgba(255, 255, 255, 0.7) !important;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4), 0 6px 16px rgba(255, 255, 255, 0.1) !important;
-  color: #0f172a !important;
-  transform: translateY(-1px);
+button.bg-emerald-500:hover,
+.theme-nature button[type="submit"]:hover,
+.theme-nature button.bg-gradient-to-r:hover,
+.theme-classic button[type="submit"]:hover,
+.theme-classic button.bg-gradient-to-r:hover,
+.theme-purple button[type="submit"]:hover,
+.theme-purple button.bg-gradient-to-r:hover {
+  background: rgba(186, 196, 190, 0.2) !important;
+  border-color: rgba(186, 196, 190, 0.65) !important;
+  color: #555e5a !important;
+  box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.4), 0 6px 14px rgba(186, 196, 190, 0.15) !important;
+  transform: translateY(-0.5px);
 }
 
+.dark button.btn-metallic-silver,
+.dark button[type="submit"],
+.dark button.bg-gradient-to-r,
+.dark button.bg-gradient-to-tr,
+.dark button.bg-sky-500,
+.dark button.bg-emerald-500,
+.dark .theme-nature button[type="submit"],
+.dark .theme-nature button.bg-gradient-to-r,
+.dark .theme-classic button[type="submit"],
+.dark .theme-classic button.bg-gradient-to-r,
+.dark .theme-purple button[type="submit"],
+.dark .theme-purple button.bg-gradient-to-r {
+  background: rgba(186, 196, 190, 0.15) !important;
+  border-color: rgba(186, 196, 190, 0.35) !important;
+  color: #cad4cf !important;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4) !important;
+  box-shadow: inset 0 1px 0.5px rgba(255, 255, 255, 0.1), 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark button.btn-metallic-silver:hover,
 .dark button[type="submit"]:hover,
 .dark button.bg-gradient-to-r:hover,
 .dark button.bg-gradient-to-tr:hover,
 .dark button.bg-sky-500:hover,
-.dark button.bg-emerald-500:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25), 0 6px 16px rgba(0, 0, 0, 0.3) !important;
-  color: #ffffff !important;
+.dark button.bg-emerald-500:hover,
+.dark .theme-nature button[type="submit"]:hover,
+.dark .theme-nature button.bg-gradient-to-r:hover,
+.dark .theme-classic button[type="submit"]:hover,
+.dark .theme-classic button.bg-gradient-to-r:hover,
+.dark .theme-purple button[type="submit"]:hover,
+.dark .theme-purple button.bg-gradient-to-r:hover {
+  background: rgba(186, 196, 190, 0.25) !important;
+  border-color: rgba(186, 196, 190, 0.55) !important;
+  color: #e5ece9 !important;
 }
 
-/* Estilo base para dashboard a pantalla completa */
+/* Dashboard Fullscreen */
 .dashboard-root {
   border-radius: 0px !important;
   border: none !important;
 }
 
-/* ==========================================
-   THEME ACCENTS DEFINITION (Text & Icons only)
-   ========================================== */
+/* Accent texts for themes (subtle and readable) */
+.theme-classic .text-sky-600, .theme-classic .text-sky-500 { color: #3b82f6 !important; }
+.theme-classic.dark .text-sky-400, .dark .theme-classic .text-sky-400 { color: #60a5fa !important; }
 
-/* Classic theme accents */
-.theme-classic .text-sky-600,
-.theme-classic .text-sky-500 {
-  color: #2563eb !important;
-}
-.theme-classic.dark .text-sky-400,
-.theme-classic .dark .text-sky-400,
-.dark .theme-classic .text-sky-400 {
-  color: #60a5fa !important;
-}
+.theme-nature .text-\[\#20a464\], .theme-nature .text-sky-600, .theme-nature .text-\[\#3cd070\] { color: #20a464 !important; }
+.theme-nature.dark .text-sky-400, .dark .theme-nature .text-sky-400 { color: #3cd070 !important; }
 
-/* Nature theme accents */
-.theme-nature .text-\[\#20a464\],
-.theme-nature .text-sky-600,
-.theme-nature .text-\[\#3cd070\] {
-  color: #16a34a !important;
-}
-.theme-nature.dark .text-sky-400,
-.theme-nature .dark .text-sky-400,
-.dark .theme-nature .text-sky-400 {
-  color: #4ade80 !important;
-}
+.theme-orange .text-sky-600, .theme-orange .text-sky-500 { color: #ea580c !important; }
+.theme-orange.dark .text-sky-400, .dark .theme-orange .text-sky-400 { color: #f97316 !important; }
 
-/* Orange theme accents */
-.theme-orange .text-sky-600,
-.theme-orange .text-sky-500 {
-  color: #ea580c !important;
-}
-.theme-orange.dark .text-sky-400,
-.theme-orange .dark .text-sky-400,
-.dark .theme-orange .text-sky-400 {
-  color: #f97316 !important;
-}
+.theme-purple .text-sky-600, .theme-purple .text-sky-500 { color: #8b5cf6 !important; }
+.theme-purple.dark .text-sky-400, .dark .theme-purple .text-sky-400 { color: #a78bfa !important; }
 
-/* Purple theme accents */
-.theme-purple .text-sky-600,
-.theme-purple .text-sky-500 {
-  color: #7c3aed !important;
-}
-.theme-purple.dark .text-sky-400,
-.theme-purple .dark .text-sky-400,
-.dark .theme-purple .text-sky-400 {
-  color: #a78bfa !important;
-}
-
-/* Red theme accents */
-.theme-red .text-sky-600,
-.theme-red .text-sky-500 {
-  color: #e11d48 !important;
-}
-.theme-red.dark .text-sky-400,
-.theme-red .dark .text-sky-400,
-.dark .theme-red .text-sky-400 {
-  color: #fb7185 !important;
-}
+.theme-red .text-sky-600, .theme-red .text-sky-500 { color: #f43f5e !important; }
+.theme-red.dark .text-sky-400, .dark .theme-red .text-sky-400 { color: #fb7185 !important; }

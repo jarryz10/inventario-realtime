@@ -7,7 +7,7 @@ import bgGreenWaves from "./assets/bg-green-waves.png";
 import bgOrangeWaves from "./assets/bg-orange-waves.png";
 import bgPurpleWaves from "./assets/bg-purple-waves.png";
 import bgRedWaves from "./assets/bg-red-waves.png";
-import bgBotanical from "./assets/bg-botanical.png";
+import bgBotanicalGradient from "./assets/bg-botanical-gradient.png";
 import { translations } from "./translations";
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
@@ -141,7 +141,7 @@ const getBackgroundClass = (theme) => {
 
 const getBackgroundStyle = (theme) => {
   return {
-    backgroundImage: `url(${bgBotanical})`,
+    backgroundImage: `url(${bgBotanicalGradient})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
@@ -165,6 +165,21 @@ const getThemeActiveTabClass = (theme) => {
       return "bg-white/60 border border-white/45 text-[#20a464] shadow-sm dark:bg-white/10 dark:text-[#3cd070] dark:border-white/10";
   }
 };
+
+const getMetallicFrameClass = (theme) => {
+  if (theme === "orange" || theme === "red") {
+    return "metallic-frame-bronze";
+  }
+  return "metallic-frame-silver";
+};
+
+const getMetallicIconClass = (theme) => {
+  if (theme === "orange" || theme === "red") {
+    return "metallic-icon-bronze";
+  }
+  return "metallic-icon-silver";
+};
+
 
 const MOCK_ICONS = [
   { name: "CPU", url: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?w=100&auto=format&fit=crop&q=80" },
@@ -2341,7 +2356,7 @@ export default function App() {
         style={getBackgroundStyle(visualTheme)}
       >
         <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 backdrop-blur-[2px]" />
-        <div className="glass-card rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center border border-white/40 dark:border-slate-800/30">
+        <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center`}>
           <Loader2 className="w-12 h-12 text-sky-500 animate-spin mb-4" />
           <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">{t.verifying_session}</h2>
         </div>
@@ -2388,7 +2403,7 @@ export default function App() {
           </button>
         </div>
 
-        <div className="w-full max-w-md glass-container rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative z-10 border border-white/50 dark:border-slate-800/30 animate-scale-in">
+        <div className={`w-full max-w-md glass-container ${getMetallicFrameClass(visualTheme)} rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative z-10 animate-scale-in`}>
           {/* Logo Area */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 rounded-[1.5rem] bg-white/60 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-white/40 dark:border-slate-800/25 flex items-center justify-center shadow-md hover-scale">
@@ -2481,14 +2496,14 @@ export default function App() {
       <div className={`w-full h-screen glass-container rounded-none flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden`}>
         
         {/* LEFT FIXED SIDEBAR */}
-        <div className="w-64 sm:w-72 bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg border-r border-white/20 dark:border-slate-800/20 flex flex-col p-6 justify-between shrink-0 select-none shadow-xl">
+        <div className="w-64 sm:w-72 glass-sidebar flex flex-col p-6 justify-between shrink-0 select-none shadow-xl">
           <div className="flex flex-col gap-6 flex-1 min-h-0">
             {/* Logo Area */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/60 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-white/40 dark:border-slate-800/25 flex items-center justify-center shadow-sm hover-scale shrink-0">
-                <Boxes className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-white/10 text-slate-100 border border-white/15 flex items-center justify-center shadow-md hover-scale shrink-0">
+                <Boxes className={`w-5 h-5 ${getMetallicIconClass(visualTheme)}`} />
               </div>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">MasterInventory</span>
+              <span className="text-xl font-bold font-serif-premium text-slate-100 tracking-tight">MasterInventory</span>
             </div>
 
             {/* Navigation Tabs (Dynamic modular configuration) */}
@@ -2505,15 +2520,15 @@ export default function App() {
                       setActiveTab(tab.id);
                       setAlertMessage({ type: "", text: "" });
                     }}
-                    className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-full transition-all duration-300 hover-scale cursor-pointer text-xs font-bold text-left ${
+                    className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-full transition-all duration-300 hover-scale cursor-pointer text-left ${
                       isActive
                         ? getThemeActiveTabClass(visualTheme)
-                        : "text-slate-700/80 hover:text-slate-900 hover:bg-white/10 dark:text-slate-300/85 dark:hover:text-white"
+                        : "text-slate-300/80 hover:text-white hover:bg-white/5"
                     }`}
                     title={tabTitle}
                   >
-                    <IconComponent className="w-4.5 h-4.5 shrink-0" />
-                    <span>{tabShort}</span>
+                    <IconComponent className={`w-4.5 h-4.5 shrink-0 ${getMetallicIconClass(visualTheme)}`} />
+                    <span className="truncate font-serif-premium font-semibold text-[13px]">{tabShort}</span>
                   </button>
                 );
               })}
@@ -2521,38 +2536,38 @@ export default function App() {
           </div>
 
           {/* Bottom Controls Panel */}
-          <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-white/20 dark:border-slate-800/20 shrink-0">
+          <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-white/10 shrink-0">
             {/* User Profile Card */}
-            <div className="p-3 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-2xl border border-white/20 dark:border-slate-700/20 flex items-center justify-between shadow-sm">
+            <div className={`p-3 bg-white/5 rounded-2xl border flex items-center justify-between shadow-sm ${getMetallicFrameClass(visualTheme)}`}>
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-[#20a464] text-white flex items-center justify-center font-black text-xs shrink-0">
+                <div className="w-8 h-8 rounded-full bg-white/10 text-slate-200 border border-white/15 flex items-center justify-center font-bold text-xs shrink-0">
                   {currentUser?.username === "1234" ? "UM" : (currentUser?.username || "U").substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">
+                  <span className="text-xs font-bold font-serif-premium text-slate-100 truncate">
                     {userDisplayName}
                   </span>
-                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold leading-tight">
+                  <span className="text-[9px] text-slate-400 font-bold leading-tight">
                     {userPosition}
                   </span>
-                  <span className="text-[9px] text-[#20a464] dark:text-[#3cd070] font-black leading-tight">
+                  <span className="text-[9px] text-slate-300 font-bold leading-tight">
                     Nivel {userLevel}
                   </span>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 text-slate-500 hover:text-red-500 hover-scale transition-colors duration-200 cursor-pointer shrink-0"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/20 text-slate-400 hover:text-red-400 hover-scale transition-colors duration-200 cursor-pointer shrink-0"
                 title={t.logout}
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
               </button>
             </div>
 
 
             {/* Tema Visual */}
             <div>
-              <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
                 {language === "es" ? "TEMA VISUAL" : "VISUAL THEME"}
               </span>
               <div className="flex items-center gap-2">
@@ -2589,7 +2604,7 @@ export default function App() {
               }}
               className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full bg-white/40 hover:bg-white/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-[10px] font-black border border-white/20 select-none hover-scale cursor-pointer transition-colors duration-200"
             >
-              <Globe className="w-3 h-3 text-[#20a464]" />
+              <Globe className={`w-3.5 h-3.5 ${getMetallicIconClass(visualTheme)}`} />
               <span>{language === "es" ? "Switch to English" : "Cambiar a Español"}</span>
             </button>
           </div>
@@ -2599,9 +2614,9 @@ export default function App() {
         <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden">
           
           {/* Greeting Banner */}
-          <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg border border-white/20 dark:border-slate-800/20 rounded-[1.5rem] sm:rounded-full px-6 py-3.5 shadow-md flex items-center justify-between mb-6 shrink-0">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[1.5rem] sm:rounded-full px-6 py-3.5 flex items-center justify-between mb-6 shrink-0`}>
             <div>
-              <h2 className="text-base font-black text-slate-800 dark:text-slate-200">
+              <h2 className="text-base font-bold font-serif-premium text-slate-800 dark:text-slate-200">
                 {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
               </h2>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">
@@ -2612,13 +2627,13 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[#20a464] dark:text-[#3cd070] text-[10px] font-black uppercase tracking-wider select-none">
-                <Shield className="w-3.5 h-3.5" />
+              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 dark:bg-slate-800/20 border text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider select-none ${getMetallicFrameClass(visualTheme)}`}>
+                <Shield className={`w-3.5 h-3.5 ${getMetallicIconClass(visualTheme)}`} />
                 <span>{language === "es" ? `Nivel ${userLevel}` : `Level ${userLevel}`}</span>
               </div>
               
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[#20a464] dark:text-[#3cd070] text-[10px] font-black uppercase tracking-wider select-none">
-                <Database className="w-3.5 h-3.5" />
+              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 dark:bg-slate-800/20 border text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider select-none ${getMetallicFrameClass(visualTheme)}`}>
+                <Database className={`w-3.5 h-3.5 ${getMetallicIconClass(visualTheme)}`} />
                 <span>{t.connected}</span>
               </div>
             </div>
@@ -2707,7 +2722,7 @@ export default function App() {
             
             {/* TAB 1: INVENTARIO */}
             {activeTab === "inventario" && (
-              <div className="glass-card rounded-[2rem] p-5 shadow-lg h-full flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
+              <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg h-full flex flex-col justify-between overflow-hidden`}>
                 <div className="flex items-center justify-between mb-4 shrink-0">
                   <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                     {t.components_warehouse}
@@ -2747,7 +2762,7 @@ export default function App() {
                         <div
                           key={product.id}
                           onClick={() => setSelectedProductId(product.id)}
-                          className="glass-card rounded-[2rem] p-4 shadow-sm border border-white/30 dark:border-slate-800/20 flex flex-col justify-between gap-4 transition-all duration-300 hover-scale hover:shadow-md cursor-pointer animate-fade-in"
+                          className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-4 shadow-sm flex flex-col justify-between gap-4 transition-all duration-300 hover-scale hover:shadow-md cursor-pointer animate-fade-in`}
                         >
                           <div className="flex gap-3">
                             <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-inner shrink-0 border border-slate-200/55 dark:border-slate-800/50">
@@ -2845,7 +2860,7 @@ export default function App() {
                 
                 {/* Left Form: place order (colspan 3) */}
                 <div className="md:col-span-3 flex flex-col h-full overflow-y-auto">
-                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                  <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg flex flex-col`}>
                     <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                       {t.purchase_request}
                     </h2>
@@ -2965,7 +2980,7 @@ export default function App() {
                 {/* Right Columns: Kanban Board and History (colspan 9) */}
                 <div className="md:col-span-9 flex flex-col h-full overflow-hidden gap-4">
                   {/* Kanban Board */}
-                  <div className="glass-card rounded-[2rem] p-5 shadow-lg h-[58%] flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30 shrink-0">
+                  <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg h-[58%] flex flex-col overflow-hidden shrink-0`}>
                     <div className="flex items-center justify-between mb-3 shrink-0">
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                         {t.pending_orders}
@@ -2985,7 +3000,7 @@ export default function App() {
                       ) : (
                         <>
                           {/* COLUMN 1: SOLICITADO */}
-                          <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
+                          <div className={`flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border overflow-hidden animate-fade-in ${getMetallicFrameClass(visualTheme)}`}>
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
                               <span className="text-[10px] font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">{t.requested_col}</span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-500/10 text-sky-600">
@@ -2994,7 +3009,7 @@ export default function App() {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
                               {orders.filter(o => o.status === "solicitado" || !o.status).map(order => (
-                                <div key={order.id} className="glass-card rounded-2xl p-3 border border-white/40 dark:border-slate-800/20 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm">
+                                <div key={order.id} className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-3 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm`}>
                                   <div className="min-w-0">
                                     <h4 className="font-extrabold product-name-text text-xs truncate">{order.itemName}</h4>
                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
@@ -3027,7 +3042,7 @@ export default function App() {
                           </div>
 
                           {/* COLUMN 2: EN ESPERA */}
-                          <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
+                          <div className={`flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border overflow-hidden animate-fade-in ${getMetallicFrameClass(visualTheme)}`}>
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
                               <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">{t.onhold_col}</span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600">
@@ -3036,7 +3051,7 @@ export default function App() {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
                               {orders.filter(o => o.status === "en_espera").map(order => (
-                                <div key={order.id} className="glass-card rounded-2xl p-3 border border-white/40 dark:border-slate-800/20 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm">
+                                <div key={order.id} className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-3 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm`}>
                                   <div className="min-w-0">
                                     <h4 className="font-extrabold product-name-text text-xs truncate">{order.itemName}</h4>
                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
@@ -3064,7 +3079,7 @@ export default function App() {
                           </div>
 
                           {/* COLUMN 3: RECIBIDO */}
-                          <div className="flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border border-slate-100 dark:border-slate-800/10 overflow-hidden animate-fade-in">
+                          <div className={`flex flex-col h-full bg-slate-500/5 dark:bg-slate-950/15 rounded-2xl p-3 border overflow-hidden animate-fade-in ${getMetallicFrameClass(visualTheme)}`}>
                             <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-200/40 dark:border-slate-800/30 shrink-0">
                               <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{t.received_col}</span>
                               <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600">
@@ -3073,7 +3088,7 @@ export default function App() {
                             </div>
                             <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 pb-2">
                               {orders.filter(o => o.status === "recibido").slice(0, 3).map(order => (
-                                <div key={order.id} className="glass-card rounded-2xl p-3 border border-white/40 dark:border-slate-800/20 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm opacity-80">
+                                <div key={order.id} className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-3 flex flex-col gap-2 hover-scale animate-fade-in shadow-sm opacity-80`}>
                                   <div className="min-w-0">
                                     <h4 className="font-extrabold product-name-text text-xs truncate">{order.itemName}</h4>
                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">Mod: {order.itemModel}</p>
@@ -3101,7 +3116,7 @@ export default function App() {
                   </div>
 
                   {/* Historial de Pedidos */}
-                  <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                  <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden`}>
                     <div className="flex items-center justify-between mb-3 shrink-0">
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                         {t.orders_history_title}
@@ -3196,7 +3211,7 @@ export default function App() {
                   <>
                     {/* Left Form: create report (colspan 5) */}
                     <div className="md:col-span-5 flex flex-col h-full overflow-y-auto pr-1 scroll-glass">
-                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg flex flex-col`}>
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                           {t.new_daily_report}
                         </h2>
@@ -3290,7 +3305,7 @@ export default function App() {
                     
                     {/* Right History: (colspan 7) */}
                     <div className="md:col-span-7 flex flex-col h-full overflow-hidden">
-                      <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden`}>
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             {t.recent_reports_title}
@@ -3315,7 +3330,7 @@ export default function App() {
                                 <div 
                                   key={report.id} 
                                   onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
-                                  className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 cursor-pointer select-none animate-fade-in"
+                                  className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-4 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 cursor-pointer select-none animate-fade-in`}
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -3379,7 +3394,7 @@ export default function App() {
                 ) : (
                   /* Nivel 3: Audit View (colspan 12) */
                   <div className="col-span-12 flex flex-col h-full overflow-hidden">
-                    <div className="glass-card rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden border border-white/40 dark:border-slate-800/30">
+                    <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg flex-1 flex flex-col overflow-hidden`}>
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
@@ -3409,7 +3424,7 @@ export default function App() {
                               <div 
                                 key={report.id} 
                                 onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
-                                className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                                className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-4 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
@@ -3480,7 +3495,7 @@ export default function App() {
                   <>
                     {/* Form: create cleaning logs (full width) */}
                     <div className="w-full flex flex-col h-auto">
-                      <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col`}>
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                           {t.printer_form_title}
                         </h2>
@@ -3489,7 +3504,7 @@ export default function App() {
                           {/* List of dynamic rows */}
                           <div className="flex flex-col gap-4">
                             {cleaningRows.map((row, index) => (
-                              <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border border-white/20 dark:border-slate-800/10 animate-fade-in">
+                              <div key={index} className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border animate-fade-in ${getMetallicFrameClass(visualTheme)}`}>
                                 
                                 {/* Estación */}
                                 <div className="md:col-span-3">
@@ -3590,9 +3605,9 @@ export default function App() {
                             <button
                               type="button"
                               onClick={handleAddCleaningRow}
-                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-sky-500/40 hover:border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-slate-300/40 hover:border-slate-400 dark:border-slate-700/40 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-white/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
                             >
-                              <PlusCircle className="w-4 h-4" />
+                              <PlusCircle className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
                               <span>{t.add_printer_btn}</span>
                             </button>
 
@@ -3615,7 +3630,7 @@ export default function App() {
                     
                     {/* Bottom History: (full width) */}
                     <div className="w-full flex flex-col h-auto">
-                      <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col`}>
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             {t.cleaning_history_title}
@@ -3646,7 +3661,7 @@ export default function App() {
                                 <div 
                                   key={record.id} 
                                   onClick={() => setExpandedCleaningId(isExpanded ? null : record.id)}
-                                  className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                                  className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-4 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto`}
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -3730,7 +3745,7 @@ export default function App() {
                 ) : (
                   /* Nivel 3: Audit View (full width) */
                   <div className="w-full flex flex-col h-auto">
-                    <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                    <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col`}>
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
@@ -3766,7 +3781,7 @@ export default function App() {
                               <div 
                                 key={record.id} 
                                 onClick={() => setExpandedCleaningId(isExpanded ? null : record.id)}
-                                className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                                className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-4 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
@@ -3857,7 +3872,7 @@ export default function App() {
                   <>
                     {/* Form: create RFID verification logs (full width) */}
                     <div className="w-full flex flex-col h-auto">
-                      <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col`}>
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                           {t.rfid_form_title}
                         </h2>
@@ -3866,7 +3881,7 @@ export default function App() {
                           {/* List of dynamic rows */}
                           <div className="flex flex-col gap-4">
                             {rfidRows.map((row, index) => (
-                              <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border border-white/20 dark:border-slate-800/10 animate-fade-in">
+                              <div key={index} className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border animate-fade-in ${getMetallicFrameClass(visualTheme)}`}>
                                 
                                 {/* Estación */}
                                 <div className="md:col-span-3">
@@ -3961,9 +3976,9 @@ export default function App() {
                             <button
                               type="button"
                               onClick={handleAddRfidRow}
-                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-sky-500/40 hover:border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-slate-300/40 hover:border-slate-400 dark:border-slate-700/40 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-white/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
                             >
-                              <PlusCircle className="w-4 h-4" />
+                              <PlusCircle className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
                               <span>{t.add_rfid_btn}</span>
                             </button>
  
@@ -3986,7 +4001,7 @@ export default function App() {
                     
                     {/* Bottom History: (full width) */}
                     <div className="w-full flex flex-col h-auto">
-                      <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col`}>
                         <div className="flex items-center justify-between mb-4 shrink-0">
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                             {t.rfid_history_title}
@@ -4017,7 +4032,7 @@ export default function App() {
                                 <div 
                                   key={record.id} 
                                   onClick={() => setExpandedRfidId(isExpanded ? null : record.id)}
-                                  className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                                  className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-4 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto`}
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -4106,7 +4121,7 @@ export default function App() {
                 ) : (
                   /* Nivel 3: Audit View (full width) */
                   <div className="w-full flex flex-col h-auto">
-                    <div className="glass-card rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                    <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-20 shadow-lg flex flex-col`}>
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <div>
                           <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
@@ -4142,7 +4157,7 @@ export default function App() {
                               <div 
                                 key={record.id} 
                                 onClick={() => setExpandedRfidId(isExpanded ? null : record.id)}
-                                className="glass-card rounded-2xl p-4 border border-white/30 dark:border-slate-800/20 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto"
+                                className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-4 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-2 cursor-pointer select-none animate-fade-in w-full h-auto`}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
@@ -4240,7 +4255,7 @@ export default function App() {
                   
                   {/* Column 1: Register Form */}
                   <div className="lg:col-span-1 flex flex-col h-auto">
-                    <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30">
+                    <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col`}>
                       <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
                         {t.user_form_title}
                       </h2>
@@ -4364,7 +4379,7 @@ export default function App() {
 
                   {/* Column 2: Users List */}
                   <div className="lg:col-span-2 flex flex-col h-auto">
-                    <div className="glass-card rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col border border-white/40 dark:border-slate-800/30 w-full min-h-[400px]">
+                    <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col w-full min-h-[400px]`}>
                       <div className="flex items-center justify-between mb-4 shrink-0">
                         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                           {t.assoc_list_title}
@@ -4467,7 +4482,7 @@ export default function App() {
             )}
 
             {activeTab === "notificaciones" && (
-              <div className="glass-card rounded-[2rem] p-6 shadow-lg h-full flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
+              <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-6 shadow-lg h-full flex flex-col justify-between overflow-hidden`}>
                 <div className="flex items-center justify-between mb-4 shrink-0">
                   <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
                     {language === "es" ? "Alertas y Notificaciones" : "Alerts & Notifications"}
@@ -4513,7 +4528,7 @@ export default function App() {
                       return (
                         <div 
                           key={notif.id} 
-                          className="p-4 rounded-2xl bg-white/30 dark:bg-slate-900/30 border border-white/20 dark:border-slate-800/10 flex items-start justify-between gap-4 hover:bg-white/40 dark:hover:bg-slate-900/40 transition-colors duration-200"
+                          className={`p-4 rounded-2xl bg-white/30 dark:bg-slate-900/30 border flex items-start justify-between gap-4 hover:bg-white/40 dark:hover:bg-slate-900/40 transition-colors duration-200 ${getMetallicFrameClass(visualTheme)}`}
                         >
                           <div className="flex gap-3 items-start">
                             <span className={`px-2 py-0.5 text-[9px] font-black rounded-lg border uppercase shrink-0 mt-0.5 ${badgeColor}`}>
@@ -4542,7 +4557,7 @@ export default function App() {
       {/* POPUP MODAL: Editar Asociado */}
       {editingUser && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="glass-card w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col border border-white/50 dark:border-slate-800/40">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col`}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
@@ -4686,7 +4701,7 @@ export default function App() {
       {/* POPUP MODAL: Historial de Movimientos */}
       {isMovementsModalOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="glass-card w-full max-w-4xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col border border-white/50 dark:border-slate-800/40 max-h-[90vh]">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-4xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col max-h-[90vh]`}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
@@ -4798,7 +4813,7 @@ export default function App() {
 
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="glass-card w-full max-w-xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in max-h-[92vh] flex flex-col border border-white/50 dark:border-slate-800/40">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in max-h-[92vh] flex flex-col`}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
@@ -5123,7 +5138,7 @@ export default function App() {
       {/* POPUP MODAL: Detalle de Componente */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="glass-card w-full max-w-lg rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in max-h-[92vh] flex flex-col border border-white/50 dark:border-slate-800/40">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-lg rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in max-h-[92vh] flex flex-col`}>
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
