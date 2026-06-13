@@ -2366,7 +2366,7 @@ export default function App() {
         className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
         style={getBackgroundStyle(visualTheme)}
       >
-        <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50" />
+
         <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center`}>
           <Loader2 className="w-12 h-12 text-sky-500 animate-spin mb-4" />
           <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">{t.verifying_session}</h2>
@@ -2381,7 +2381,7 @@ export default function App() {
         className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in ${getBackgroundClass(visualTheme)}`}
         style={getBackgroundStyle(visualTheme)}
       >
-        <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 pointer-events-none" />
+
         
         {/* Controls in top-right corner of login screen */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
@@ -2508,8 +2508,7 @@ export default function App() {
       className={`min-h-screen w-screen flex transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
       style={getBackgroundStyle(visualTheme)}
     >
-      {/* Background Overlay */}
-      <div className="absolute inset-0 bg-slate-900/10 dark:bg-slate-950/50 transition-colors duration-500 pointer-events-none" />
+
 
       {/* Floating Glassmorphic Main Dashboard Card */}
       <div className={`w-full h-screen flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden`}>

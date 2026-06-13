@@ -31,8 +31,8 @@ body {
 
 /* Tema 1: Helechos (Naturaleza) - Fondo Oscuro */
 .theme-nature {
-  --glass-bg: rgba(255, 255, 255, 0.13);
-  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.2);
   --text-main: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.7);
   --sidebar-bg: rgba(15, 23, 42, 0.5);
@@ -49,8 +49,8 @@ body {
 
 /* Tema 2: Bosque de Secuoyas - Fondo Oscuro */
 .theme-redwood {
-  --glass-bg: rgba(255, 255, 255, 0.13);
-  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.2);
   --text-main: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.7);
   --sidebar-bg: rgba(15, 23, 42, 0.5);
@@ -67,8 +67,8 @@ body {
 
 /* Tema 3: Costa Pacífica - Fondo Claro */
 .theme-coast {
-  --glass-bg: rgba(255, 255, 255, 0.16); /* Slightly higher opacity for readability on light bg */
-  --glass-border: rgba(17, 24, 39, 0.12); /* Subtle dark border for light background */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.2);
   --text-main: #111827; /* Charcoal dark */
   --text-muted: #4b5563; /* Medium gray */
   --sidebar-bg: rgba(15, 23, 42, 0.65); /* Keep sidebar dark slate glass for premium look */
@@ -85,8 +85,8 @@ body {
 
 /* Tema 4: Rocas Rojas - Fondo Claro */
 .theme-redrocks {
-  --glass-bg: rgba(255, 255, 255, 0.16);
-  --glass-border: rgba(17, 24, 39, 0.12);
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.2);
   --text-main: #111827;
   --text-muted: #4b5563;
   --sidebar-bg: rgba(15, 23, 42, 0.65);
@@ -143,8 +143,8 @@ body {
 
 .glass-container {
   background: var(--glass-bg, rgba(255, 255, 255, 0.15)) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
+  backdrop-filter: blur(60px) !important;
+  -webkit-backdrop-filter: blur(60px) !important;
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.04) !important;
   border-radius: 1.5rem !important;
@@ -152,8 +152,8 @@ body {
 
 .dark .glass-container {
   background: var(--glass-bg, rgba(15, 23, 42, 0.15)) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
+  backdrop-filter: blur(60px) !important;
+  -webkit-backdrop-filter: blur(60px) !important;
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2) !important;
   border-radius: 1.5rem !important;
@@ -161,8 +161,8 @@ body {
 
 .glass-card {
   background: var(--glass-bg, rgba(255, 255, 255, 0.15)) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
+  backdrop-filter: blur(60px) !important;
+  -webkit-backdrop-filter: blur(60px) !important;
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.02) !important;
   border-radius: 1.5rem !important;
@@ -170,8 +170,8 @@ body {
 
 .dark .glass-card {
   background: var(--glass-bg, rgba(30, 41, 59, 0.15)) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
+  backdrop-filter: blur(60px) !important;
+  -webkit-backdrop-filter: blur(60px) !important;
   border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.03), 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
   border-radius: 1.5rem !important;
@@ -212,16 +212,16 @@ body {
 /* Sidebar: Frosted Glass Oscuro */
 .glass-sidebar {
   background: var(--sidebar-bg, rgba(15, 23, 42, 0.5)) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
+  backdrop-filter: blur(60px) !important;
+  -webkit-backdrop-filter: blur(60px) !important;
   border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
   border-radius: 0px !important;
 }
 
 .dark .glass-sidebar {
   background: var(--sidebar-bg, rgba(10, 15, 28, 0.65)) !important;
-  backdrop-filter: blur(40px) !important;
-  -webkit-backdrop-filter: blur(40px) !important;
+  backdrop-filter: blur(60px) !important;
+  -webkit-backdrop-filter: blur(60px) !important;
   border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
   border-radius: 0px !important;
 }
