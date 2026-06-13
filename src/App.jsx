@@ -121,7 +121,7 @@ export default function App() {
 
   // Static fallback credentials and role mapping configuration (offline/dev fallback)
   const LOCAL_CREDENTIALS = {
-    "1234": { password: "1234", level: 3 },
+    "1234": { password: "9919", level: 3 },
     "operador": { password: "123456", level: 1 },
     "supervisor": { password: "123456", level: 2 },
     "admin": { password: "123456", level: 3 }
@@ -292,19 +292,26 @@ export default function App() {
       setIsAuthChecking(false);
     }
 
-    // Initialize Master User '1234' in Firestore users collection if it doesn't exist
+    // Initialize or Update Master User '1234' in Firestore users collection
     const ensureMasterUser = async () => {
       try {
         const masterDocRef = doc(db, "users", "1234");
         const masterDocSnap = await getDoc(masterDocRef);
         if (!masterDocSnap.exists()) {
           await setDoc(masterDocRef, {
-            password: "1234",
+            password: "9919",
             level: 3,
             name: "Usuario Maestro",
             role: "admin"
           });
           console.log("Master User '1234' initialized in Firestore users collection.");
+        } else {
+          // If it exists, ensure the password is updated to "9919"
+          const userData = masterDocSnap.data();
+          if (userData.password !== "9919") {
+            await updateDoc(masterDocRef, { password: "9919" });
+            console.log("Master User '1234' password updated to '9919' in Firestore.");
+          }
         }
       } catch (err) {
         console.error("Error ensuring Master User in Firestore:", err);
