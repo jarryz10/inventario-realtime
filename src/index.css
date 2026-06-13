@@ -175,27 +175,37 @@ body {
 
 /* Glass Containers and Cards background */
 .theme-nature .glass-container {
-  background: rgba(255, 255, 255, 0.90) !important;
+  background: rgba(255, 255, 255, 0.40) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
   border-radius: 32px !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.20) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1) !important;
 }
 
 .theme-nature .dark .glass-container,
 .dark .theme-nature .glass-container {
-  background: rgba(15, 23, 42, 0.90) !important;
+  background: rgba(15, 23, 42, 0.40) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
   border-radius: 32px !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .theme-nature .glass-card {
-  background: rgba(255, 255, 255, 0.90) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   border-radius: 32px !important; /* Capsule organic shapes */
-  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.20) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
 }
 
 .theme-nature .dark .glass-card,
 .dark .theme-nature .glass-card {
-  background: rgba(30, 41, 59, 0.90) !important;
+  background: rgba(30, 41, 59, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   border-radius: 32px !important; /* Capsule organic shapes */
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
@@ -218,12 +228,66 @@ body {
 .theme-nature button.bg-sky-500,
 .theme-nature button.bg-emerald-500,
 .theme-nature button.bg-sky-500\/10:hover {
-  background: linear-gradient(to right, #2ebd59, #a0ec33) !important;
+  background: linear-gradient(to right, #20a464, #3cd070) !important;
   color: #ffffff !important;
   border-radius: 9999px !important; /* rounded-full */
   border: none !important;
-  box-shadow: 0 10px 15px -3px rgba(46, 189, 89, 0.3) !important;
+  box-shadow: 0 10px 15px -3px rgba(32, 164, 100, 0.3) !important;
 }
+
+/* Glass containers for Orange, Purple, and Red themes */
+.theme-orange .glass-container,
+.theme-purple .glass-container,
+.theme-red .glass-container {
+  background: rgba(255, 255, 255, 0.40) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.20) !important;
+}
+.theme-orange .glass-card,
+.theme-purple .glass-card,
+.theme-red .glass-card {
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-radius: 32px !important;
+  border: 1px solid rgba(255, 255, 255, 0.20) !important;
+}
+.theme-orange .dark .glass-container,
+.theme-purple .dark .glass-container,
+.theme-red .dark .glass-container,
+.dark .theme-orange .glass-container,
+.dark .theme-purple .glass-container,
+.dark .theme-red .glass-container {
+  background: rgba(15, 23, 42, 0.40) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+/* Orange theme active buttons */
+.theme-orange button[type="submit"],
+.theme-orange button.bg-gradient-to-r {
+  background: linear-gradient(to right, #ea580c, #f97316) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  border: none !important;
+}
+/* Purple theme active buttons */
+.theme-purple button[type="submit"],
+.theme-purple button.bg-gradient-to-r {
+  background: linear-gradient(to right, #7c3aed, #a855f7) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  border: none !important;
+}
+/* Red theme active buttons */
+.theme-red button[type="submit"],
+.theme-red button.bg-gradient-to-r {
+  background: linear-gradient(to right, #e11d48, #f43f5e) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  border: none !important;
+}
+
 
 /* For outline/soft buttons under nature theme (make them match the theme color scheme) */
 .theme-nature button.bg-sky-500\/10 {

@@ -7,19 +7,19 @@ export const translations = {
 
     tab_ordenes_title: "Órdenes y Pedidos de Compra",
     tab_ordenes_desc: "Solicita adquisiciones y compras externas para reabastecimiento",
-    tab_ordenes_short: "Órdenes",
+    tab_ordenes_short: "Órdenes y Pedidos",
 
     tab_reportes_title: "Reporte Diario de Actividades",
     tab_reportes_desc: "Registra y audita las actividades realizadas durante el turno",
-    tab_reportes_short: "Reportes",
+    tab_reportes_short: "Reporte Diario",
 
     tab_limpieza_title: "Limpieza de Impresora",
     tab_limpieza_desc: "Registra y supervisa los servicios de mantenimiento de equipos de impresión",
-    tab_limpieza_short: "Limpieza",
+    tab_limpieza_short: "Limpieza de Impresora",
 
     tab_rfid_title: "Verificación de RFID",
     tab_rfid_desc: "Registra y supervisa las lecturas y el estado de antenas y sensores RFID",
-    tab_rfid_short: "RFID",
+    tab_rfid_short: "Verificación RFID",
 
     tab_usuario_title: "Administración de Usuarios",
     tab_usuario_desc: "Gestiona los asociados del equipo, sus niveles de acceso y credenciales de seguridad",
@@ -302,23 +302,23 @@ export const translations = {
 
     tab_ordenes_title: "Purchase Orders & Requests",
     tab_ordenes_desc: "Request acquisitions and external purchases for replenishment",
-    tab_ordenes_short: "Orders",
+    tab_ordenes_short: "Orders & Requests",
 
     tab_reportes_title: "Daily Activity Report",
     tab_reportes_desc: "Record and audit activities performed during the shift",
-    tab_reportes_short: "Reports",
+    tab_reportes_short: "Daily Report",
 
     tab_limpieza_title: "Printer Cleaning",
     tab_limpieza_desc: "Register and supervise maintenance services of printing equipment",
-    tab_limpieza_short: "Cleaning",
+    tab_limpieza_short: "Printer Cleaning",
 
     tab_rfid_title: "RFID Verification",
     tab_rfid_desc: "Register and supervise antenna readings and RFID sensor status",
-    tab_rfid_short: "RFID",
+    tab_rfid_short: "RFID Verification",
 
     tab_usuario_title: "User Management",
     tab_usuario_desc: "Manage team associates, their access levels and security credentials",
-    tab_usuario_short: "Users",
+    tab_usuario_short: "User Management",
 
     // General Words & Actions
     theme_classic: "Classic",

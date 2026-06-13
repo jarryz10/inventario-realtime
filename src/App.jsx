@@ -48,7 +48,8 @@ import {
   Radio,
   Users,
   Globe,
-  Palette
+  Palette,
+  Shield
 } from "lucide-react";
 
 const TABS_CONFIG = [
@@ -116,6 +117,26 @@ export default function App() {
   // Authentication & Roles State
   const [currentUser, setCurrentUser] = useState(null);
   const [userLevel, setUserLevel] = useState(1); // 1 = Operador, 2 = Supervisor, 3 = Administrador
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoLevel, setDemoLevel] = useState(1);
+
+  const handleDemoToggle = (checked) => {
+    setIsDemoMode(checked);
+    if (checked) {
+      setUserLevel(demoLevel);
+    } else {
+      setUserLevel(currentUser?.level || 1);
+    }
+  };
+
+  const handleDemoLevelChange = (level) => {
+    const lvl = Number(level);
+    setDemoLevel(lvl);
+    if (isDemoMode) {
+      setUserLevel(lvl);
+    }
+  };
+
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Login Form State
@@ -2152,11 +2173,22 @@ export default function App() {
     );
   }
 
+  const userProfile = usersList.find(u => u.id === currentUser?.username);
+  const userShift = userProfile?.shift || "Mixto";
+  const userDisplayName = userProfile?.name || (currentUser?.username === "1234" ? "Usuario Maestro" : currentUser?.username || "Usuario");
+  const userPosition = userProfile?.position || (currentUser?.username === "1234" ? "Superusuario" : "Operario");
+
   return (
     <div 
       className={`min-h-screen w-screen flex transition-all duration-500 relative ${
         visualTheme === "nature" 
           ? "bg-gradient-to-b from-[#0a3a20] via-[#1e6f42] to-[#76e043] theme-nature" 
+          : visualTheme === "orange"
+          ? "bg-gradient-to-b from-[#4a2306] via-[#9e4f12] to-[#f97316] theme-orange"
+          : visualTheme === "purple"
+          ? "bg-gradient-to-b from-[#2e0854] via-[#5b1f9c] to-[#a855f7] theme-purple"
+          : visualTheme === "red"
+          ? "bg-gradient-to-b from-[#5c0618] via-[#a81335] to-[#f43f5e] theme-red"
           : ""
       }`}
       style={visualTheme === "classic" ? {
@@ -2173,64 +2205,144 @@ export default function App() {
       <div className={`w-full h-screen glass-container rounded-none flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden`}>
         
         {/* LEFT FIXED SIDEBAR */}
-        <div className="w-20 sm:w-24 bg-white/50 dark:bg-slate-900/40 backdrop-blur-md border-r border-white/40 dark:border-slate-800/30 flex flex-col items-center py-8 justify-between shrink-0 select-none">
-          {/* Logo Area */}
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 hover-scale">
-              <Boxes className="w-6 h-6" />
+        <div className="w-64 sm:w-72 bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg border-r border-white/20 dark:border-slate-800/20 flex flex-col p-6 justify-between shrink-0 select-none shadow-xl">
+          <div className="flex flex-col gap-6 flex-1 min-h-0">
+            {/* Logo Area */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#20a464] to-[#3cd070] flex items-center justify-center text-white shadow-md hover-scale shrink-0">
+                <Boxes className="w-5 h-5" />
+              </div>
+              <span className="text-sm font-black text-[#20a464] dark:text-[#3cd070] tracking-tight">MasterInventory</span>
             </div>
-            <span className="text-[9px] font-black text-sky-600 dark:text-sky-400 mt-2 tracking-wider">REALTIME</span>
+
+            {/* Navigation Tabs (Dynamic modular configuration) */}
+            <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-1 scroll-glass">
+              {TABS_CONFIG.filter(tab => tab.id !== "usuario" || userLevel >= 3).map((tab) => {
+                const IconComponent = ICON_COMPONENTS[tab.iconName] || Boxes;
+                const tabTitle = t[`tab_${tab.id}_title`] || tab.title;
+                const tabShort = t[`tab_${tab.id}_short`] || tab.shortTitle;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setAlertMessage({ type: "", text: "" });
+                    }}
+                    className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-full transition-all duration-300 hover-scale cursor-pointer text-xs font-bold text-left ${
+                      isActive
+                        ? "bg-white text-[#20a464] shadow-md dark:bg-slate-800 dark:text-[#3cd070]"
+                        : "text-emerald-950/70 hover:text-emerald-950 hover:bg-white/20 dark:text-slate-300 dark:hover:text-white"
+                    }`}
+                    title={tabTitle}
+                  >
+                    <IconComponent className="w-4.5 h-4.5 shrink-0" />
+                    <span>{tabShort}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Navigation Tabs (Dynamic modular configuration) */}
-          <div className="flex flex-col gap-5">
-            {TABS_CONFIG.filter(tab => tab.id !== "usuario" || userLevel >= 3).map((tab) => {
-              const IconComponent = ICON_COMPONENTS[tab.iconName] || Boxes;
-              const tabTitle = t[`tab_${tab.id}_title`] || tab.title;
-              const tabShort = t[`tab_${tab.id}_short`] || tab.shortTitle;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setAlertMessage({ type: "", text: "" });
-                  }}
-                  className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all duration-355 hover-scale cursor-pointer ${
-                    activeTab === tab.id
-                      ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-lg"
-                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                  }`}
-                  title={tabTitle}
-                >
-                  <IconComponent className="w-5.5 h-5.5 mb-1" />
-                  <span className="text-[10px] font-bold">{tabShort}</span>
-                </button>
-              );
-            })}
-          </div>
+          {/* Bottom Controls Panel */}
+          <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-white/20 dark:border-slate-800/20 shrink-0">
+            {/* User Profile Card */}
+            <div className="p-3 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-2xl border border-white/20 dark:border-slate-700/20 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-8 h-8 rounded-full bg-[#20a464] text-white flex items-center justify-center font-black text-xs shrink-0">
+                  {currentUser?.username === "1234" ? "UM" : (currentUser?.username || "U").substring(0, 2).toUpperCase()}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 truncate">
+                    {userDisplayName}
+                  </span>
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold leading-tight">
+                    {userPosition}
+                  </span>
+                  <span className="text-[9px] text-[#20a464] dark:text-[#3cd070] font-black leading-tight">
+                    Nivel {userLevel}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 text-slate-500 hover:text-red-500 hover-scale transition-colors duration-200 cursor-pointer shrink-0"
+                title={t.logout}
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
 
-          {/* Theme & Logout */}
-          <div className="flex flex-col items-center gap-4">
-            {/* Theme switcher */}
-            <button
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="w-10 h-10 rounded-xl flex items-center justify-center hover-scale transition-colors duration-200 cursor-pointer"
-              title={theme === "light" ? (language === "es" ? "Modo Oscuro" : "Dark Mode") : (language === "es" ? "Modo Claro" : "Light Mode")}
-            >
-              {theme === "light" ? (
-                <Moon className="w-5 h-5 text-slate-500 hover:text-slate-900" />
-              ) : (
-                <Sun className="w-5 h-5 text-amber-400 hover:text-amber-300" />
-              )}
-            </button>
+            {/* Modo Demostración */}
+            <div className="p-3 bg-white/40 dark:bg-slate-800/40 rounded-2xl border border-white/20 dark:border-slate-700/20 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-wider">
+                  {language === "es" ? "Modo Demostración" : "Demo Mode"}
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isDemoMode}
+                    onChange={(e) => handleDemoToggle(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-8 h-4 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-focus:ring-1 peer-focus:ring-[#20a464] peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3.5 after:transition-all peer-checked:bg-[#20a464]"></div>
+                </label>
+              </div>
+              
+              <select
+                value={demoLevel}
+                onChange={(e) => handleDemoLevelChange(e.target.value)}
+                disabled={!isDemoMode}
+                className="w-full px-2 py-1 rounded-xl text-[9px] font-black bg-white/60 dark:bg-slate-900/60 border border-white/20 text-slate-700 dark:text-slate-300 disabled:opacity-50 cursor-pointer"
+              >
+                <option value={1}>{language === "es" ? "Nivel 1 - Operador" : "Level 1 - Operator"}</option>
+                <option value={2}>{language === "es" ? "Nivel 2 - Supervisor" : "Level 2 - Supervisor"}</option>
+                <option value={3}>{language === "es" ? "Nivel 3 - Administrador" : "Level 3 - Administrator"}</option>
+              </select>
+            </div>
 
-            {/* Logout button */}
+            {/* Tema Visual */}
+            <div>
+              <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">
+                {language === "es" ? "TEMA VISUAL" : "VISUAL THEME"}
+              </span>
+              <div className="flex items-center gap-2">
+                {[
+                  { name: "classic", color: "bg-blue-500", ring: "ring-blue-300" },
+                  { name: "nature", color: "bg-emerald-500", ring: "ring-emerald-300" },
+                  { name: "orange", color: "bg-orange-500", ring: "ring-orange-300" },
+                  { name: "purple", color: "bg-purple-500", ring: "ring-purple-300" },
+                  { name: "red", color: "bg-rose-500", ring: "ring-rose-300" }
+                ].map((tOption) => (
+                  <button
+                    key={tOption.name}
+                    onClick={() => {
+                      setVisualTheme(tOption.name);
+                      localStorage.setItem("app_theme", tOption.name);
+                    }}
+                    className={`w-4 h-4 rounded-full ${tOption.color} transition-all duration-200 cursor-pointer hover-scale ${
+                      visualTheme === tOption.name
+                        ? `ring-2 ring-offset-2 dark:ring-offset-slate-950 ${tOption.ring}`
+                        : ""
+                    }`}
+                    title={tOption.name}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Language Switcher */}
             <button
-              onClick={handleLogout}
-              className="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-red-500/10 text-slate-400 hover:text-red-500 hover-scale transition-colors duration-200 cursor-pointer"
-              title={t.logout}
+              onClick={() => {
+                const nextLang = language === "es" ? "en" : "es";
+                setLanguage(nextLang);
+                localStorage.setItem("app_language", nextLang);
+              }}
+              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full bg-white/40 hover:bg-white/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-[10px] font-black border border-white/20 select-none hover-scale cursor-pointer transition-colors duration-200"
             >
-              <LogOut className="w-5 h-5" />
+              <Globe className="w-3 h-3 text-[#20a464]" />
+              <span>{language === "es" ? "Switch to English" : "Cambiar a Español"}</span>
             </button>
           </div>
         </div>
@@ -2238,10 +2350,36 @@ export default function App() {
         {/* RIGHT WORKSPACE */}
         <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden">
           
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
+          {/* Greeting Banner */}
+          <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg border border-white/20 dark:border-slate-800/20 rounded-[1.5rem] sm:rounded-full px-6 py-3.5 shadow-md flex items-center justify-between mb-6 shrink-0">
             <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">
+              <h2 className="text-base font-black text-slate-800 dark:text-slate-200">
+                {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
+              </h2>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">
+                {language === "es" 
+                  ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
+                  : `Shift: ${userShift} | Access: Level ${userLevel}`}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[#20a464] dark:text-[#3cd070] text-[10px] font-black uppercase tracking-wider select-none">
+                <Shield className="w-3.5 h-3.5" />
+                <span>{language === "es" ? `Nivel ${userLevel}` : `Level ${userLevel}`}</span>
+              </div>
+              
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[#20a464] dark:text-[#3cd070] text-[10px] font-black uppercase tracking-wider select-none">
+                <Database className="w-3.5 h-3.5" />
+                <span>{t.connected}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2 border-b border-white/10 dark:border-slate-800/10 shrink-0">
+            <div>
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-tight">
                 {t[`tab_${activeTab}_title`] || "Panel de Control"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
@@ -2249,40 +2387,7 @@ export default function App() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto justify-end">
-              {/* Theme Toggle */}
-              <button
-                onClick={() => {
-                  const nextTheme = visualTheme === "classic" ? "nature" : "classic";
-                  setVisualTheme(nextTheme);
-                  localStorage.setItem("app_theme", nextTheme);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-extrabold border border-sky-500/20 select-none hover-scale cursor-pointer transition-colors duration-200"
-                title={visualTheme === "classic" ? (language === "es" ? "Cambiar a Naturaleza" : "Switch to Nature") : (language === "es" ? "Cambiar a Clásico" : "Switch to Classic")}
-              >
-                <Palette className="w-3.5 h-3.5" />
-                <span>{visualTheme === "classic" ? (language === "es" ? "Clásico" : "Classic") : (language === "es" ? "Naturaleza" : "Nature")}</span>
-              </button>
-
-              {/* Language Selector */}
-              <button
-                onClick={() => {
-                  const nextLang = language === "es" ? "en" : "es";
-                  setLanguage(nextLang);
-                  localStorage.setItem("app_language", nextLang);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-extrabold border border-sky-500/20 select-none hover-scale cursor-pointer transition-colors duration-200"
-                title={language === "es" ? "Switch to English" : "Cambiar a Español"}
-              >
-                <Globe className="w-3.5 h-3.5" />
-                <span>{language === "es" ? "ES" : "EN"}</span>
-              </button>
-
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20 select-none">
-                <Database className="w-3.5 h-3.5" />
-                <span>{t.connected}</span>
-              </div>
-
+            <div className="flex items-center gap-3 justify-end flex-wrap">
               {activeTab === "inventario" && (
                 <div className="relative w-48 sm:w-60 shrink-0">
                   <input
@@ -2322,7 +2427,7 @@ export default function App() {
               {activeTab === "inventario" && userLevel >= 2 && (
                 <button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 rounded-xl text-xs font-bold shadow-md shadow-sky-500/10 hover-scale cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-[#20a464] to-[#3cd070] hover:from-[#20a464] hover:to-[#3cd070] rounded-xl text-xs font-bold shadow-md shadow-[#20a464]/10 hover-scale cursor-pointer"
                 >
                   <PlusCircle className="w-4.5 h-4.5" />
                   <span>{t.add_component}</span>
@@ -3232,18 +3337,18 @@ export default function App() {
                               <PlusCircle className="w-4 h-4" />
                               <span>{t.add_printer_btn}</span>
                             </button>
- 
+
                             <button
                               type="submit"
                               disabled={isCleaningSubmitting}
-                              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                              className="w-full sm:w-auto px-8 py-3 rounded-full bg-gradient-to-r from-[#20a464] to-[#3cd070] hover:from-[#20a464] hover:to-[#3cd070] text-white font-bold text-xs shadow-lg shadow-[#20a464]/20 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
                             >
                               {isCleaningSubmitting ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               ) : (
                                 <CheckCircle className="w-3.5 h-3.5" />
                               )}
-                              <span>{isCleaningSubmitting ? t.loading : t.save_record}</span>
+                              <span>{isCleaningSubmitting ? t.loading : (language === "es" ? "Registrar Limpiezas" : "Register Cleanings")}</span>
                             </button>
                           </div>
                         </form>
