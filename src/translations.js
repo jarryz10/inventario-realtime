@@ -21,6 +21,10 @@ export const translations = {
     tab_rfid_desc: "Registra y supervisa las lecturas y el estado de antenas y sensores RFID",
     tab_rfid_short: "Verificación RFID",
 
+    tab_notificaciones_title: "Notificaciones del Sistema",
+    tab_notificaciones_desc: "Alertas de stock mínimo y registros importantes del almacén",
+    tab_notificaciones_short: "Notificaciones",
+
     tab_usuario_title: "Administración de Usuarios",
     tab_usuario_desc: "Gestiona los asociados del equipo, sus niveles de acceso y credenciales de seguridad",
     tab_usuario_short: "Usuario",
@@ -315,6 +319,10 @@ export const translations = {
     tab_rfid_title: "RFID Verification",
     tab_rfid_desc: "Register and supervise antenna readings and RFID sensor status",
     tab_rfid_short: "RFID Verification",
+
+    tab_notificaciones_title: "System Notifications",
+    tab_notificaciones_desc: "Minimum stock alerts and important warehouse logs",
+    tab_notificaciones_short: "Notifications",
 
     tab_usuario_title: "User Management",
     tab_usuario_desc: "Manage team associates, their access levels and security credentials",

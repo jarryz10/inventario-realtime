@@ -54,7 +54,9 @@ import {
   Users,
   Globe,
   Palette,
-  Shield
+  Shield,
+  Bell,
+  History
 } from "lucide-react";
 
 const TABS_CONFIG = [
@@ -94,6 +96,13 @@ const TABS_CONFIG = [
     iconName: "Radio"
   },
   {
+    id: "notificaciones",
+    title: "Notificaciones del Sistema",
+    description: "Alertas de stock mínimo y registros importantes del almacén",
+    shortTitle: "Notificaciones",
+    iconName: "Bell"
+  },
+  {
     id: "usuario",
     title: "Administración de Usuarios",
     description: "Gestiona los asociados del equipo, sus niveles de acceso y credenciales de seguridad",
@@ -108,6 +117,7 @@ const ICON_COMPONENTS = {
   FileText,
   Printer,
   Radio,
+  Bell,
   Users
 };
 
@@ -213,6 +223,13 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState(null);
+
+  // Notifications & Movements States
+  const [notifications, setNotifications] = useState([]);
+  const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+  const [movements, setMovements] = useState([]);
+  const [isMovementsLoading, setIsMovementsLoading] = useState(false);
+  const [isMovementsModalOpen, setIsMovementsModalOpen] = useState(false);
   const selectedProduct = products.find(p => p.id === selectedProductId) || null;
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -784,6 +801,76 @@ export default function App() {
     }
   }, [currentUser, userLevel]);
 
+  // Effect to fetch notifications in real-time from Firestore
+  useEffect(() => {
+    if (!currentUser) {
+      setIsNotificationsLoading(false);
+      return;
+    }
+    setIsNotificationsLoading(true);
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, "notifications"),
+        (snapshot) => {
+          const list = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          list.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          setNotifications(list);
+          setIsNotificationsLoading(false);
+        },
+        (error) => {
+          console.error("Firestore notifications query error:", error);
+          setIsNotificationsLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup notifications list real-time listener:", error);
+      setIsNotificationsLoading(false);
+    }
+  }, [currentUser]);
+
+  // Effect to fetch movements in real-time from Firestore
+  useEffect(() => {
+    if (!currentUser) {
+      setIsMovementsLoading(false);
+      return;
+    }
+    setIsMovementsLoading(true);
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, "movements"),
+        (snapshot) => {
+          const list = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          list.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          setMovements(list);
+          setIsMovementsLoading(false);
+        },
+        (error) => {
+          console.error("Firestore movements query error:", error);
+          setIsMovementsLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup movements list real-time listener:", error);
+      setIsMovementsLoading(false);
+    }
+  }, [currentUser]);
+
   // Effect to protect and redirect unauthorized users from the User tab
   useEffect(() => {
     if (activeTab === "usuario" && userLevel < 3) {
@@ -898,6 +985,92 @@ export default function App() {
     }
   };
 
+  // Helper to log inventory movements to Firestore
+  const logMovement = async (itemName, type, amount, operator) => {
+    try {
+      const activeOperator = operator || currentUser?.username || "Sistema";
+      await addDoc(collection(db, "movements"), {
+        timestamp: serverTimestamp(),
+        itemName: itemName,
+        type: type, // "Entrada" | "Salida" | "Ajuste por Edición"
+        amount: amount,
+        operator: activeOperator
+      });
+    } catch (error) {
+      console.error("Error logging movement to Firestore:", error);
+    }
+  };
+
+  // Generate and download PDF report of inventory movements history
+  const handleDownloadMovementsPDF = () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(32, 164, 100); // Emerald color
+      doc.text("Reporte de Movimientos de Inventario - MasterInventory", 14, 20);
+
+      // Subtitle / Metadata
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139); // Slate-500
+      const todayStr = new Date().toLocaleString("es-CL");
+      doc.text(`Fecha de generación: ${todayStr}`, 14, 28);
+      doc.text(`Generado por: ${currentUser?.username || "Sistema"}`, 14, 34);
+
+      // Divider line
+      doc.setDrawColor(226, 232, 240); // Slate-200
+      doc.line(14, 38, 196, 38);
+
+      // Prepare Table Data
+      const tableHeaders = [["Fecha y Hora", "Artículo", "Tipo de Movimiento", "Cantidad", "Operador"]];
+      const tableRows = movements.map(mov => {
+        const dateStr = mov.timestamp?.toDate
+          ? mov.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
+          : (mov.timestamp?.seconds ? new Date(mov.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
+        return [
+          dateStr,
+          mov.itemName || "N/D",
+          mov.type || "N/D",
+          mov.amount !== undefined ? mov.amount : "N/D",
+          mov.operator || "N/D"
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 44,
+        head: tableHeaders,
+        body: tableRows,
+        theme: "striped",
+        headStyles: {
+          fillColor: [32, 164, 100], // Emerald-600
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 9
+        },
+        bodyStyles: {
+          fontSize: 8,
+          textColor: [51, 65, 85]
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252] // Slate-50
+        },
+        margin: { top: 10, left: 14, right: 14 },
+        styles: {
+          overflow: "linebreak",
+          cellPadding: 4
+        }
+      });
+
+      doc.save(`Movimientos_Inventario_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (error) {
+      console.error("Error generating movements PDF:", error);
+      alert("Error al generar el PDF del historial.");
+    }
+  };
+
   // Add Component Submission
   const handleAddProduct = (e) => {
     e.preventDefault();
@@ -913,17 +1086,37 @@ export default function App() {
         finalImageUrl = "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&auto=format&fit=crop&q=80";
       }
 
+      const pName = formData.name.trim();
+      const pStock = parseInt(formData.stock) || 0;
+      const pMinStock = parseInt(formData.minStock) || 0;
+
       addDoc(collection(db, "items"), {
-        name: formData.name.trim(),
+        name: pName,
         brand: formData.brand.trim(),
         model: formData.model.trim(),
         sku: formData.sku.trim().toUpperCase(),
         location: formData.location.trim(),
-        minStock: parseInt(formData.minStock) || 0,
-        stock: parseInt(formData.stock) || 0,
+        minStock: pMinStock,
+        stock: pStock,
         description: formData.description.trim(),
         image: finalImageUrl,
         timestamp: serverTimestamp()
+      }).then(async (docRef) => {
+        await logMovement(pName, "Entrada", pStock);
+        if (pStock <= pMinStock) {
+          try {
+            await addDoc(collection(db, "notifications"), {
+              timestamp: serverTimestamp(),
+              type: "stock_minimo",
+              message: language === "es"
+                ? `Alerta de Stock Mínimo: "${pName}" tiene ${pStock} unidades (mínimo requerido: ${pMinStock}).`
+                : `Low Stock Alert: "${pName}" has ${pStock} units (minimum required: ${pMinStock}).`,
+              title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert"
+            });
+          } catch (err) {
+            console.error("Error creating low stock notification:", err);
+          }
+        }
       }).catch(error => {
         console.error("Error adding document:", error);
         setAlertMessage({ type: "error", text: "Error al guardar en Firestore." });
@@ -1054,6 +1247,15 @@ export default function App() {
         userLevel: userLevel,
         date: today,
         timestamp: serverTimestamp()
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "reporte_diario",
+        message: language === "es"
+          ? `El operador "${currentUser.username}" ha registrado el Reporte Diario de Actividades para la fecha ${today}.`
+          : `Operator "${currentUser.username}" has registered the Daily Activity Report for date ${today}.`,
+        title: language === "es" ? "Reporte Diario Registrado" : "Daily Report Registered"
       });
 
       setReportRows([{ time: "08:00 AM - 09:00 AM", activity: "" }]);
@@ -1381,6 +1583,15 @@ export default function App() {
         userLevel: userLevel,
         date: today,
         timestamp: serverTimestamp()
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "limpieza_impresora",
+        message: language === "es"
+          ? `El operador "${currentUser.username}" ha registrado un servicio de Limpieza de Impresora para ${printersData.length} equipo(s).`
+          : `Operator "${currentUser.username}" has registered a Printer Cleaning service for ${printersData.length} equipment(s).`,
+        title: language === "es" ? "Limpieza de Impresora" : "Printer Cleaning Registered"
       });
 
       setCleaningRows([{ station: "", ip: "10.40.", printerType: "" }]);
@@ -2025,6 +2236,10 @@ export default function App() {
   const handleDeleteProduct = async (productId) => {
     if (userLevel < 2) return;
     try {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        await logMovement(product.name, "Salida", product.stock || 0);
+      }
       await deleteDoc(doc(db, "items", productId));
       setAlertMessage({ type: "success", text: "Componente eliminado correctamente." });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
@@ -2037,6 +2252,30 @@ export default function App() {
   const handleAdjustStock = async (productId, amount, currentStock) => {
     if (amount < 0 && currentStock <= 0) return;
     try {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        const type = amount > 0 ? "Entrada" : "Salida";
+        const newStock = Math.max(0, currentStock + amount);
+        const minStock = product.minStock || 0;
+        
+        await logMovement(product.name, type, Math.abs(amount));
+
+        if (newStock <= minStock) {
+          try {
+            await addDoc(collection(db, "notifications"), {
+              timestamp: serverTimestamp(),
+              type: "stock_minimo",
+              message: language === "es"
+                ? `Alerta de Stock Mínimo: "${product.name}" tiene ${newStock} unidades (mínimo requerido: ${minStock}).`
+                : `Low Stock Alert: "${product.name}" has ${newStock} units (minimum required: ${minStock}).`,
+              title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert"
+            });
+          } catch (err) {
+            console.error("Error creating low stock notification:", err);
+          }
+        }
+      }
+
       const docRef = doc(db, "items", productId);
       await updateDoc(docRef, {
         stock: increment(amount)
@@ -2083,6 +2322,7 @@ export default function App() {
         description: (editDetailForm.description || "").trim(),
         image: (editDetailForm.image || "").trim()
       });
+      await logMovement(editDetailForm.name.trim(), "Ajuste por Edición", 0);
       setIsEditingDetail(false);
       setAlertMessage({
         type: "success",
@@ -2446,6 +2686,16 @@ export default function App() {
                     </button>
                   )}
                 </div>
+              )}
+
+              {activeTab === "inventario" && (
+                <button
+                  onClick={() => setIsMovementsModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold shadow-md hover-scale cursor-pointer bg-white/60 hover:bg-white/80 dark:bg-slate-800/60 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 border border-white/20 dark:border-slate-700/30"
+                >
+                  <History className="w-4 h-4 text-[#20a464]" />
+                  <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
+                </button>
               )}
 
               {activeTab === "inventario" && userLevel >= 2 && (
@@ -4232,6 +4482,73 @@ export default function App() {
               </div>
             )}
 
+            {activeTab === "notificaciones" && (
+              <div className="glass-card rounded-[2rem] p-6 shadow-lg h-full flex flex-col justify-between overflow-hidden border border-white/40 dark:border-slate-800/30">
+                <div className="flex items-center justify-between mb-4 shrink-0">
+                  <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                    {language === "es" ? "Alertas y Notificaciones" : "Alerts & Notifications"}
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
+                    {notifications.length} {language === "es" ? "notificaciones" : "notifications"}
+                  </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 min-h-[200px]">
+                  {isNotificationsLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <Loader2 className="w-8 h-8 text-[#20a464] animate-spin mb-2" />
+                      <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
+                      <Bell className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                        {language === "es" ? "No hay notificaciones" : "No notifications"}
+                      </h3>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
+                        {language === "es" 
+                          ? "Las alertas de stock mínimo y registros del sistema aparecerán aquí en tiempo real."
+                          : "Low stock alerts and system registrations will appear here in real time."}
+                      </p>
+                    </div>
+                  ) : (
+                    notifications.map((notif) => {
+                      const dateStr = notif.timestamp?.toDate
+                        ? notif.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
+                        : (notif.timestamp?.seconds ? new Date(notif.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
+                      
+                      let badgeColor = "bg-sky-500/10 text-sky-600 border-sky-500/20";
+                      if (notif.type === "stock_minimo") {
+                        badgeColor = "bg-rose-500/10 text-rose-600 border-rose-500/20";
+                      } else if (notif.type === "limpieza_impresora") {
+                        badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                      } else if (notif.type === "reporte_diario") {
+                        badgeColor = "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+                      }
+
+                      return (
+                        <div 
+                          key={notif.id} 
+                          className="p-4 rounded-2xl bg-white/30 dark:bg-slate-900/30 border border-white/20 dark:border-slate-800/10 flex items-start justify-between gap-4 hover:bg-white/40 dark:hover:bg-slate-900/40 transition-colors duration-200"
+                        >
+                          <div className="flex gap-3 items-start">
+                            <span className={`px-2 py-0.5 text-[9px] font-black rounded-lg border uppercase shrink-0 mt-0.5 ${badgeColor}`}>
+                              {notif.type ? notif.type.replace("_", " ") : "Alerta"}
+                            </span>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-700 dark:text-slate-200">{notif.title || "Notificación"}</h4>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{notif.message}</p>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-semibold text-slate-400 shrink-0 font-mono">{dateStr}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
 
           </div>
 
@@ -4378,6 +4695,117 @@ export default function App() {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Historial de Movimientos */}
+      {isMovementsModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="glass-card w-full max-w-4xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col border border-white/50 dark:border-slate-800/40 max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
+              <div>
+                <h2 className="text-lg font-black text-slate-800 dark:text-white">
+                  {language === "es" ? "Historial de Movimientos" : "Movement History"}
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {language === "es"
+                    ? "Registro de transacciones de inventario (Entradas, Salidas y Ajustes)"
+                    : "Inventory transaction log (Entries, Outputs and Adjustments)"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadMovementsPDF}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-md hover-scale cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{language === "es" ? "Descargar Reporte PDF" : "Download PDF Report"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMovementsModalOpen(false)}
+                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content / Table */}
+            <div className="flex-1 overflow-y-auto pr-1 scroll-glass min-h-[200px]">
+              {isMovementsLoading ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <Loader2 className="w-8 h-8 text-[#20a464] animate-spin mb-2" />
+                  <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
+                </div>
+              ) : movements.length === 0 ? (
+                <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                  {language === "es" ? "No se encontraron movimientos registrados." : "No registered movements found."}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200/40 dark:border-slate-800/30 text-[9px] text-slate-400 font-black uppercase tracking-wider">
+                        <th className="pb-2 font-black">{language === "es" ? "Fecha y Hora" : "Date & Time"}</th>
+                        <th className="pb-2 font-black">{language === "es" ? "Artículo" : "Item"}</th>
+                        <th className="pb-2 font-black">{language === "es" ? "Tipo" : "Type"}</th>
+                        <th className="pb-2 font-black text-center">{language === "es" ? "Cantidad" : "Quantity"}</th>
+                        <th className="pb-2 font-black">{language === "es" ? "Operador" : "Operator"}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100/30 dark:divide-slate-800/10 text-[11px] font-semibold text-slate-600 dark:text-slate-350">
+                      {movements.map((mov) => {
+                        const dateStr = mov.timestamp?.toDate
+                          ? mov.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
+                          : (mov.timestamp?.seconds ? new Date(mov.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
+                        
+                        let badgeColor = "bg-sky-500/10 text-sky-600 border-sky-500/20";
+                        if (mov.type === "Entrada") {
+                          badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                        } else if (mov.type === "Salida") {
+                          badgeColor = "bg-rose-500/10 text-rose-600 border-rose-500/20";
+                        } else if (mov.type === "Ajuste por Edición") {
+                          badgeColor = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+                        }
+
+                        return (
+                          <tr key={mov.id} className="hover:bg-slate-500/5 transition-colors">
+                            <td className="py-2.5 pr-2 font-mono text-slate-400 dark:text-slate-500 text-[10px]">{dateStr}</td>
+                            <td className="py-2.5 max-w-[200px] truncate pr-2 font-bold text-slate-800 dark:text-slate-100">{mov.itemName}</td>
+                            <td className="py-2.5 pr-2">
+                              <span className={`px-2 py-0.5 text-[9px] font-black rounded-lg border uppercase ${badgeColor}`}>
+                                {mov.type}
+                              </span>
+                            </td>
+                            <td className="py-2.5 text-center font-bold text-slate-700 dark:text-slate-200">
+                              {mov.type === "Ajuste por Edición" ? "-" : mov.amount}
+                            </td>
+                            <td className="py-2.5 text-slate-500 dark:text-slate-400 font-bold">{mov.operator}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end pt-4 border-t border-slate-200/50 dark:border-slate-800/50 mt-4 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsMovementsModalOpen(false)}
+                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs hover-scale cursor-pointer"
+              >
+                {t.cancel}
+              </button>
+            </div>
+
           </div>
         </div>
       )}
