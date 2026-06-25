@@ -136,18 +136,7 @@ const getBackgroundStyle = (theme) => {
 };
 
 const getThemeActiveTabClass = (theme) => {
-  switch (theme) {
-    case "nature":
-      return "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold";
-    case "redwood":
-      return "bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold";
-    case "coast":
-      return "bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-bold";
-    case "redrocks":
-      return "bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 font-bold";
-    default:
-      return "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-bold";
-  }
+  return "bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-full font-bold shadow-md shadow-emerald-800/10 border-none";
 };
 
 const getMetallicFrameClass = (theme) => "";
@@ -2332,11 +2321,14 @@ export default function App() {
   if (isAuthChecking) {
     return (
       <div 
-        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative bg-slate-50 dark:bg-slate-950"
+        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-800 overflow-hidden"
       >
-        <div className="glass-card rounded-lg p-8 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 flex flex-col items-center justify-center max-w-sm w-full text-center">
-          <Loader2 className="w-12 h-12 text-sky-500 animate-spin mb-4" />
-          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">{t.verifying_session}</h2>
+        <div className="absolute w-[500px] h-[500px] rounded-full bg-emerald-500/10 -top-40 -left-40 blur-3xl pointer-events-none" />
+        <div className="absolute w-[600px] h-[600px] rounded-full bg-lime-400/5 -bottom-40 -right-40 blur-3xl pointer-events-none" />
+        
+        <div className="glass-card rounded-[2rem] p-8 shadow-lg border border-emerald-850 bg-white/95 dark:bg-slate-900/95 z-10 flex flex-col items-center justify-center max-w-sm w-full text-center">
+          <Loader2 className="w-12 h-12 text-emerald-500 animate-spin mb-4" />
+          <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider">{t.verifying_session}</h2>
         </div>
       </div>
     );
@@ -2345,8 +2337,11 @@ export default function App() {
   if (!currentUser) {
     return (
       <div 
-        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in bg-slate-50 dark:bg-slate-950"
+        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-800 overflow-hidden"
       >
+        {/* Decorative Liquid Shapes */}
+        <div className="absolute w-[500px] h-[500px] rounded-full bg-emerald-500/10 -top-40 -left-40 blur-3xl pointer-events-none" />
+        <div className="absolute w-[600px] h-[600px] rounded-full bg-lime-400/5 -bottom-40 -right-40 blur-3xl pointer-events-none" />
         
         {/* Controls in top-right corner of login screen */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
@@ -2360,7 +2355,7 @@ export default function App() {
               setVisualTheme(nextTheme);
               localStorage.setItem("app_theme", nextTheme);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-all duration-200 shadow-sm"
             title={language === "es" ? "Cambiar Acento" : "Switch Accent"}
           >
             <Palette className="w-3.5 h-3.5 text-slate-400" />
@@ -2375,10 +2370,10 @@ export default function App() {
           {/* Light/Dark Mode Switch */}
           <button
             onClick={toggleTheme}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200 cursor-pointer shadow-sm"
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 cursor-pointer shadow-sm"
             title={theme === "light" ? (language === "es" ? "Modo Oscuro" : "Dark Mode") : (language === "es" ? "Modo Claro" : "Light Mode")}
           >
-            {theme === "light" ? <Moon className="w-4 h-4 text-slate-400" /> : <Sun className="w-4 h-4 text-slate-400" />}
+            {theme === "light" ? <Moon className="w-4 h-4 text-slate-500" /> : <Sun className="w-4 h-4 text-slate-400" />}
           </button>
 
           {/* Language Selector */}
@@ -2388,7 +2383,7 @@ export default function App() {
               setLanguage(nextLang);
               localStorage.setItem("app_language", nextLang);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-all duration-200 shadow-sm"
             title={language === "es" ? "Switch to English" : "Cambiar a Español"}
           >
             <Globe className="w-3.5 h-3.5 text-slate-400" />
@@ -2396,24 +2391,24 @@ export default function App() {
           </button>
         </div>
 
-        <div className="w-full max-w-md glass-container rounded-lg p-8 sm:p-10 shadow-sm relative z-10 animate-scale-in border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="w-full max-w-md glass-container rounded-[2rem] p-8 sm:p-10 shadow-xl relative z-10 animate-scale-in border border-emerald-800 bg-white/95 dark:bg-slate-900/95">
           {/* Logo Area */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm">
-              <Boxes className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shadow-inner">
+              <Boxes className="w-8 h-8 text-emerald-600" />
             </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-4 tracking-tight font-serif-premium">
+            <h1 className="text-2xl font-black text-slate-800 dark:text-white mt-4 tracking-tight font-serif-premium">
               {language === "es" ? "Inventario Real-time" : "Real-time Inventory"}
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">{t.login_description}</p>
           </div>
 
-          <h2 className="text-sm font-black text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200/50 dark:border-slate-800/50 pb-2">
+          <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200/50 dark:border-slate-800/50 pb-2">
             {t.login_title}
           </h2>
 
           {loginError && (
-            <div className="mb-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2 animate-fade-in">
+            <div className="mb-4 p-3 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-2 animate-fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
               <span>{loginError}</span>
             </div>
@@ -2421,36 +2416,36 @@ export default function App() {
 
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5 ml-1">
                 {t.username_or_id}
               </label>
               <div className="relative">
-                <Boxes className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
+                <Boxes className="absolute left-4 top-3.5 w-4.5 h-4.5 text-slate-400" />
                 <input
                   type="text"
                   placeholder={language === "es" ? "ej. operador" : "e.g. operador"}
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   disabled={isLoggingIn}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                  className="w-full pl-12 pr-4 py-3 rounded-full text-xs glass-input font-bold"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5 ml-1">
                 {t.password}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-3 w-4.5 h-4.5 text-slate-400" />
+                <Lock className="absolute left-4 top-3.5 w-4.5 h-4.5 text-slate-400" />
                 <input
                   type="password"
                   placeholder="••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   disabled={isLoggingIn}
-                  className="w-full pl-11 pr-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                  className="w-full pl-12 pr-4 py-3 rounded-full text-xs glass-input font-bold"
                   required
                 />
               </div>
@@ -2459,7 +2454,7 @@ export default function App() {
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer"
+              className="w-full py-3 rounded-full bg-gradient-to-r from-emerald-600 to-lime-500 hover:from-emerald-700 hover:to-lime-600 text-white font-black text-xs shadow-lg shadow-emerald-500/20 hover-scale flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer border-none"
             >
               {isLoggingIn ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -2515,7 +2510,7 @@ export default function App() {
                       setActiveTab(tab.id);
                       setAlertMessage({ type: "", text: "" });
                     }}
-                    className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer text-left ${
+                    className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-full transition-all duration-200 cursor-pointer text-left ${
                       isActive
                         ? getThemeActiveTabClass(visualTheme)
                         : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -2533,9 +2528,9 @@ export default function App() {
           {/* Bottom Controls Panel */}
           <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
             {/* User Profile Card */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-850 flex items-center justify-between shadow-sm">
+            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
                   {currentUser?.username === "1234" ? "UM" : (currentUser?.username || "U").substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
@@ -2621,114 +2616,132 @@ export default function App() {
         </div>
 
         {/* RIGHT WORKSPACE */}
-        <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
           
-          {/* Greeting Banner */}
-          <div className="glass-card rounded-lg px-6 py-3.5 flex items-center justify-between mb-6 shrink-0 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-            <div>
-              <h2 className="text-base font-bold text-slate-800 dark:text-slate-200">
-                {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
-              </h2>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">
-                {language === "es" 
-                  ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
-                  : `Shift: ${userShift} | Access: Level ${userLevel}`}
-              </p>
-            </div>
+          {/* Top Banner Fluid Green Gradient Area */}
+          <div className="bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-600 text-white px-6 sm:px-8 pt-6 sm:pt-8 pb-4 shrink-0 relative overflow-hidden">
+            <div className="absolute w-96 h-96 rounded-full bg-lime-400/10 -top-20 -right-20 blur-3xl pointer-events-none animate-pulse" />
+            <div className="absolute w-80 h-80 rounded-full bg-emerald-500/10 -bottom-20 -left-20 blur-3xl pointer-events-none" />
             
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider select-none">
-                <Shield className="w-3.5 h-3.5 text-slate-400" />
-                <span>{language === "es" ? `Nivel ${userLevel}` : `Level ${userLevel}`}</span>
+            {/* Greeting Banner */}
+            <div className="glass-card rounded-3xl px-6 py-4 flex items-center justify-between mb-6 shrink-0 border border-emerald-700/50 bg-white/95 dark:bg-slate-900/95 shadow-lg relative z-10 text-slate-800 dark:text-slate-100">
+              <div>
+                <h2 className="text-base font-extrabold text-emerald-900 dark:text-emerald-300">
+                  {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
+                </h2>
+                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold mt-0.5">
+                  {language === "es" 
+                    ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
+                    : `Shift: ${userShift} | Access: Level ${userLevel}`}
+                </p>
               </div>
               
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider select-none">
-                <Database className="w-3.5 h-3.5 text-slate-400" />
-                <span>{t.connected}</span>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider select-none">
+                  <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{language === "es" ? `Nivel ${userLevel}` : `Level ${userLevel}`}</span>
+                </div>
+                
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider select-none">
+                  <Database className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{t.connected}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Header Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 relative z-10">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black text-white leading-tight font-serif-premium">
+                  {t[`tab_${activeTab}_title`] || "Panel de Control"}
+                </h1>
+                <p className="text-xs text-emerald-100 font-medium mt-0.5 opacity-90">
+                  {t[`tab_${activeTab}_desc`] || ""}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 justify-end flex-wrap">
+                {activeTab === "inventario" && (
+                  <div className="relative w-48 sm:w-60 shrink-0">
+                    <input
+                      type="text"
+                      placeholder={t.search_components}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-8 pr-7 py-2 rounded-full text-xs glass-input font-bold"
+                    />
+                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                      <svg
+                        className="h-3.5 w-3.5 text-slate-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                      </svg>
+                    </div>
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
+                        type="button"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "inventario" && (
+                  <button
+                    onClick={() => setIsMovementsModalOpen(true)}
+                    className="flex items-center gap-2 px-4.5 py-2.5 rounded-full text-xs font-extrabold shadow-md hover-scale cursor-pointer bg-white hover:bg-slate-50 text-emerald-950 border border-emerald-100"
+                  >
+                    <History className="w-4 h-4 text-emerald-600" />
+                    <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
+                  </button>
+                )}
+
+                {activeTab === "inventario" && userLevel >= 2 && (
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-2 px-4.5 py-2.5 text-emerald-950 bg-gradient-to-r from-lime-300 to-emerald-400 hover:from-lime-400 hover:to-emerald-500 rounded-full text-xs font-black shadow-lg shadow-emerald-500/20 hover-scale cursor-pointer border border-lime-300"
+                  >
+                    <PlusCircle className="w-4.5 h-4.5" />
+                    <span>{t.add_component}</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2 border-b border-slate-200 dark:border-slate-800 shrink-0">
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">
-                {t[`tab_${activeTab}_title`] || "Panel de Control"}
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 opacity-80">
-                {t[`tab_${activeTab}_desc`] || ""}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 justify-end flex-wrap">
-              {activeTab === "inventario" && (
-                <div className="relative w-48 sm:w-60 shrink-0">
-                  <input
-                    type="text"
-                    placeholder={t.search_components}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-8 pr-7 py-2 rounded-xl text-xs glass-input font-bold"
-                  />
-                  <div className="absolute inset-y-0 left-2.5 flex items-center pointer-events-none">
-                    <svg
-                      className="h-3.5 w-3.5 text-slate-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute inset-y-0 right-2.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                      type="button"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "inventario" && (
-                <button
-                  onClick={() => setIsMovementsModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold shadow-md hover-scale cursor-pointer bg-white/60 hover:bg-white/80 dark:bg-slate-800/60 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 border border-white/20 dark:border-slate-700/30"
-                >
-                  <History className="w-4 h-4 text-[#20a464]" />
-                  <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
-                </button>
-              )}
-
-              {activeTab === "inventario" && userLevel >= 2 && (
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 text-white bg-gradient-to-r from-[#20a464] to-[#3cd070] hover:from-[#20a464] hover:to-[#3cd070] rounded-xl text-xs font-bold shadow-md shadow-[#20a464]/10 hover-scale cursor-pointer"
-                >
-                  <PlusCircle className="w-4.5 h-4.5" />
-                  <span>{t.add_component}</span>
-                </button>
-              )}
-            </div>
+          {/* Liquid Wave Separator */}
+          <div className="relative shrink-0 z-10 -mt-0.5 bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-600">
+            <svg 
+              className="w-full fill-white dark:fill-slate-950 h-8 block" 
+              viewBox="0 0 1200 120" 
+              preserveAspectRatio="none"
+            >
+              <path d="M0,0 C300,90 900,-30 1200,40 L1200,120 L0,120 Z"></path>
+            </svg>
           </div>
 
-          {/* Success Alerts */}
-          {alertMessage.text && alertMessage.type === "success" && (
-            <div className="mt-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fade-in shrink-0">
-              <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" />
-              <span>{alertMessage.text}</span>
-            </div>
-          )}
+          {/* Bottom Area containing the Tab Content Views */}
+          <div className="flex-1 p-6 sm:p-8 overflow-y-auto bg-white dark:bg-slate-950 min-h-0">
+            {/* Success Alerts */}
+            {alertMessage.text && alertMessage.type === "success" && (
+              <div className="mb-4 p-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fade-in shrink-0">
+                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" />
+                <span>{alertMessage.text}</span>
+              </div>
+            )}
 
-          {/* TAB CONTENT VIEWS */}
-          <div className={`flex-1 mt-6 ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "usuario") ? "overflow-y-auto h-full pb-4" : "overflow-hidden"}`}>
+            <div className={`h-full ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "usuario") ? "overflow-y-auto pb-4" : "overflow-hidden"}`}>
             
             {/* TAB 1: INVENTARIO */}
             {activeTab === "inventario" && (
@@ -2768,96 +2781,131 @@ export default function App() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4">
-                      {filteredProducts.map((product) => (
-                        <div
-                          key={product.id}
-                          onClick={() => setSelectedProductId(product.id)}
-                          className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-4 shadow-sm flex flex-col justify-between gap-4 transition-all duration-300 hover-scale hover:shadow-md cursor-pointer animate-fade-in`}
-                        >
-                          <div className="flex gap-3">
-                            <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-inner shrink-0 border border-slate-200/55 dark:border-slate-800/50">
-                              <img
-                                src={product.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <span className="text-[9px] uppercase font-bold text-sky-600 dark:text-sky-400 tracking-wider">
-                                {product.brand || t.no_brand}
-                              </span>
-                              <h3 className="font-extrabold product-name-text text-sm truncate leading-snug">
-                                {product.name}
-                              </h3>
-                              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 truncate">
-                                Mod: {product.model || t.na}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-2 pt-3 border-t border-white/10 dark:border-slate-800/30 text-[11px]">
-                            <div className="p-2 rounded-xl bg-white/5 dark:bg-slate-950/20 border border-white/10 dark:border-slate-800/20 flex flex-col">
-                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">SKU</span>
-                              <span className="font-mono font-bold text-[10px] text-slate-600 dark:text-slate-300 uppercase truncate">
-                                {product.sku || "N/A"}
-                              </span>
-                            </div>
-                            <div className="p-2 rounded-xl bg-white/5 dark:bg-slate-950/20 border border-white/10 dark:border-slate-800/20 flex flex-col">
-                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider mb-0.5">{language === "es" ? "Ubicación" : "Location"}</span>
-                              <span className="font-bold text-[10px] text-slate-600 dark:text-slate-300 truncate flex items-center gap-0.5">
-                                <MapPin className="w-3 h-3 text-sky-500" />
-                                {product.location || t.na}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/30">
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t.stock_status}</span>
-                              <div className="flex items-center gap-1.5">
-                                {getStockStatus(product.stock, product.minStock)}
-                                
-                                <div className="flex items-center gap-1 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAdjustStock(product.id, -1, product.stock);
-                                    }}
-                                    disabled={product.stock <= 0}
-                                    className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-[10px] font-bold disabled:opacity-40 disabled:hover:bg-slate-100 dark:disabled:hover:bg-slate-800 hover-scale transition-colors cursor-pointer"
-                                    title={t.subtract_unit_tooltip}
-                                  >
-                                    -
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAdjustStock(product.id, 1, product.stock);
-                                    }}
-                                    className="w-5 h-5 rounded bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer"
-                                    title={t.add_unit_tooltip}
-                                  >
-                                    +
-                                  </button>
-                                </div>
+                      {filteredProducts.map((product, index) => {
+                        const isVariantB = index % 3 === 1;
+                        return (
+                          <div
+                            key={product.id}
+                            onClick={() => setSelectedProductId(product.id)}
+                            className={`glass-card rounded-[2rem] p-5 flex flex-col justify-between gap-4 transition-all duration-300 hover-scale cursor-pointer animate-fade-in border ${
+                              isVariantB
+                                ? "bg-gradient-to-br from-emerald-950 via-emerald-800 to-emerald-600 text-white border-emerald-700/30 shadow-lg shadow-emerald-900/10"
+                                : "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border-slate-100 dark:border-slate-800 shadow-md shadow-slate-100/50 dark:shadow-none"
+                            }`}
+                          >
+                            <div className="flex gap-3">
+                              {/* Oval Image Mask */}
+                              <div className="w-14 h-20 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-950 shadow-inner shrink-0 border border-slate-200/50 dark:border-slate-800/50 aspect-[2/3]">
+                                <img
+                                  src={product.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              
+                              <div className="min-w-0 flex-1">
+                                <span className={`text-[9px] uppercase font-bold tracking-wider ${
+                                  isVariantB ? "text-lime-300" : "text-emerald-600 dark:text-emerald-400"
+                                }`}>
+                                  {product.brand || t.no_brand}
+                                </span>
+                                <h3 className={`font-black text-sm truncate leading-snug ${
+                                  isVariantB ? "text-white" : "text-slate-800 dark:text-white"
+                                }`}>
+                                  {product.name}
+                                </h3>
+                                <p className={`text-[11px] font-semibold mt-0.5 truncate ${
+                                  isVariantB ? "text-emerald-100" : "text-slate-400 dark:text-slate-500"
+                                }`}>
+                                  Mod: {product.model || t.na}
+                                </p>
                               </div>
                             </div>
 
-                            {userLevel >= 2 && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteProduct(product.id);
-                                }}
-                                className="w-8 h-8 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 flex items-center justify-center shrink-0 transition-colors duration-150"
-                                title={t.delete_firestore_tooltip}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                            <div className={`grid grid-cols-2 gap-2 pt-3 border-t text-[11px] ${
+                              isVariantB ? "border-white/10" : "border-slate-100 dark:border-slate-800/50"
+                            }`}>
+                              <div className={`p-2 rounded-2xl flex flex-col ${
+                                isVariantB ? "bg-emerald-950/30 border border-emerald-800/30" : "bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800"
+                              }`}>
+                                <span className={`text-[8px] uppercase font-black tracking-wider mb-0.5 ${
+                                  isVariantB ? "text-emerald-200" : "text-slate-400 dark:text-slate-500"
+                                }`}>SKU</span>
+                                <span className={`font-black truncate ${
+                                  isVariantB ? "text-white" : "text-slate-700 dark:text-slate-200"
+                                }`}>{product.sku || t.na}</span>
+                              </div>
+
+                              <div className={`p-2 rounded-2xl flex flex-col ${
+                                isVariantB ? "bg-emerald-950/30 border border-emerald-800/30" : "bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800"
+                              }`}>
+                                <span className={`text-[8px] uppercase font-black tracking-wider mb-0.5 ${
+                                  isVariantB ? "text-emerald-200" : "text-slate-400 dark:text-slate-500"
+                                }`}>{language === "es" ? "Ubicación" : "Location"}</span>
+                                <span className={`font-black truncate ${
+                                  isVariantB ? "text-white" : "text-slate-700 dark:text-slate-200"
+                                }`}>{product.location || t.na}</span>
+                              </div>
+                            </div>
+
+                            <div className={`flex items-center justify-between pt-2 border-t ${
+                              isVariantB ? "border-white/10" : "border-slate-100 dark:border-slate-800/30"
+                            }`}>
+                              <div className="flex flex-col gap-1">
+                                <span className={`text-[8px] uppercase font-black tracking-wider block ${
+                                  isVariantB ? "text-emerald-200" : "text-slate-400 dark:text-slate-500"
+                                }`}>{t.stock_status}</span>
+                                <div className="flex items-center gap-1.5">
+                                  {getStockStatus(product.stock, product.minStock)}
+                                  
+                                  <div className="flex items-center gap-1 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAdjustStock(product.id, -1, product.stock);
+                                      }}
+                                      disabled={product.stock <= 0}
+                                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold disabled:opacity-40 hover-scale transition-colors cursor-pointer ${
+                                        isVariantB ? "bg-emerald-900 text-white hover:bg-emerald-950" : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                                      }`}
+                                      title={t.subtract_unit_tooltip}
+                                    >
+                                      -
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAdjustStock(product.id, 1, product.stock);
+                                      }}
+                                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer ${
+                                        isVariantB ? "bg-lime-400 text-emerald-950 hover:bg-lime-300" : "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                                      }`}
+                                      title={t.add_unit_tooltip}
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {userLevel >= 2 && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteProduct(product.id);
+                                  }}
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-150 ${
+                                    isVariantB ? "text-emerald-300 hover:text-red-400 hover:bg-white/10" : "text-slate-400 hover:text-red-500 hover:bg-red-500/10"
+                                  }`}
+                                  title={t.delete_firestore_tooltip}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -4560,9 +4608,9 @@ export default function App() {
 
 
           </div>
-
         </div>
       </div>
+    </div>
 
       {/* POPUP MODAL: Editar Asociado */}
       {editingUser && (
