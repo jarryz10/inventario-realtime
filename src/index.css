@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 /* Base Body Styles */
@@ -6,6 +6,7 @@ body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1e293b;
+  background-color: #f8fafc;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -14,228 +15,91 @@ body {
 
 .dark body {
   color: #f8fafc;
+  background-color: #0f172a;
 }
 
-/* Serif Font Class */
+/* Serif Font Class override to Inter */
 .font-serif-premium {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* ==========================================
-   NEO-FROSTED GLASS SYSTEM (Advanced Glassmorphism)
-   ========================================== */
+/* Flat Design System */
 
-/* ==========================================
-   DYNAMIC ADAPTIVE THEME SYSTEM VARIABLES
-   ========================================== */
-
-/* Tema 1: Helechos (Naturaleza) - Fondo Oscuro */
-.theme-nature {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --sidebar-bg: rgba(15, 23, 42, 0.5);
-}
-
-.dark .theme-nature,
-.theme-nature.dark {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --sidebar-bg: rgba(10, 15, 28, 0.65);
-}
-
-/* Tema 2: Bosque de Secuoyas - Fondo Oscuro */
-.theme-redwood {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --sidebar-bg: rgba(15, 23, 42, 0.5);
-}
-
-.dark .theme-redwood,
-.theme-redwood.dark {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --sidebar-bg: rgba(10, 15, 28, 0.65);
-}
-
-/* Tema 3: Costa Pacífica - Fondo Claro */
-.theme-coast {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #111827; /* Charcoal dark */
-  --text-muted: #4b5563; /* Medium gray */
-  --sidebar-bg: rgba(15, 23, 42, 0.65); /* Keep sidebar dark slate glass for premium look */
-}
-
-.dark .theme-coast,
-.theme-coast.dark {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --sidebar-bg: rgba(10, 15, 28, 0.65);
-}
-
-/* Tema 4: Rocas Rojas - Fondo Claro */
-.theme-redrocks {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #111827;
-  --text-muted: #4b5563;
-  --sidebar-bg: rgba(15, 23, 42, 0.65);
-}
-
-.dark .theme-redrocks,
-.theme-redrocks.dark {
-  --glass-bg: rgba(255, 255, 255, 0.28);
-  --glass-border: rgba(255, 255, 255, 0.45);
-  --text-main: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --sidebar-bg: rgba(10, 15, 28, 0.65);
-}
-
-/* Dynamic Contrast Rules for Typography under Active Themes */
-[class*="theme-"] .text-slate-900:not(option),
-[class*="theme-"] .text-slate-800:not(option),
-[class*="theme-"] .text-slate-700:not(option),
-[class*="theme-"] .text-slate-300:not(option),
-[class*="theme-"] .text-slate-200:not(option),
-[class*="theme-"] .text-slate-100:not(option),
-[class*="theme-"] .text-white:not(option),
-[class*="theme-"] h1,
-[class*="theme-"] h2,
-[class*="theme-"] h3,
-[class*="theme-"] h4,
-[class*="theme-"] th {
-  color: var(--text-main) !important;
-}
-
-[class*="theme-"] .text-slate-600:not(option),
-[class*="theme-"] .text-slate-500:not(option),
-[class*="theme-"] .text-slate-400:not(option),
-[class*="theme-"] p,
-[class*="theme-"] td,
-[class*="theme-"] label {
-  color: var(--text-muted) !important;
-}
-
-/* Sidebar text override to keep sidebar readable */
-.glass-sidebar .text-slate-300,
-.glass-sidebar .text-slate-300\/80 {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-.glass-sidebar .text-slate-100 {
-  color: #ffffff !important;
-}
-.glass-sidebar .text-slate-400 {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-.glass-sidebar .text-slate-500 {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-
-.glass-container {
-  position: relative !important;
-  isolation: isolate !important;
-  background-color: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(55px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(55px) saturate(140%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08) !important;
-  border-radius: 1.5rem !important;
-}
-
-.dark .glass-container {
-  position: relative !important;
-  isolation: isolate !important;
-  background-color: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(55px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(55px) saturate(140%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08) !important;
-  border-radius: 1.5rem !important;
-}
-
+.glass-container,
 .glass-card {
   position: relative !important;
   isolation: isolate !important;
-  background-color: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(55px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(55px) saturate(140%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08) !important;
-  border-radius: 1.5rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important; /* border-slate-200 */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* shadow-sm */
+  border-radius: 0.5rem !important; /* rounded-lg */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
+.dark .glass-container,
 .dark .glass-card {
+  background-color: #1e293b !important; /* bg-slate-800 */
+  border: 1px solid #334155 !important; /* border-slate-700 */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important; /* shadow-sm */
+  border-radius: 0.5rem !important; /* rounded-lg */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Sidebar: Solid clean background */
+.glass-sidebar {
   position: relative !important;
   isolation: isolate !important;
-  background-color: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(55px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(55px) saturate(140%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08) !important;
-  border-radius: 1.5rem !important;
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  border-radius: 0px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
+.dark .glass-sidebar {
+  background-color: #0f172a !important;
+  border-right: 1px solid #1e293b !important;
+  border-radius: 0px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Input Fields: Flat Solid style */
 .glass-input {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
   outline: none;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+  border-radius: 0.375rem !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   transition: all 0.2s ease-in-out !important;
 }
 
 .glass-input::placeholder {
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: #94a3b8 !important;
 }
 
 .glass-input:focus {
-  background: rgba(255, 255, 255, 0.18) !important;
-  border-color: var(--glass-border, rgba(255, 255, 255, 0.4)) !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08) !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6 !important;
 }
 
 .dark .glass-input {
-  background: rgba(15, 23, 42, 0.35) !important;
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
-  color: #ffffff !important;
+  background-color: #1e293b !important;
+  border: 1px solid #475569 !important;
+  color: #f8fafc !important;
+}
+
+.dark .glass-input::placeholder {
+  color: #64748b !important;
 }
 
 .dark .glass-input:focus {
-  background: rgba(15, 23, 42, 0.5) !important;
-  border-color: var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.03) !important;
-}
-
-/* Sidebar: Frosted Glass Oscuro */
-.glass-sidebar {
-  position: relative !important;
-  isolation: isolate !important;
-  background-color: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(55px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(55px) saturate(140%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.45) !important;
-  border-radius: 0px !important;
-}
-
-.dark .glass-sidebar {
-  position: relative !important;
-  isolation: isolate !important;
-  background-color: rgba(255, 255, 255, 0.28) !important;
-  backdrop-filter: blur(55px) saturate(140%) !important;
-  -webkit-backdrop-filter: blur(55px) saturate(140%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.45) !important;
-  border-radius: 0px !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6 !important;
 }
 
 /* Select option styles to keep them legible in all browsers */
@@ -282,11 +146,11 @@ option {
 }
 
 .hover-scale:hover {
-  transform: translateY(-1px) scale(1.005);
+  transform: translateY(-1px) scale(1.002);
 }
 
 .hover-scale:active {
-  transform: translateY(0) scale(0.995);
+  transform: translateY(0) scale(0.998);
 }
 
 .scroll-glass::-webkit-scrollbar-thumb {
@@ -317,73 +181,35 @@ option {
 }
 
 .product-name-text {
-  font-family: 'Playfair Display', Georgia, serif !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   font-weight: 700 !important;
   color: #0f172a !important;
 }
 
 .dark .product-name-text {
-  font-family: 'Playfair Display', Georgia, serif !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
   font-weight: 700 !important;
   color: #f8fafc !important;
 }
 
-/* ==========================================
-   BRUSHED METAL FRAMES & BORDERS (Bronze & Silver)
-   ========================================== */
-
-/* ==========================================
-   BRUSHED METAL FRAMES & BORDERS -> GLASS CANTOS
-   ========================================== */
-
-.metallic-frame-bronze,
-.metallic-frame-silver {
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: none !important;
-}
-
-.dark .metallic-frame-bronze,
-.dark .metallic-frame-silver {
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow: none !important;
-}
-
-/* ==========================================
-   POLISHED METALLIC FINISHED ICONS -> ADAPTIVE
-   ========================================== */
-
-.metallic-icon-bronze,
-.metallic-icon-silver {
-  color: var(--text-main) !important;
-  filter: none !important;
-}
-
-/* ==========================================
-   METALLIC FINISHED BUTTONS -> GLASSMORPHIC
-   ========================================== */
-
+/* Buttons style: clean and solid */
 button.btn-metallic-bronze,
 button.btn-metallic-silver,
 button[type="submit"],
 button.bg-gradient-to-r,
 button.bg-gradient-to-tr,
 button.bg-sky-500,
-button.bg-emerald-500,
-[class*="theme-"] button[type="submit"],
-[class*="theme-"] button.bg-gradient-to-r,
-[class*="theme-"] button.bg-gradient-to-tr,
-[class*="theme-"] button.bg-sky-500,
-[class*="theme-"] button.bg-emerald-500 {
-  background: rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.2)) !important;
-  color: var(--text-main) !important;
-  text-shadow: none !important;
+button.bg-emerald-500 {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 0.375rem !important; /* rounded-md */
+  font-weight: 500 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: all 0.2s ease-in-out !important;
   box-shadow: none !important;
-  border-radius: 9999px !important;
-  font-weight: 700 !important;
-  transition: all 0.25s ease-in-out !important;
+  text-shadow: none !important;
 }
 
 button.btn-metallic-bronze:hover,
@@ -392,15 +218,10 @@ button[type="submit"]:hover,
 button.bg-gradient-to-r:hover,
 button.bg-gradient-to-tr:hover,
 button.bg-sky-500:hover,
-button.bg-emerald-500:hover,
-[class*="theme-"] button[type="submit"]:hover,
-[class*="theme-"] button.bg-gradient-to-r:hover,
-[class*="theme-"] button.bg-gradient-to-tr:hover,
-[class*="theme-"] button.bg-sky-500:hover,
-[class*="theme-"] button.bg-emerald-500:hover {
-  background: rgba(255, 255, 255, 0.25) !important;
-  border-color: var(--glass-border, rgba(255, 255, 255, 0.3)) !important;
-  color: var(--text-main) !important;
+button.bg-emerald-500:hover {
+  background-color: #0f172a !important;
+  border-color: #0f172a !important;
+  color: #ffffff !important;
 }
 
 .dark button.btn-metallic-bronze,
@@ -409,17 +230,10 @@ button.bg-emerald-500:hover,
 .dark button.bg-gradient-to-r,
 .dark button.bg-gradient-to-tr,
 .dark button.bg-sky-500,
-.dark button.bg-emerald-500,
-.dark [class*="theme-"] button[type="submit"],
-.dark [class*="theme-"] button.bg-gradient-to-r,
-.dark [class*="theme-"] button.bg-gradient-to-tr,
-.dark [class*="theme-"] button.bg-sky-500,
-.dark [class*="theme-"] button.bg-emerald-500 {
-  background: rgba(15, 23, 42, 0.3) !important;
-  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08)) !important;
-  color: var(--text-main) !important;
-  text-shadow: none !important;
-  box-shadow: none !important;
+.dark button.bg-emerald-500 {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border: 1px solid #f8fafc !important;
 }
 
 .dark button.btn-metallic-bronze:hover,
@@ -428,15 +242,10 @@ button.bg-emerald-500:hover,
 .dark button.bg-gradient-to-r:hover,
 .dark button.bg-gradient-to-tr:hover,
 .dark button.bg-sky-500:hover,
-.dark button.bg-emerald-500:hover,
-.dark [class*="theme-"] button[type="submit"]:hover,
-.dark [class*="theme-"] button.bg-gradient-to-r:hover,
-.dark [class*="theme-"] button.bg-gradient-to-tr:hover,
-.dark [class*="theme-"] button.bg-sky-500:hover,
-.dark [class*="theme-"] button.bg-emerald-500:hover {
-  background: rgba(15, 23, 42, 0.45) !important;
-  border-color: var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
-  color: var(--text-main) !important;
+.dark button.bg-emerald-500:hover {
+  background-color: #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
 /* Dashboard Fullscreen */
@@ -445,18 +254,18 @@ button.bg-emerald-500:hover,
   border: none !important;
 }
 
-/* Accent texts for themes (subtle and readable) */
+/* Accent colors for text (flat and simple) */
 .theme-classic .text-sky-600, .theme-classic .text-sky-500 { color: #3b82f6 !important; }
 .theme-classic.dark .text-sky-400, .dark .theme-classic .text-sky-400 { color: #60a5fa !important; }
 
-.theme-nature .text-\[\#20a464\], .theme-nature .text-sky-600, .theme-nature .text-\[\#3cd070\] { color: #20a464 !important; }
-.theme-nature.dark .text-sky-400, .dark .theme-nature .text-sky-400 { color: #3cd070 !important; }
+.theme-nature .text-\[\#20a464\], .theme-nature .text-sky-600, .theme-nature .text-\[\#3cd070\] { color: #10b981 !important; }
+.theme-nature.dark .text-sky-400, .dark .theme-nature .text-sky-400 { color: #34d399 !important; }
 
-.theme-orange .text-sky-600, .theme-orange .text-sky-500 { color: #ea580c !important; }
-.theme-orange.dark .text-sky-400, .dark .theme-orange .text-sky-400 { color: #f97316 !important; }
+.theme-orange .text-sky-600, .theme-orange .text-sky-500 { color: #f59e0b !important; }
+.theme-orange.dark .text-sky-400, .dark .theme-orange .text-sky-400 { color: #fbbf24 !important; }
 
 .theme-purple .text-sky-600, .theme-purple .text-sky-500 { color: #8b5cf6 !important; }
 .theme-purple.dark .text-sky-400, .dark .theme-purple .text-sky-400 { color: #a78bfa !important; }
 
-.theme-red .text-sky-600, .theme-red .text-sky-500 { color: #f43f5e !important; }
-.theme-red.dark .text-sky-400, .dark .theme-red .text-sky-400 { color: #fb7185 !important; }
+.theme-red .text-sky-600, .theme-red .text-sky-500 { color: #ef4444 !important; }
+.theme-red.dark .text-sky-400, .dark .theme-red .text-sky-400 { color: #f87171 !important; }

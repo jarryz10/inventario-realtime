@@ -2,10 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { db, storage } from "./firebase";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import bgBotanicalGradient from "./assets/bg-botanical-gradient.png";
-import bgRedwoodForest from "./assets/bg-redwood-forest.png";
-import bgPacificCoast from "./assets/bg-pacific-coast.png";
-import bgRedRocks from "./assets/bg-red-rocks.png";
 import { translations } from "./translations";
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { 
@@ -136,75 +132,27 @@ const getBackgroundClass = (theme) => {
 };
 
 const getBackgroundStyle = (theme) => {
-  let bgImage;
-  switch (theme) {
-    case "nature":
-      bgImage = bgBotanicalGradient;
-      break;
-    case "redwood":
-      bgImage = bgRedwoodForest;
-      break;
-    case "coast":
-      bgImage = bgPacificCoast;
-      break;
-    case "redrocks":
-      bgImage = bgRedRocks;
-      break;
-    default:
-      bgImage = bgBotanicalGradient;
-  }
-  return {
-    backgroundImage: `url(${bgImage})`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    backgroundAttachment: "fixed"
-  };
+  return {};
 };
 
 const getThemeActiveTabClass = (theme) => {
   switch (theme) {
     case "nature":
-      return "bg-white/20 border border-white/30 text-[#4ade80] dark:text-[#4ade80] shadow-md";
+      return "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold";
     case "redwood":
-      return "bg-white/20 border border-white/30 text-[#fb923c] dark:text-[#fb923c] shadow-md";
+      return "bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold";
     case "coast":
-      return "bg-white/20 border border-white/30 text-[#2563eb] dark:text-[#2563eb] shadow-md";
+      return "bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-bold";
     case "redrocks":
-      return "bg-white/20 border border-white/30 text-[#ea580c] dark:text-[#ea580c] shadow-md";
+      return "bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 font-bold";
     default:
-      return "bg-white/20 border border-white/30 text-white shadow-md";
+      return "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-bold";
   }
 };
 
-const getThemeDotColorClass = (theme) => {
-  switch (theme) {
-    case "nature":
-      return "text-[#4ade80]";
-    case "redwood":
-      return "text-[#fb923c]";
-    case "coast":
-      return "text-[#2563eb]";
-    case "redrocks":
-      return "text-[#ea580c]";
-    default:
-      return "text-[#4ade80]";
-  }
-};
+const getMetallicFrameClass = (theme) => "";
 
-const getMetallicFrameClass = (theme) => {
-  if (theme === "redwood" || theme === "redrocks") {
-    return "metallic-frame-bronze";
-  }
-  return "metallic-frame-silver";
-};
-
-const getMetallicIconClass = (theme) => {
-  if (theme === "redwood" || theme === "redrocks") {
-    return "metallic-icon-bronze";
-  }
-  return "metallic-icon-silver";
-};
+const getMetallicIconClass = (theme) => "";
 
 
 const MOCK_ICONS = [
@@ -402,7 +350,7 @@ export default function App() {
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
 
   // Theme State
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState(() => localStorage.getItem("app_mode") || "light");
 
   // Effect to toggle Dark Mode
   useEffect(() => {
@@ -413,6 +361,12 @@ export default function App() {
       root.classList.remove("dark");
     }
   }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    localStorage.setItem("app_mode", nextTheme);
+  };
 
   // Load user session from localStorage on mount and auto-initialize Master User
   useEffect(() => {
@@ -2378,13 +2332,11 @@ export default function App() {
   if (isAuthChecking) {
     return (
       <div 
-        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
-        style={getBackgroundStyle(visualTheme)}
+        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative bg-slate-50 dark:bg-slate-950"
       >
-
-        <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-8 shadow-2xl z-10 flex flex-col items-center justify-center max-w-sm w-full text-center`}>
+        <div className="glass-card rounded-lg p-8 shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-10 flex flex-col items-center justify-center max-w-sm w-full text-center">
           <Loader2 className="w-12 h-12 text-sky-500 animate-spin mb-4" />
-          <h2 className="text-sm font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">{t.verifying_session}</h2>
+          <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wider">{t.verifying_session}</h2>
         </div>
       </div>
     );
@@ -2393,14 +2345,12 @@ export default function App() {
   if (!currentUser) {
     return (
       <div 
-        className={`min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in ${getBackgroundClass(visualTheme)}`}
-        style={getBackgroundStyle(visualTheme)}
+        className="min-h-screen w-screen flex items-center justify-center p-3 sm:p-6 transition-all duration-500 relative animate-fade-in bg-slate-50 dark:bg-slate-950"
       >
-
         
         {/* Controls in top-right corner of login screen */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-          {/* Theme Selector */}
+          {/* Theme Selector (Accent Color) */}
           <button
             onClick={() => {
               const themeCycle = ["nature", "redwood", "coast", "redrocks"];
@@ -2410,16 +2360,25 @@ export default function App() {
               setVisualTheme(nextTheme);
               localStorage.setItem("app_theme", nextTheme);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-slate-900/40 hover:bg-white/60 dark:hover:bg-slate-900/60 text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-white/20 dark:border-slate-800/10 select-none hover-scale cursor-pointer transition-colors duration-200 backdrop-blur-md"
-            title={language === "es" ? "Cambiar Fondo de Pantalla" : "Switch Wallpaper"}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
+            title={language === "es" ? "Cambiar Acento" : "Switch Accent"}
           >
-            <Palette className="w-3.5 h-3.5 text-sky-500" />
+            <Palette className="w-3.5 h-3.5 text-slate-400" />
             <span>
-              {visualTheme === "nature" && (language === "es" ? "Helechos" : "Ferns")}
-              {visualTheme === "redwood" && (language === "es" ? "Secuoyas" : "Redwoods")}
-              {visualTheme === "coast" && (language === "es" ? "Costa Pacífica" : "Coast")}
-              {visualTheme === "redrocks" && (language === "es" ? "Rocas Rojas" : "Red Rocks")}
+              {visualTheme === "nature" && (language === "es" ? "Verde" : "Green")}
+              {visualTheme === "redwood" && (language === "es" ? "Bronce" : "Bronze")}
+              {visualTheme === "coast" && (language === "es" ? "Azul" : "Blue")}
+              {visualTheme === "redrocks" && (language === "es" ? "Rojo" : "Red")}
             </span>
+          </button>
+
+          {/* Light/Dark Mode Switch */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200 cursor-pointer shadow-sm"
+            title={theme === "light" ? (language === "es" ? "Modo Oscuro" : "Dark Mode") : (language === "es" ? "Modo Claro" : "Light Mode")}
+          >
+            {theme === "light" ? <Moon className="w-4 h-4 text-slate-400" /> : <Sun className="w-4 h-4 text-slate-400" />}
           </button>
 
           {/* Language Selector */}
@@ -2429,23 +2388,22 @@ export default function App() {
               setLanguage(nextLang);
               localStorage.setItem("app_language", nextLang);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/40 dark:bg-slate-900/40 hover:bg-white/60 dark:hover:bg-slate-900/60 text-slate-700 dark:text-slate-200 text-xs font-extrabold border border-white/20 dark:border-slate-800/10 select-none hover-scale cursor-pointer transition-colors duration-200 backdrop-blur-md"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
             title={language === "es" ? "Switch to English" : "Cambiar a Español"}
           >
-            <Globe className="w-3.5 h-3.5 text-sky-500" />
+            <Globe className="w-3.5 h-3.5 text-slate-400" />
             <span>{language === "es" ? "ES" : "EN"}</span>
           </button>
         </div>
 
-        <div className={`w-full max-w-md glass-container ${getMetallicFrameClass(visualTheme)} rounded-[2.5rem] p-8 sm:p-10 shadow-2xl relative z-10 animate-scale-in`}>
+        <div className="w-full max-w-md glass-container rounded-lg p-8 sm:p-10 shadow-sm relative z-10 animate-scale-in border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           {/* Logo Area */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-white/60 dark:bg-slate-800/40 text-slate-800 dark:text-slate-100 border border-white/40 dark:border-slate-800/25 flex items-center justify-center shadow-md hover-scale">
+            <div className="w-16 h-16 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm">
               <Boxes className="w-8 h-8" />
             </div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-4 tracking-tight font-serif-premium">
               {language === "es" ? "Inventario Real-time" : "Real-time Inventory"}
-              <span className={getThemeDotColorClass(visualTheme)}>.</span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold">{t.login_description}</p>
           </div>
@@ -2523,24 +2481,23 @@ export default function App() {
 
   return (
     <div 
-      className={`min-h-screen w-screen flex transition-all duration-500 relative ${getBackgroundClass(visualTheme)}`}
-      style={getBackgroundStyle(visualTheme)}
+      className="min-h-screen w-screen flex transition-all duration-500 relative bg-slate-50 dark:bg-slate-950"
     >
 
 
-      {/* Floating Glassmorphic Main Dashboard Card */}
-      <div className={`w-full h-screen flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden`}>
+      {/* Flat Main Dashboard Container */}
+      <div className="w-full h-screen flex relative z-10 transition-all duration-300 dashboard-root overflow-hidden">
         
         {/* LEFT FIXED SIDEBAR */}
-        <div className="w-64 sm:w-72 glass-sidebar flex flex-col p-6 justify-between shrink-0 select-none shadow-xl">
+        <div className="w-64 sm:w-72 glass-sidebar flex flex-col p-6 justify-between shrink-0 select-none border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
           <div className="flex flex-col gap-6 flex-1 min-h-0">
             {/* Logo Area */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 text-slate-100 border border-white/15 flex items-center justify-center shadow-md hover-scale shrink-0">
-                <Boxes className={`w-5 h-5 ${getMetallicIconClass(visualTheme)}`} />
+              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0">
+                <Boxes className="w-5 h-5 text-slate-500 dark:text-slate-400" />
               </div>
-              <span className="text-xl font-bold font-serif-premium text-slate-100 tracking-tight">
-                MasterInventory<span className={getThemeDotColorClass(visualTheme)}>.</span>
+              <span className="text-xl font-bold font-serif-premium text-slate-900 dark:text-white tracking-tight">
+                MasterInventory
               </span>
             </div>
 
@@ -2558,14 +2515,14 @@ export default function App() {
                       setActiveTab(tab.id);
                       setAlertMessage({ type: "", text: "" });
                     }}
-                    className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-full transition-all duration-300 hover-scale cursor-pointer text-left ${
+                    className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-lg transition-all duration-200 cursor-pointer text-left ${
                       isActive
                         ? getThemeActiveTabClass(visualTheme)
-                        : "text-slate-300/80 hover:text-white hover:bg-white/5"
+                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
                     }`}
                     title={tabTitle}
                   >
-                    <IconComponent className={`w-4.5 h-4.5 shrink-0 ${getMetallicIconClass(visualTheme)}`} />
+                    <IconComponent className="w-4.5 h-4.5 shrink-0" />
                     <span className="truncate font-serif-premium font-semibold text-[13px]">{tabShort}</span>
                   </button>
                 );
@@ -2574,61 +2531,77 @@ export default function App() {
           </div>
 
           {/* Bottom Controls Panel */}
-          <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-white/10 shrink-0">
+          <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
             {/* User Profile Card */}
-            <div className={`p-3 bg-white/5 rounded-2xl border flex items-center justify-between shadow-sm ${getMetallicFrameClass(visualTheme)}`}>
+            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-200 dark:border-slate-850 flex items-center justify-between shadow-sm">
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-white/10 text-slate-200 border border-white/15 flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
                   {currentUser?.username === "1234" ? "UM" : (currentUser?.username || "U").substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold font-serif-premium text-slate-100 truncate">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                     {userDisplayName}
                   </span>
-                  <span className="text-[9px] text-slate-400 font-bold leading-tight">
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold leading-tight">
                     {userPosition}
                   </span>
-                  <span className="text-[9px] text-slate-300 font-bold leading-tight">
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold leading-tight">
                     Nivel {userLevel}
                   </span>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/20 text-slate-400 hover:text-red-400 hover-scale transition-colors duration-200 cursor-pointer shrink-0"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 text-slate-500 hover:text-red-500 transition-colors duration-200 cursor-pointer shrink-0 border border-transparent hover:border-red-500/20"
                 title={t.logout}
               >
-                <LogOut className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
 
 
-            {/* Tema Visual */}
-            <div>
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
-                {language === "es" ? "TEMA VISUAL" : "VISUAL THEME"}
-              </span>
-              <div className="flex items-center gap-2">
-                {[
-                  { name: "nature", color: "bg-emerald-500", ring: "ring-emerald-300", label: { es: "Helechos", en: "Ferns" } },
-                  { name: "redwood", color: "bg-amber-800", ring: "ring-amber-500", label: { es: "Secuoyas", en: "Redwoods" } },
-                  { name: "coast", color: "bg-sky-400", ring: "ring-sky-300", label: { es: "Costa Pacífica", en: "Pacific Coast" } },
-                  { name: "redrocks", color: "bg-red-500", ring: "ring-red-300", label: { es: "Rocas Rojas", en: "Red Rocks" } }
-                ].map((tOption) => (
-                  <button
-                    key={tOption.name}
-                    onClick={() => {
-                      setVisualTheme(tOption.name);
-                      localStorage.setItem("app_theme", tOption.name);
-                    }}
-                    className={`w-4 h-4 rounded-full ${tOption.color} transition-all duration-200 cursor-pointer hover-scale ${
-                      visualTheme === tOption.name
-                        ? `ring-2 ring-offset-2 dark:ring-offset-slate-950 ${tOption.ring}`
-                        : ""
-                    }`}
-                    title={tOption.label[language]}
-                  />
-                ))}
+            {/* Accent Color and Mode Toggles */}
+            <div className="flex items-center justify-between mt-1">
+              <div>
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
+                  {language === "es" ? "Color de Acento" : "Accent Color"}
+                </span>
+                <div className="flex items-center gap-2">
+                  {[
+                    { name: "nature", color: "bg-emerald-500", ring: "ring-emerald-300", label: { es: "Verde", en: "Green" } },
+                    { name: "redwood", color: "bg-amber-800", ring: "ring-amber-500", label: { es: "Bronce", en: "Bronze" } },
+                    { name: "coast", color: "bg-sky-400", ring: "ring-sky-300", label: { es: "Azul", en: "Blue" } },
+                    { name: "redrocks", color: "bg-red-500", ring: "ring-red-300", label: { es: "Rojo", en: "Red" } }
+                  ].map((tOption) => (
+                    <button
+                      key={tOption.name}
+                      onClick={() => {
+                        setVisualTheme(tOption.name);
+                        localStorage.setItem("app_theme", tOption.name);
+                      }}
+                      className={`w-4 h-4 rounded-full ${tOption.color} transition-all duration-200 cursor-pointer hover:scale-110 ${
+                        visualTheme === tOption.name
+                          ? `ring-2 ring-offset-2 dark:ring-offset-slate-900 ${tOption.ring}`
+                          : ""
+                      }`}
+                      title={tOption.label[language]}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Light/Dark Mode Switch */}
+              <div className="flex flex-col items-end">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
+                  {language === "es" ? "Modo" : "Mode"}
+                </span>
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200 cursor-pointer shadow-sm"
+                  title={theme === "light" ? (language === "es" ? "Modo Oscuro" : "Dark Mode") : (language === "es" ? "Modo Claro" : "Light Mode")}
+                >
+                  {theme === "light" ? <Moon className="w-4 h-4 text-slate-500" /> : <Sun className="w-4 h-4 text-slate-400" />}
+                </button>
               </div>
             </div>
 
@@ -2639,21 +2612,21 @@ export default function App() {
                 setLanguage(nextLang);
                 localStorage.setItem("app_language", nextLang);
               }}
-              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-full bg-white/40 hover:bg-white/60 dark:bg-slate-800/40 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 text-[10px] font-black border border-white/20 select-none hover-scale cursor-pointer transition-colors duration-200"
+              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
             >
-              <Globe className={`w-3.5 h-3.5 ${getMetallicIconClass(visualTheme)}`} />
+              <Globe className="w-3.5 h-3.5 text-slate-400" />
               <span>{language === "es" ? "Switch to English" : "Cambiar a Español"}</span>
             </button>
           </div>
         </div>
 
         {/* RIGHT WORKSPACE */}
-        <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden">
+        <div className="flex-1 flex flex-col p-6 sm:p-8 overflow-hidden bg-slate-50 dark:bg-slate-950">
           
           {/* Greeting Banner */}
-          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[1.5rem] sm:rounded-full px-6 py-3.5 flex items-center justify-between mb-6 shrink-0`}>
+          <div className="glass-card rounded-lg px-6 py-3.5 flex items-center justify-between mb-6 shrink-0 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
             <div>
-              <h2 className="text-base font-bold font-serif-premium text-slate-800 dark:text-slate-200">
+              <h2 className="text-base font-bold text-slate-800 dark:text-slate-200">
                 {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
               </h2>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">
@@ -2664,24 +2637,23 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-2">
-              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 dark:bg-slate-800/20 border text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider select-none ${getMetallicFrameClass(visualTheme)}`}>
-                <Shield className={`w-3.5 h-3.5 ${getMetallicIconClass(visualTheme)}`} />
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider select-none">
+                <Shield className="w-3.5 h-3.5 text-slate-400" />
                 <span>{language === "es" ? `Nivel ${userLevel}` : `Level ${userLevel}`}</span>
               </div>
               
-              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 dark:bg-slate-800/20 border text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider select-none ${getMetallicFrameClass(visualTheme)}`}>
-                <Database className={`w-3.5 h-3.5 ${getMetallicIconClass(visualTheme)}`} />
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold uppercase tracking-wider select-none">
+                <Database className="w-3.5 h-3.5 text-slate-400" />
                 <span>{t.connected}</span>
               </div>
             </div>
           </div>
 
           {/* Header Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2 border-b border-white/10 dark:border-slate-800/10 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2 border-b border-slate-200 dark:border-slate-800 shrink-0">
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight font-serif-premium">
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-tight">
                 {t[`tab_${activeTab}_title`] || "Panel de Control"}
-                <span className={getThemeDotColorClass(visualTheme)}>.</span>
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 opacity-80">
                 {t[`tab_${activeTab}_desc`] || ""}
@@ -4602,7 +4574,6 @@ export default function App() {
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
                   {t.edit_user_title}
-                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5 opacity-80">{t.edit_assoc_subtitle} {editingUser.id}.</p>
               </div>
@@ -4749,7 +4720,6 @@ export default function App() {
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
                   {language === "es" ? "Historial de Movimientos" : "Movement History"}
-                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5 opacity-80">
                   {language === "es"
@@ -4862,7 +4832,6 @@ export default function App() {
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
                   {t.add_new_component_title}
-                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5 opacity-80">
                   {language === "es" ? "Registra una nueva pieza en el inventario real-time." : "Register a new piece in the real-time inventory."}
@@ -5190,7 +5159,6 @@ export default function App() {
               <div>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white font-serif-premium">
                   {isEditingDetail ? (language === "es" ? "Editar Componente" : "Edit Component") : t.details_modal_title}
-                  <span className={getThemeDotColorClass(visualTheme)}>.</span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5 opacity-80">
                   {isEditingDetail ? (language === "es" ? "Modifica los campos técnicos del componente." : "Modify the technical fields of the component.") : (language === "es" ? "Información técnica y stock en tiempo real." : "Technical info and real-time stock.")}
