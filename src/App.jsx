@@ -338,24 +338,16 @@ export default function App() {
   const [orderErrors, setOrderErrors] = useState({});
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
 
-  // Theme State
-  const [theme, setTheme] = useState(() => localStorage.getItem("app_mode") || "light");
+  // Theme State (Forced to light mode)
+  const [theme, setTheme] = useState("light");
 
-  // Effect to toggle Dark Mode
+  // Effect to toggle Mode (always light)
   useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [theme]);
+    root.classList.remove("dark");
+  }, []);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    localStorage.setItem("app_mode", nextTheme);
-  };
+  const toggleTheme = () => {};
 
   // Load user session from localStorage on mount and auto-initialize Master User
   useEffect(() => {
@@ -2345,37 +2337,6 @@ export default function App() {
         
         {/* Controls in top-right corner of login screen */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-          {/* Theme Selector (Accent Color) */}
-          <button
-            onClick={() => {
-              const themeCycle = ["nature", "redwood", "coast", "redrocks"];
-              const currentIndex = themeCycle.indexOf(visualTheme);
-              const nextIndex = (currentIndex + 1) % themeCycle.length;
-              const nextTheme = themeCycle[nextIndex] || "nature";
-              setVisualTheme(nextTheme);
-              localStorage.setItem("app_theme", nextTheme);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/90 dark:bg-slate-800/90 hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-all duration-200 shadow-sm"
-            title={language === "es" ? "Cambiar Acento" : "Switch Accent"}
-          >
-            <Palette className="w-3.5 h-3.5 text-slate-400" />
-            <span>
-              {visualTheme === "nature" && (language === "es" ? "Verde" : "Green")}
-              {visualTheme === "redwood" && (language === "es" ? "Bronce" : "Bronze")}
-              {visualTheme === "coast" && (language === "es" ? "Azul" : "Blue")}
-              {visualTheme === "redrocks" && (language === "es" ? "Rojo" : "Red")}
-            </span>
-          </button>
-
-          {/* Light/Dark Mode Switch */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 cursor-pointer shadow-sm"
-            title={theme === "light" ? (language === "es" ? "Modo Oscuro" : "Dark Mode") : (language === "es" ? "Modo Claro" : "Light Mode")}
-          >
-            {theme === "light" ? <Moon className="w-4 h-4 text-slate-500" /> : <Sun className="w-4 h-4 text-slate-400" />}
-          </button>
-
           {/* Language Selector */}
           <button
             onClick={() => {
@@ -2554,52 +2515,6 @@ export default function App() {
               </button>
             </div>
 
-
-            {/* Accent Color and Mode Toggles */}
-            <div className="flex items-center justify-between mt-1">
-              <div>
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
-                  {language === "es" ? "Color de Acento" : "Accent Color"}
-                </span>
-                <div className="flex items-center gap-2">
-                  {[
-                    { name: "nature", color: "bg-emerald-500", ring: "ring-emerald-300", label: { es: "Verde", en: "Green" } },
-                    { name: "redwood", color: "bg-amber-800", ring: "ring-amber-500", label: { es: "Bronce", en: "Bronze" } },
-                    { name: "coast", color: "bg-sky-400", ring: "ring-sky-300", label: { es: "Azul", en: "Blue" } },
-                    { name: "redrocks", color: "bg-red-500", ring: "ring-red-300", label: { es: "Rojo", en: "Red" } }
-                  ].map((tOption) => (
-                    <button
-                      key={tOption.name}
-                      onClick={() => {
-                        setVisualTheme(tOption.name);
-                        localStorage.setItem("app_theme", tOption.name);
-                      }}
-                      className={`w-4 h-4 rounded-full ${tOption.color} transition-all duration-200 cursor-pointer hover:scale-110 ${
-                        visualTheme === tOption.name
-                          ? `ring-2 ring-offset-2 dark:ring-offset-slate-900 ${tOption.ring}`
-                          : ""
-                      }`}
-                      title={tOption.label[language]}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Light/Dark Mode Switch */}
-              <div className="flex flex-col items-end">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">
-                  {language === "es" ? "Modo" : "Mode"}
-                </span>
-                <button
-                  onClick={toggleTheme}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200 cursor-pointer shadow-sm"
-                  title={theme === "light" ? (language === "es" ? "Modo Oscuro" : "Dark Mode") : (language === "es" ? "Modo Claro" : "Light Mode")}
-                >
-                  {theme === "light" ? <Moon className="w-4 h-4 text-slate-500" /> : <Sun className="w-4 h-4 text-slate-400" />}
-                </button>
-              </div>
-            </div>
-
             {/* Language Switcher */}
             <button
               onClick={() => {
@@ -2607,7 +2522,7 @@ export default function App() {
                 setLanguage(nextLang);
                 localStorage.setItem("app_language", nextLang);
               }}
-              className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
+              className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
             >
               <Globe className="w-3.5 h-3.5 text-slate-400" />
               <span>{language === "es" ? "Switch to English" : "Cambiar a Español"}</span>
@@ -2616,131 +2531,118 @@ export default function App() {
         </div>
 
         {/* RIGHT WORKSPACE */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
+        <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#064e3b] to-[#4ade80] p-6 sm:p-8 relative">
           
-          {/* Top Banner Fluid Green Gradient Area */}
-          <div className="bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-600 text-white px-6 sm:px-8 pt-6 sm:pt-8 pb-4 shrink-0 relative overflow-hidden">
-            <div className="absolute w-96 h-96 rounded-full bg-lime-400/10 -top-20 -right-20 blur-3xl pointer-events-none animate-pulse" />
-            <div className="absolute w-80 h-80 rounded-full bg-emerald-500/10 -bottom-20 -left-20 blur-3xl pointer-events-none" />
+          {/* Decorative Fluid Shapes */}
+          <div className="absolute w-[500px] h-[500px] rounded-full bg-emerald-500/10 -top-40 -left-40 blur-3xl pointer-events-none" />
+          <div className="absolute w-[600px] h-[600px] rounded-full bg-lime-400/5 -bottom-40 -right-40 blur-3xl pointer-events-none" />
+          
+          {/* Greeting Banner */}
+          <div className="glass-card rounded-[2rem] px-6 py-4 flex items-center justify-between mb-6 shrink-0 border border-emerald-700/35 bg-white/95 shadow-lg relative z-10 text-slate-800">
+            <div>
+              <h2 className="text-base font-extrabold text-emerald-900">
+                {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
+              </h2>
+              <p className="text-[10px] text-emerald-700 font-bold mt-0.5">
+                {language === "es" 
+                  ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
+                  : `Shift: ${userShift} | Access: Level ${userLevel}`}
+              </p>
+            </div>
             
-            {/* Greeting Banner */}
-            <div className="glass-card rounded-3xl px-6 py-4 flex items-center justify-between mb-6 shrink-0 border border-emerald-700/50 bg-white/95 dark:bg-slate-900/95 shadow-lg relative z-10 text-slate-800 dark:text-slate-100">
-              <div>
-                <h2 className="text-base font-extrabold text-emerald-900 dark:text-emerald-300">
-                  {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
-                </h2>
-                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold mt-0.5">
-                  {language === "es" 
-                    ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
-                    : `Shift: ${userShift} | Access: Level ${userLevel}`}
-                </p>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider select-none">
+                <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{language === "es" ? `Nivel ${userLevel}` : `Level ${userLevel}`}</span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider select-none">
-                  <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{language === "es" ? `Nivel ${userLevel}` : `Level ${userLevel}`}</span>
-                </div>
-                
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold uppercase tracking-wider select-none">
-                  <Database className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{t.connected}</span>
-                </div>
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider select-none">
+                <Database className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{t.connected}</span>
               </div>
             </div>
+          </div>
 
-            {/* Header Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 relative z-10">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black text-white leading-tight font-serif-premium">
-                  {t[`tab_${activeTab}_title`] || "Panel de Control"}
-                </h1>
-                <p className="text-xs text-emerald-100 font-medium mt-0.5 opacity-90">
-                  {t[`tab_${activeTab}_desc`] || ""}
-                </p>
-              </div>
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-2 relative z-10">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-white leading-tight font-serif-premium">
+                {t[`tab_${activeTab}_title`] || "Panel de Control"}
+              </h1>
+              <p className="text-xs text-emerald-100 font-medium mt-0.5 opacity-90">
+                {t[`tab_${activeTab}_desc`] || ""}
+              </p>
+            </div>
 
-              <div className="flex items-center gap-3 justify-end flex-wrap">
-                {activeTab === "inventario" && (
-                  <div className="relative w-48 sm:w-60 shrink-0">
-                    <input
-                      type="text"
-                      placeholder={t.search_components}
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-8 pr-7 py-2 rounded-full text-xs glass-input font-bold"
-                    />
-                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                      <svg
-                        className="h-3.5 w-3.5 text-slate-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2.5}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
-                    </div>
-                    {searchTerm && (
-                      <button
-                        onClick={() => setSearchTerm("")}
-                        className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
-                        type="button"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+            <div className="flex items-center gap-3 justify-end flex-wrap">
+              {activeTab === "inventario" && (
+                <div className="relative w-48 sm:w-60 shrink-0">
+                  <input
+                    type="text"
+                    placeholder={t.search_components}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-8 pr-7 py-2 rounded-full text-xs glass-input font-bold"
+                  />
+                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <svg
+                      className="h-3.5 w-3.5 text-slate-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
                   </div>
-                )}
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
+                      type="button"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
 
-                {activeTab === "inventario" && (
-                  <button
-                    onClick={() => setIsMovementsModalOpen(true)}
-                    className="flex items-center gap-2 px-4.5 py-2.5 rounded-full text-xs font-extrabold shadow-md hover-scale cursor-pointer bg-white hover:bg-slate-50 text-emerald-950 border border-emerald-100"
-                  >
-                    <History className="w-4 h-4 text-emerald-600" />
-                    <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
-                  </button>
-                )}
+              {activeTab === "inventario" && (
+                <button
+                  onClick={() => setIsMovementsModalOpen(true)}
+                  className="flex items-center gap-2 px-4.5 py-2.5 rounded-full text-xs font-extrabold shadow-md hover-scale cursor-pointer bg-white hover:bg-slate-50 text-emerald-950 border border-emerald-100"
+                >
+                  <History className="w-4 h-4 text-emerald-600" />
+                  <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
+                </button>
+              )}
 
-                {activeTab === "inventario" && userLevel >= 2 && (
-                  <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 px-4.5 py-2.5 text-emerald-950 bg-gradient-to-r from-lime-300 to-emerald-400 hover:from-lime-400 hover:to-emerald-500 rounded-full text-xs font-black shadow-lg shadow-emerald-500/20 hover-scale cursor-pointer border border-lime-300"
-                  >
-                    <PlusCircle className="w-4.5 h-4.5" />
-                    <span>{t.add_component}</span>
-                  </button>
-                )}
-              </div>
+              {activeTab === "inventario" && userLevel >= 2 && (
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="flex items-center gap-2 px-4.5 py-2.5 text-emerald-950 bg-gradient-to-r from-lime-300 to-emerald-400 hover:from-lime-400 hover:to-emerald-500 rounded-full text-xs font-black shadow-lg shadow-emerald-500/20 hover-scale cursor-pointer border border-lime-300"
+                >
+                  <PlusCircle className="w-4.5 h-4.5" />
+                  <span>{t.add_component}</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Liquid Wave Separator */}
-          <div className="relative shrink-0 z-10 -mt-0.5 bg-gradient-to-r from-emerald-950 via-emerald-800 to-emerald-600">
-            <svg 
-              className="w-full fill-white dark:fill-slate-950 h-8 block" 
-              viewBox="0 0 1200 120" 
-              preserveAspectRatio="none"
-            >
-              <path d="M0,0 C300,90 900,-30 1200,40 L1200,120 L0,120 Z"></path>
-            </svg>
-          </div>
+          {/* Success Alerts */}
+          {alertMessage.text && alertMessage.type === "success" && (
+            <div className="mb-4 p-3 rounded-full bg-white/20 border border-white/20 text-white text-xs font-bold flex items-center gap-2 animate-fade-in shrink-0 relative z-10 animate-pulse">
+              <CheckCircle className="w-4 h-4 shrink-0 text-lime-300" />
+              <span>{alertMessage.text}</span>
+            </div>
+          )}
 
           {/* Bottom Area containing the Tab Content Views */}
-          <div className="flex-1 p-6 sm:p-8 overflow-y-auto bg-white dark:bg-slate-950 min-h-0">
-            {/* Success Alerts */}
-            {alertMessage.text && alertMessage.type === "success" && (
-              <div className="mb-4 p-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-2 animate-fade-in shrink-0">
-                <CheckCircle className="w-4 h-4 shrink-0 text-emerald-500" />
-                <span>{alertMessage.text}</span>
-              </div>
-            )}
-
+          <div className="flex-1 min-h-0 overflow-hidden relative z-10">
             <div className={`h-full ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "usuario") ? "overflow-y-auto pb-4" : "overflow-hidden"}`}>
             
             {/* TAB 1: INVENTARIO */}
