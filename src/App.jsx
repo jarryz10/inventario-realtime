@@ -14,6 +14,7 @@ import {
   setDoc,
   query, 
   where,
+  getDocs,
   serverTimestamp,
   updateDoc,
   increment
@@ -89,13 +90,6 @@ const TABS_CONFIG = [
     description: "Registra y supervisa las lecturas y el estado de antenas y sensores RFID",
     shortTitle: "RFID",
     iconName: "Radio"
-  },
-  {
-    id: "notificaciones",
-    title: "Notificaciones del Sistema",
-    description: "Alertas de stock mínimo y registros importantes del almacén",
-    shortTitle: "Notificaciones",
-    iconName: "Bell"
   },
   {
     id: "usuario",
@@ -189,6 +183,9 @@ export default function App() {
   // Notifications & Movements States
   const [notifications, setNotifications] = useState([]);
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const notificationRef = useRef(null);
+  const hasCleanedUpRef = useRef(false);
   const [movements, setMovements] = useState([]);
   const [isMovementsLoading, setIsMovementsLoading] = useState(false);
   const [isMovementsModalOpen, setIsMovementsModalOpen] = useState(false);
@@ -796,6 +793,82 @@ export default function App() {
     }
   }, [currentUser]);
 
+  // Effect to close the notification popover when clicking outside of it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Effect to auto-clean notifications older than 5 days
+  useEffect(() => {
+    if (!currentUser || hasCleanedUpRef.current) return;
+    hasCleanedUpRef.current = true;
+
+    const cleanOldNotifications = async () => {
+      try {
+        const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+        const q = query(
+          collection(db, "notifications"),
+          where("timestamp", "<", fiveDaysAgo)
+        );
+        const querySnapshot = await getDocs(q);
+        const deletePromises = [];
+        querySnapshot.forEach((docSnap) => {
+          deletePromises.push(deleteDoc(docSnap.ref));
+        });
+        if (deletePromises.length > 0) {
+          await Promise.all(deletePromises);
+          console.log(`Auto-cleaned ${deletePromises.length} old notifications.`);
+        }
+      } catch (error) {
+        console.error("Error auto-cleaning notifications:", error);
+      }
+    };
+
+    cleanOldNotifications();
+  }, [currentUser]);
+
+  // Handler to delete a single notification
+  const handleDeleteNotification = async (notifId) => {
+    try {
+      await deleteDoc(doc(db, "notifications", notifId));
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+    }
+  };
+
+  // Handler to mark all notifications as read
+  const handleMarkAllAsRead = async () => {
+    try {
+      const unreadNotifs = notifications.filter(n => n.read !== true);
+      const promises = unreadNotifs.map(n => 
+        updateDoc(doc(db, "notifications", n.id), { read: true })
+      );
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
+  };
+
+  // Handler to clear all notifications
+  const handleClearAllNotifications = async () => {
+    try {
+      const promises = notifications.map(n => 
+        deleteDoc(doc(db, "notifications", n.id))
+      );
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Error clearing notifications:", error);
+    }
+  };
+
   // Effect to fetch movements in real-time from Firestore
   useEffect(() => {
     if (!currentUser) {
@@ -1063,6 +1136,21 @@ export default function App() {
         timestamp: serverTimestamp()
       }).then(async (docRef) => {
         await logMovement(pName, "Entrada", pStock);
+        
+        try {
+          await addDoc(collection(db, "notifications"), {
+            timestamp: serverTimestamp(),
+            type: "nuevo_componente",
+            message: language === "es"
+              ? `Nuevo Componente Registrado: "${pName}" con ${pStock} unidades en "${formData.location.trim()}".`
+              : `New Component Registered: "${pName}" with ${pStock} units in "${formData.location.trim()}".`,
+            title: language === "es" ? "Componente Creado" : "Component Created",
+            read: false
+          });
+        } catch (err) {
+          console.error("Error creating low stock notification:", err);
+        }
+
         if (pStock <= pMinStock) {
           try {
             await addDoc(collection(db, "notifications"), {
@@ -1071,7 +1159,8 @@ export default function App() {
               message: language === "es"
                 ? `Alerta de Stock Mínimo: "${pName}" tiene ${pStock} unidades (mínimo requerido: ${pMinStock}).`
                 : `Low Stock Alert: "${pName}" has ${pStock} units (minimum required: ${pMinStock}).`,
-              title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert"
+              title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert",
+              read: false
             });
           } catch (err) {
             console.error("Error creating low stock notification:", err);
@@ -1140,6 +1229,16 @@ export default function App() {
         url: orderForm.url.trim(),
         status: "solicitado",
         timestamp: serverTimestamp()
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "orden_compra",
+        message: language === "es"
+          ? `Nueva Solicitud de Compra: "${orderForm.itemName.trim()}" (Cant: ${orderForm.quantity}) registrada por "${currentUser.username}".`
+          : `New Purchase Request: "${orderForm.itemName.trim()}" (Qty: ${orderForm.quantity}) registered by "${currentUser.username}".`,
+        title: language === "es" ? "Solicitud de Compra" : "Purchase Request",
+        read: false
       });
 
       setOrderForm({
@@ -1215,7 +1314,8 @@ export default function App() {
         message: language === "es"
           ? `El operador "${currentUser.username}" ha registrado el Reporte Diario de Actividades para la fecha ${today}.`
           : `Operator "${currentUser.username}" has registered the Daily Activity Report for date ${today}.`,
-        title: language === "es" ? "Reporte Diario Registrado" : "Daily Report Registered"
+        title: language === "es" ? "Reporte Diario Registrado" : "Daily Report Registered",
+        read: false
       });
 
       setReportRows([{ time: "08:00 AM - 09:00 AM", activity: "" }]);
@@ -1551,7 +1651,8 @@ export default function App() {
         message: language === "es"
           ? `El operador "${currentUser.username}" ha registrado un servicio de Limpieza de Impresora para ${printersData.length} equipo(s).`
           : `Operator "${currentUser.username}" has registered a Printer Cleaning service for ${printersData.length} equipment(s).`,
-        title: language === "es" ? "Limpieza de Impresora" : "Printer Cleaning Registered"
+        title: language === "es" ? "Limpieza de Impresora" : "Printer Cleaning Registered",
+        read: false
       });
 
       setCleaningRows([{ station: "", ip: "10.40.", printerType: "" }]);
@@ -1770,6 +1871,16 @@ export default function App() {
         userLevel: userLevel,
         date: today,
         timestamp: serverTimestamp()
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "rfid",
+        message: language === "es"
+          ? `El operador "${currentUser.username}" ha registrado la Verificación de RFID para ${stationsData.length} estación(es).`
+          : `Operator "${currentUser.username}" has registered the RFID Verification for ${stationsData.length} station(s).`,
+        title: language === "es" ? "Verificación RFID" : "RFID Verification",
+        read: false
       });
 
       setRfidRows([{ station: "", ip: "10.40.", antennaStatus: "" }]);
@@ -2155,6 +2266,18 @@ export default function App() {
       await updateDoc(docRef, {
         status: "en_espera"
       });
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        await addDoc(collection(db, "notifications"), {
+          timestamp: serverTimestamp(),
+          type: "orden_aprobada",
+          message: language === "es"
+            ? `Pedido Aprobado: "${order.itemName}" (${order.quantity} uds.) aprobado por "${currentUser.username}".`
+            : `Order Approved: "${order.itemName}" (${order.quantity} pcs.) approved by "${currentUser.username}".`,
+          title: language === "es" ? "Pedido Aprobado" : "Order Approved",
+          read: false
+        });
+      }
       setAlertMessage({ type: "success", text: "¡Pedido aprobado y puesto en espera!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -2170,6 +2293,18 @@ export default function App() {
       await updateDoc(docRef, {
         status: "rechazado"
       });
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        await addDoc(collection(db, "notifications"), {
+          timestamp: serverTimestamp(),
+          type: "orden_rechazada",
+          message: language === "es"
+            ? `Pedido Rechazado: "${order.itemName}" (${order.quantity} uds.) rechazado por "${currentUser.username}".`
+            : `Order Rejected: "${order.itemName}" (${order.quantity} pcs.) rejected by "${currentUser.username}".`,
+          title: language === "es" ? "Pedido Rechazado" : "Order Rejected",
+          read: false
+        });
+      }
       setAlertMessage({ type: "success", text: "Pedido rechazado." });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -2185,6 +2320,18 @@ export default function App() {
       await updateDoc(docRef, {
         status: "recibido"
       });
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        await addDoc(collection(db, "notifications"), {
+          timestamp: serverTimestamp(),
+          type: "orden_recibida",
+          message: language === "es"
+            ? `Pedido Recibido: "${order.itemName}" (${order.quantity} uds.) recibido por "${currentUser.username}".`
+            : `Order Received: "${order.itemName}" (${order.quantity} pcs.) received by "${currentUser.username}".`,
+          title: language === "es" ? "Pedido Recibido" : "Order Received",
+          read: false
+        });
+      }
       setAlertMessage({ type: "success", text: "¡Pedido marcado como recibido!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -2199,6 +2346,15 @@ export default function App() {
       const product = products.find(p => p.id === productId);
       if (product) {
         await logMovement(product.name, "Salida", product.stock || 0);
+        await addDoc(collection(db, "notifications"), {
+          timestamp: serverTimestamp(),
+          type: "eliminacion_componente",
+          message: language === "es"
+            ? `Componente Eliminado: "${product.name}" eliminado por "${currentUser.username}".`
+            : `Component Deleted: "${product.name}" deleted by "${currentUser.username}".`,
+          title: language === "es" ? "Componente Eliminado" : "Component Deleted",
+          read: false
+        });
       }
       await deleteDoc(doc(db, "items", productId));
       setAlertMessage({ type: "success", text: "Componente eliminado correctamente." });
@@ -2220,6 +2376,16 @@ export default function App() {
         
         await logMovement(product.name, type, Math.abs(amount));
 
+        await addDoc(collection(db, "notifications"), {
+          timestamp: serverTimestamp(),
+          type: type === "Entrada" ? "entrada_stock" : "salida_stock",
+          message: language === "es"
+            ? `Ajuste de Stock: ${type} de ${Math.abs(amount)} unidades en "${product.name}" por "${currentUser.username || "Sistema"}".`
+            : `Stock Adjustment: ${type} of ${Math.abs(amount)} units in "${product.name}" by "${currentUser.username || "System"}".`,
+          title: language === "es" ? `Movimiento (${type})` : `Movement (${type})`,
+          read: false
+        });
+
         if (newStock <= minStock) {
           try {
             await addDoc(collection(db, "notifications"), {
@@ -2228,7 +2394,8 @@ export default function App() {
               message: language === "es"
                 ? `Alerta de Stock Mínimo: "${product.name}" tiene ${newStock} unidades (mínimo requerido: ${minStock}).`
                 : `Low Stock Alert: "${product.name}" has ${newStock} units (minimum required: ${minStock}).`,
-              title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert"
+              title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert",
+              read: false
             });
           } catch (err) {
             console.error("Error creating low stock notification:", err);
@@ -2283,6 +2450,17 @@ export default function App() {
         image: (editDetailForm.image || "").trim()
       });
       await logMovement(editDetailForm.name.trim(), "Ajuste por Edición", 0);
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "edicion_componente",
+        message: language === "es"
+          ? `Componente Modificado: "${editDetailForm.name.trim()}" editado por "${currentUser.username}".`
+          : `Component Modified: "${editDetailForm.name.trim()}" edited by "${currentUser.username}".`,
+        title: language === "es" ? "Componente Modificado" : "Component Modified",
+        read: false
+      });
+
       setIsEditingDetail(false);
       setAlertMessage({
         type: "success",
@@ -2430,6 +2608,8 @@ export default function App() {
     );
   }
 
+  const unreadCount = notifications.filter(n => n.read !== true).length;
+
   const userProfile = usersList.find(u => u.id === currentUser?.username);
   const userShift = userProfile?.shift || "Mixto";
   const userDisplayName = userProfile?.name || (currentUser?.username === "1234" ? "Usuario Maestro" : currentUser?.username || "Usuario");
@@ -2539,15 +2719,146 @@ export default function App() {
           
           {/* Greeting Banner */}
           <div className="glass-card rounded-[2rem] px-6 py-4 flex items-center justify-between mb-6 shrink-0 border border-emerald-700/35 bg-white/95 shadow-lg relative z-10 text-slate-800">
-            <div>
-              <h2 className="text-base font-extrabold text-emerald-900">
-                {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
-              </h2>
-              <p className="text-[10px] text-emerald-700 font-bold mt-0.5">
-                {language === "es" 
-                  ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
-                  : `Shift: ${userShift} | Access: Level ${userLevel}`}
-              </p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h2 className="text-base font-extrabold text-emerald-900">
+                  {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
+                </h2>
+                <p className="text-[10px] text-emerald-700 font-bold mt-0.5">
+                  {language === "es" 
+                    ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
+                    : `Shift: ${userShift} | Access: Level ${userLevel}`}
+                </p>
+              </div>
+
+              {/* Campana de Notificaciones Flotante */}
+              <div className="relative" ref={notificationRef}>
+                <button
+                  onClick={() => {
+                    setIsNotificationsOpen(!isNotificationsOpen);
+                    // Mark all as read when opening
+                    if (!isNotificationsOpen) {
+                      handleMarkAllAsRead();
+                    }
+                  }}
+                  className="p-2 rounded-full hover:bg-emerald-50 dark:hover:bg-slate-800 text-emerald-800 dark:text-emerald-300 relative focus:outline-none transition-colors duration-200 cursor-pointer border-none bg-transparent"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white animate-pulse" />
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <div className="absolute left-0 mt-2 w-80 sm:w-96 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 overflow-hidden animate-scale-in">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                      <span className="text-xs font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">
+                        {language === "es" ? "Notificaciones" : "Notifications"}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllAsRead}
+                            className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 font-extrabold cursor-pointer border-none bg-transparent"
+                          >
+                            {language === "es" ? "Leer todas" : "Read all"}
+                          </button>
+                        )}
+                        {notifications.length > 0 && (
+                          <button
+                            onClick={handleClearAllNotifications}
+                            className="text-[10px] text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-extrabold cursor-pointer border-none bg-transparent"
+                          >
+                            {language === "es" ? "Borrar todas" : "Clear all"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* List */}
+                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/50">
+                      {isNotificationsLoading ? (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-1.5" />
+                          <span className="text-[10px] text-slate-400 font-bold">{t.loading_database}</span>
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+                          <Bell className="w-8 h-8 text-slate-300 dark:text-slate-700 mb-1.5" />
+                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                            {language === "es" ? "No hay notificaciones" : "No notifications"}
+                          </p>
+                          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
+                            {language === "es" 
+                              ? "Las alertas y cambios se mostrarán aquí en tiempo real."
+                              : "Alerts and changes will be shown here in real time."}
+                          </p>
+                        </div>
+                      ) : (
+                        notifications.map((notif) => {
+                          const dateStr = notif.timestamp?.toDate
+                            ? notif.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
+                            : (notif.timestamp?.seconds ? new Date(notif.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
+
+                          let badgeColor = "bg-sky-500/10 text-sky-600 border-sky-500/20";
+                          if (notif.type === "stock_minimo") {
+                            badgeColor = "bg-rose-500/10 text-rose-600 border-rose-500/20";
+                          } else if (notif.type === "limpieza_impresora") {
+                            badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                          } else if (notif.type === "reporte_diario") {
+                            badgeColor = "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+                          } else if (notif.type === "rfid") {
+                            badgeColor = "bg-violet-500/10 text-violet-600 border-violet-500/20";
+                          } else if (notif.type?.includes("orden")) {
+                            badgeColor = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+                          } else if (notif.type?.includes("componente")) {
+                            badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                          } else if (notif.type?.includes("stock")) {
+                            badgeColor = "bg-teal-500/10 text-teal-600 border-teal-500/20";
+                          }
+
+                          return (
+                            <div
+                              key={notif.id}
+                              className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors duration-150 relative group ${
+                                notif.read !== true ? "bg-emerald-50/20 dark:bg-emerald-950/10" : ""
+                              }`}
+                            >
+                              <span className={`px-1.5 py-0.5 text-[8px] font-black rounded border uppercase shrink-0 mt-0.5 ${badgeColor}`}>
+                                {notif.type ? notif.type.replace("_", " ") : "Alerta"}
+                              </span>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <h4 className="text-[11px] font-extrabold text-slate-700 dark:text-slate-200 truncate">
+                                    {notif.title || "Notificación"}
+                                  </h4>
+                                  <span className="text-[8px] text-slate-400 shrink-0 font-mono font-semibold">
+                                    {dateStr}
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug break-words">
+                                  {notif.message}
+                                </p>
+                              </div>
+
+                              <button
+                                onClick={() => handleDeleteNotification(notif.id)}
+                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 dark:text-slate-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/35 rounded transition-all duration-150 shrink-0 cursor-pointer border-none bg-transparent"
+                                title={language === "es" ? "Eliminar" : "Delete"}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center gap-2">
@@ -4441,72 +4752,7 @@ export default function App() {
               </div>
             )}
 
-            {activeTab === "notificaciones" && (
-              <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-6 shadow-lg h-full flex flex-col justify-between overflow-hidden`}>
-                <div className="flex items-center justify-between mb-4 shrink-0">
-                  <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                    {language === "es" ? "Alertas y Notificaciones" : "Alerts & Notifications"}
-                  </h2>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold border border-slate-200/50 dark:border-slate-700/50">
-                    {notifications.length} {language === "es" ? "notificaciones" : "notifications"}
-                  </span>
-                </div>
 
-                <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 min-h-[200px]">
-                  {isNotificationsLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <Loader2 className="w-8 h-8 text-[#20a464] animate-spin mb-2" />
-                      <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
-                    </div>
-                  ) : notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
-                      <Bell className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                        {language === "es" ? "No hay notificaciones" : "No notifications"}
-                      </h3>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                        {language === "es" 
-                          ? "Las alertas de stock mínimo y registros del sistema aparecerán aquí en tiempo real."
-                          : "Low stock alerts and system registrations will appear here in real time."}
-                      </p>
-                    </div>
-                  ) : (
-                    notifications.map((notif) => {
-                      const dateStr = notif.timestamp?.toDate
-                        ? notif.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
-                        : (notif.timestamp?.seconds ? new Date(notif.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
-                      
-                      let badgeColor = "bg-sky-500/10 text-sky-600 border-sky-500/20";
-                      if (notif.type === "stock_minimo") {
-                        badgeColor = "bg-rose-500/10 text-rose-600 border-rose-500/20";
-                      } else if (notif.type === "limpieza_impresora") {
-                        badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-                      } else if (notif.type === "reporte_diario") {
-                        badgeColor = "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
-                      }
-
-                      return (
-                        <div 
-                          key={notif.id} 
-                          className={`p-4 rounded-2xl bg-white/30 dark:bg-slate-900/30 border flex items-start justify-between gap-4 hover:bg-white/40 dark:hover:bg-slate-900/40 transition-colors duration-200 ${getMetallicFrameClass(visualTheme)}`}
-                        >
-                          <div className="flex gap-3 items-start">
-                            <span className={`px-2 py-0.5 text-[9px] font-black rounded-lg border uppercase shrink-0 mt-0.5 ${badgeColor}`}>
-                              {notif.type ? notif.type.replace("_", " ") : "Alerta"}
-                            </span>
-                            <div>
-                              <h4 className="text-xs font-black text-slate-700 dark:text-slate-200">{notif.title || "Notificación"}</h4>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{notif.message}</p>
-                            </div>
-                          </div>
-                          <span className="text-[9px] font-semibold text-slate-400 shrink-0 font-mono">{dateStr}</span>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            )}
 
 
           </div>
