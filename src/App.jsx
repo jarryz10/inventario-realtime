@@ -2941,7 +2941,7 @@ export default function App() {
                     placeholder={t.search_components}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-8 pr-7 py-2 rounded-full text-xs glass-input font-bold"
+                    className="w-full pl-10 pr-7 py-2 rounded-full text-xs glass-input font-bold"
                   />
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                     <svg
