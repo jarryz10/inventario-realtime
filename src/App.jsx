@@ -869,6 +869,42 @@ export default function App() {
     }
   };
 
+  // Handler to process clicks on notifications and redirect accordingly
+  const handleNotificationClick = (notif) => {
+    setIsNotificationsOpen(false);
+
+    // Dynamic redirection
+    if (notif.type === "reporte_diario") {
+      setActiveTab("reportes");
+    } else if (notif.type === "limpieza_impresora") {
+      setActiveTab("limpieza");
+    } else if (
+      notif.type === "stock_minimo" || 
+      notif.type === "nuevo_componente" || 
+      notif.type?.includes("componente") || 
+      notif.type?.includes("stock")
+    ) {
+      setActiveTab("inventario");
+      
+      // Try to find the item name to search it
+      let itemName = notif.itemName;
+      if (!itemName && notif.message) {
+        // Find inside quotes e.g. "ITEM"
+        const match = notif.message.match(/"([^"]+)"/);
+        if (match) itemName = match[1];
+      }
+      if (itemName) {
+        setSearchTerm(itemName);
+      } else {
+        setSearchTerm("");
+      }
+    } else if (notif.type?.includes("orden")) {
+      setActiveTab("ordenes");
+    } else if (notif.type === "rfid") {
+      setActiveTab("rfid");
+    }
+  };
+
   // Effect to fetch movements in real-time from Firestore
   useEffect(() => {
     if (!currentUser) {
@@ -1145,6 +1181,7 @@ export default function App() {
               ? `Nuevo Componente Registrado: "${pName}" con ${pStock} unidades en "${formData.location.trim()}".`
               : `New Component Registered: "${pName}" with ${pStock} units in "${formData.location.trim()}".`,
             title: language === "es" ? "Componente Creado" : "Component Created",
+            itemName: pName,
             read: false
           });
         } catch (err) {
@@ -1160,6 +1197,7 @@ export default function App() {
                 ? `Alerta de Stock Mínimo: "${pName}" tiene ${pStock} unidades (mínimo requerido: ${pMinStock}).`
                 : `Low Stock Alert: "${pName}" has ${pStock} units (minimum required: ${pMinStock}).`,
               title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert",
+              itemName: pName,
               read: false
             });
           } catch (err) {
@@ -2383,6 +2421,7 @@ export default function App() {
             ? `Ajuste de Stock: ${type} de ${Math.abs(amount)} unidades en "${product.name}" por "${currentUser.username || "Sistema"}".`
             : `Stock Adjustment: ${type} of ${Math.abs(amount)} units in "${product.name}" by "${currentUser.username || "System"}".`,
           title: language === "es" ? `Movimiento (${type})` : `Movement (${type})`,
+          itemName: product.name,
           read: false
         });
 
@@ -2395,6 +2434,7 @@ export default function App() {
                 ? `Alerta de Stock Mínimo: "${product.name}" tiene ${newStock} unidades (mínimo requerido: ${minStock}).`
                 : `Low Stock Alert: "${product.name}" has ${newStock} units (minimum required: ${minStock}).`,
               title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert",
+              itemName: product.name,
               read: false
             });
           } catch (err) {
@@ -2458,6 +2498,7 @@ export default function App() {
           ? `Componente Modificado: "${editDetailForm.name.trim()}" editado por "${currentUser.username}".`
           : `Component Modified: "${editDetailForm.name.trim()}" edited by "${currentUser.username}".`,
         title: language === "es" ? "Componente Modificado" : "Component Modified",
+        itemName: editDetailForm.name.trim(),
         read: false
       });
 
@@ -2825,7 +2866,8 @@ export default function App() {
                           return (
                             <div
                               key={notif.id}
-                              className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors duration-150 relative group ${
+                              onClick={() => handleNotificationClick(notif)}
+                              className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors duration-150 relative group cursor-pointer ${
                                 notif.read !== true ? "bg-emerald-50/20 dark:bg-emerald-950/10" : ""
                               }`}
                             >
@@ -2848,7 +2890,10 @@ export default function App() {
                               </div>
 
                               <button
-                                onClick={() => handleDeleteNotification(notif.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNotification(notif.id);
+                                }}
                                 className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 dark:text-slate-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/35 rounded transition-all duration-150 shrink-0 cursor-pointer border-none bg-transparent"
                                 title={language === "es" ? "Eliminar" : "Delete"}
                               >
