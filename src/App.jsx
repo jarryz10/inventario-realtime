@@ -2718,7 +2718,7 @@ export default function App() {
           <div className="absolute w-[600px] h-[600px] rounded-full bg-lime-400/5 -bottom-40 -right-40 blur-3xl pointer-events-none" />
           
           {/* Greeting Banner */}
-          <div className="glass-card rounded-[2rem] px-6 py-4 flex items-center justify-between mb-6 shrink-0 border border-emerald-700/35 bg-white/95 shadow-lg relative z-10 text-slate-800">
+          <div className="glass-card rounded-[2rem] px-6 py-4 flex items-center justify-between mb-6 shrink-0 border border-emerald-700/35 bg-white/95 shadow-lg relative z-30 text-slate-800">
             <div className="flex items-center gap-4">
               <div>
                 <h2 className="text-base font-extrabold text-emerald-900">
@@ -2751,7 +2751,10 @@ export default function App() {
                 </button>
 
                 {isNotificationsOpen && (
-                  <div className="absolute left-0 mt-2 w-80 sm:w-96 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 overflow-hidden animate-scale-in">
+                  <div 
+                    className="absolute left-0 top-full mt-2 w-80 sm:w-96 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-scale-in"
+                    style={{ zIndex: 9999 }}
+                  >
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
                       <span className="text-xs font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">
