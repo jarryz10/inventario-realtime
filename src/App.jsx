@@ -2607,7 +2607,8 @@ export default function App() {
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   disabled={isLoggingIn}
-                  className="w-full pl-12 pr-4 py-3 rounded-full text-xs glass-input font-bold"
+                  className="w-full py-3 rounded-full text-xs glass-input font-bold"
+                  style={{ paddingLeft: '44px', paddingRight: '40px' }}
                   required
                 />
               </div>
@@ -2625,7 +2626,8 @@ export default function App() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   disabled={isLoggingIn}
-                  className="w-full pl-12 pr-4 py-3 rounded-full text-xs glass-input font-bold"
+                  className="w-full py-3 rounded-full text-xs glass-input font-bold"
+                  style={{ paddingLeft: '44px', paddingRight: '40px' }}
                   required
                 />
               </div>
@@ -2941,9 +2943,10 @@ export default function App() {
                     placeholder={t.search_components}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-7 py-2 rounded-full text-xs glass-input font-bold"
+                    className="w-full py-2 rounded-full text-xs glass-input font-bold"
+                    style={{ paddingLeft: '44px', paddingRight: '40px' }}
                   />
-                  <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                     <svg
                       className="h-3.5 w-3.5 text-slate-400"
                       fill="none"
