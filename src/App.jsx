@@ -849,19 +849,45 @@ export default function App() {
 
   // Effect to fetch printer catalog in real-time from Firestore, seeding it if empty
   useEffect(() => {
-    try {
-      const unsubscribe = onSnapshot(
-        collection(db, "printer_catalog"),
-        async (snapshot) => {
-          if (snapshot.empty) {
-            console.log("Seeding printer catalog in Firestore...");
+    let isMounted = true;
+    let unsubscribe = null;
+
+    const initCatalog = async () => {
+      try {
+        const colRef = collection(db, "printer_catalog");
+        const querySnapshot = await getDocs(colRef);
+        
+        if (querySnapshot.empty) {
+          console.log("Seeding printer catalog in Firestore...");
+          const batchSeed = [];
+          ["A", "B", "C", "D"].forEach(line => {
+            const limit = line === "A" ? 22 : 12;
+            for (let i = 1; i <= limit; i++) {
+              const numStr = i < 10 ? `0${i}` : `${i}`;
+              const station = `${line}${numStr}`;
+              batchSeed.push({ line, station, printerType: "Sato", ip: `10.40.${i}.101` });
+              batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
+              batchSeed.push({ line, station, printerType: "Zebra 4x8", ip: `10.40.${i}.103` });
+              batchSeed.push({ line, station, printerType: "Lexmark", ip: `10.40.${i}.104` });
+            }
+          });
+          for (const item of batchSeed) {
+            await addDoc(colRef, item);
+          }
+        } else {
+          const docsList = querySnapshot.docs.map(d => d.data());
+          const needsMigration = !docsList.some(item => item.printerType === "Zebra 4x8");
+          if (needsMigration) {
+            console.log("Migrating database: clearing old catalog to seed 4 printers per station...");
+            for (const docObj of querySnapshot.docs) {
+              await deleteDoc(docObj.ref);
+            }
             const batchSeed = [];
             ["A", "B", "C", "D"].forEach(line => {
               const limit = line === "A" ? 22 : 12;
               for (let i = 1; i <= limit; i++) {
                 const numStr = i < 10 ? `0${i}` : `${i}`;
                 const station = `${line}${numStr}`;
-                // Assign all 4 printer models with unique IP addresses
                 batchSeed.push({ line, station, printerType: "Sato", ip: `10.40.${i}.101` });
                 batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
                 batchSeed.push({ line, station, printerType: "Zebra 4x8", ip: `10.40.${i}.103` });
@@ -869,40 +895,41 @@ export default function App() {
               }
             });
             for (const item of batchSeed) {
-              await addDoc(collection(db, "printer_catalog"), item);
+              await addDoc(colRef, item);
             }
-          } else {
+          }
+        }
+
+        if (!isMounted) return;
+        unsubscribe = onSnapshot(
+          colRef,
+          (snapshot) => {
             const list = snapshot.docs.map(doc => ({
               id: doc.id,
               ...doc.data()
             }));
-
-            // Check if database needs migration (doesn't contain "Zebra 4x8" yet)
-            const needsMigration = list.length > 0 && !list.some(item => item.printerType === "Zebra 4x8");
-            if (needsMigration) {
-              console.log("Migrating database: clearing old catalog to seed 4 printers per station...");
-              for (const docObj of snapshot.docs) {
-                await deleteDoc(docObj.ref);
-              }
-              return;
-            }
-
             list.sort((a, b) => {
               if (a.line !== b.line) return a.line.localeCompare(b.line);
               if (a.station !== b.station) return a.station.localeCompare(b.station);
               return a.printerType.localeCompare(b.printerType);
             });
             setPrinterCatalog(list);
+          },
+          (error) => {
+            console.error("Firestore printer catalog query error:", error);
           }
-        },
-        (error) => {
-          console.error("Firestore printer catalog query error:", error);
-        }
-      );
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Failed to setup printer catalog listener:", error);
-    }
+        );
+      } catch (err) {
+        console.error("Error initializing printer catalog database:", err);
+      }
+    };
+
+    initCatalog();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // Effect to close the notification popover when clicking outside of it
