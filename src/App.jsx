@@ -133,11 +133,34 @@ const getBackgroundStyle = (theme) => {
 };
 
 const getThemeActiveTabClass = (theme) => {
-  return "bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-full font-bold shadow-md shadow-emerald-800/10 border-none";
+  if (theme === "gradient-sunset") {
+    return "bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] text-[#1e293b] rounded-full font-bold shadow-md shadow-amber-500/10 border-none transition-all duration-300 hover:brightness-105";
+  }
+  return "bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-full font-bold shadow-md shadow-emerald-800/10 border-none transition-all duration-300 hover:brightness-110";
+};
+
+const getThemeProfileClass = (theme) => {
+  if (theme === "gradient-sunset") {
+    return "p-3 bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] text-[#1e293b] rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
+  }
+  return "p-3 bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-2xl border-none flex items-center justify-between shadow-md transition-all duration-300 hover:scale-[1.02] hover:brightness-110";
+};
+
+const getThemeInitialsClass = (theme) => {
+  if (theme === "gradient-sunset") {
+    return "w-8 h-8 rounded-full bg-white/40 text-[#1e293b] border border-[#E5A273]/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
+  }
+  return "w-8 h-8 rounded-full bg-gradient-to-r from-emerald-900 to-emerald-700 text-white border border-emerald-500/35 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
+};
+
+const getThemeLanguageSwitcherClass = (theme) => {
+  if (theme === "gradient-sunset") {
+    return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] text-[#1e293b] text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
+  }
+  return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-800 to-emerald-600 text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-110 shadow-md";
 };
 
 const getMetallicFrameClass = (theme) => "";
-
 const getMetallicIconClass = (theme) => "";
 
 
@@ -158,12 +181,14 @@ export default function App() {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    if (visualTheme === "gradient") {
-      root.classList.add("theme-gradient");
-      root.classList.remove("theme-classic");
+    root.classList.remove("theme-classic", "theme-gradient", "theme-gradient-green", "theme-gradient-sunset");
+    
+    if (visualTheme === "gradient-sunset") {
+      root.classList.add("theme-gradient-sunset");
+    } else if (visualTheme === "gradient-green" || visualTheme === "gradient") {
+      root.classList.add("theme-gradient-green");
     } else {
       root.classList.add("theme-classic");
-      root.classList.remove("theme-gradient");
     }
   }, [visualTheme]);
 
@@ -199,6 +224,8 @@ export default function App() {
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef(null);
   const hasCleanedUpRef = useRef(false);
   const [movements, setMovements] = useState([]);
   const [isMovementsLoading, setIsMovementsLoading] = useState(false);
@@ -911,11 +938,14 @@ export default function App() {
     };
   }, []);
 
-  // Effect to close the notification popover when clicking outside of it
+  // Effect to close popovers when clicking outside of them
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
         setIsNotificationsOpen(false);
+      }
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target)) {
+        setIsThemeDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -3132,19 +3162,19 @@ export default function App() {
           {/* Bottom Controls Panel */}
           <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
             {/* User Profile Card */}
-            <div className="p-3 bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-2xl border-none flex items-center justify-between shadow-md transition-all duration-300 hover:scale-[1.02] hover:brightness-110">
+            <div className={getThemeProfileClass(visualTheme)}>
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-900 to-emerald-700 text-white border border-emerald-500/35 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner">
+                <div className={getThemeInitialsClass(visualTheme)}>
                   {currentUser?.username === "1234" ? "UM" : (currentUser?.username || "U").substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-extrabold text-white truncate">
+                  <span className="text-xs font-extrabold truncate">
                     {userDisplayName}
                   </span>
-                  <span className="text-[9px] text-emerald-100 font-bold leading-tight">
+                  <span className="text-[9px] font-bold leading-tight opacity-90">
                     {userPosition}
                   </span>
-                  <span className="text-[9px] text-emerald-200 font-semibold leading-tight">
+                  <span className="text-[9px] font-semibold leading-tight opacity-90">
                     Nivel {userLevel}
                   </span>
                 </div>
@@ -3156,17 +3186,17 @@ export default function App() {
                     setChangePasswordError("");
                     setIsChangePasswordOpen(true);
                   }}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 text-white hover:text-emerald-300 transition-colors duration-200 cursor-pointer border border-transparent"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors duration-200 cursor-pointer border border-transparent"
                   title={language === "es" ? "Cambiar contraseña" : "Change password"}
                 >
-                  <Settings className="w-4 h-4 text-white" />
+                  <Settings className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 text-white hover:text-red-400 transition-colors duration-200 cursor-pointer border border-transparent"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors duration-200 cursor-pointer border border-transparent"
                   title={t.logout}
                 >
-                  <LogOut className="w-4 h-4 text-white" />
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -3178,7 +3208,7 @@ export default function App() {
                 setLanguage(nextLang);
                 localStorage.setItem("app_language", nextLang);
               }}
-              className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-800 to-emerald-600 text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-110 shadow-md"
+              className={getThemeLanguageSwitcherClass(visualTheme)}
             >
               <Globe className="w-3.5 h-3.5 text-white/80" />
               <span>{language === "es" ? "Switch to English" : "Cambiar a Español"}</span>
@@ -3209,18 +3239,69 @@ export default function App() {
 
               {/* Acciones de Cabecera: Selector de Tema & Notificaciones */}
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const nextTheme = visualTheme === "gradient" ? "classic" : "gradient";
-                    setVisualTheme(nextTheme);
-                    localStorage.setItem("app_theme", nextTheme);
-                  }}
-                  className="p-2 rounded-full hover:bg-white/10 text-white transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border-none bg-transparent"
-                  title={visualTheme === "gradient" ? "Tema Clásico" : "Tema Degradado"}
-                >
-                  <Palette className="w-5 h-5 text-white/90" />
-                </button>
+                {/* Selector de Tema Visual con Popover */}
+                <div className="relative" ref={themeDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                    className="p-2 rounded-full hover:bg-white/10 text-white transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border-none bg-transparent"
+                    title={language === "es" ? "Cambiar Tema" : "Change Theme"}
+                  >
+                    <Palette className="w-5 h-5 text-white/90" />
+                  </button>
+
+                  {isThemeDropdownOpen && (
+                    <div 
+                      className="absolute right-0 top-full mt-2 w-48 rounded-[1.25rem] bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 flex flex-col gap-1 animate-scale-in text-white"
+                      style={{ zIndex: 9999 }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVisualTheme("classic");
+                          localStorage.setItem("app_theme", "classic");
+                          setIsThemeDropdownOpen(false);
+                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
+                          visualTheme === "classic" ? "bg-white/10 text-white" : "text-white/80"
+                        }`}
+                      >
+                        <span className="w-3.5 h-3.5 rounded-full bg-slate-700 border border-slate-600 block shrink-0" />
+                        <span>Classic Deep</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVisualTheme("gradient-green");
+                          localStorage.setItem("app_theme", "gradient-green");
+                          setIsThemeDropdownOpen(false);
+                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
+                          visualTheme === "gradient-green" || visualTheme === "gradient" ? "bg-white/10 text-white" : "text-white/80"
+                        }`}
+                      >
+                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-emerald-800 to-lime-400 border border-emerald-500/20 block shrink-0" />
+                        <span>Pastel Green</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVisualTheme("gradient-sunset");
+                          localStorage.setItem("app_theme", "gradient-sunset");
+                          setIsThemeDropdownOpen(false);
+                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
+                          visualTheme === "gradient-sunset" ? "bg-white/10 text-white" : "text-white/80"
+                        }`}
+                      >
+                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] border border-amber-300/20 block shrink-0" />
+                        <span>Sunset Pastel</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 {/* Campana de Notificaciones Flotante */}
                 <div className="relative" ref={notificationRef}>

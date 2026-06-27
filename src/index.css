@@ -27,16 +27,20 @@ body {
   font-weight: 800 !important;
 }
 
-/* --- THEME GRADIENT (Degradado Orgánico Continuo) --- */
+/* --- THEME GRADIENT GREEN (Degradado Orgánico Verde Continuo) --- */
 .theme-gradient body,
-.theme-gradient .dashboard-root {
+.theme-gradient-green body,
+.theme-gradient .dashboard-root,
+.theme-gradient-green .dashboard-root {
   background: linear-gradient(180deg, #09324A 0%, #1B6F81 35%, #AED0C9 70%, #FFFB08 100%) !important;
   background-attachment: fixed !important;
   color: #ffffff !important;
 }
 
 .theme-gradient .glass-container,
-.theme-gradient .glass-card {
+.theme-gradient-green .glass-container,
+.theme-gradient .glass-card,
+.theme-gradient-green .glass-card {
   position: relative !important;
   isolation: isolate !important;
   background: rgba(9, 50, 74, 0.92) !important;
@@ -48,7 +52,8 @@ body {
   color: #ffffff !important;
 }
 
-.theme-gradient .glass-sidebar {
+.theme-gradient .glass-sidebar,
+.theme-gradient-green .glass-sidebar {
   position: relative !important;
   isolation: isolate !important;
   background: rgba(9, 50, 74, 0.95) !important;
@@ -61,24 +66,49 @@ body {
   color: #ffffff !important;
 }
 
-.theme-gradient .glass-card h1, .theme-gradient .glass-card h2, .theme-gradient .glass-card h3, .theme-gradient .glass-card h4, .theme-gradient .glass-card h5, .theme-gradient .glass-card h6,
-.theme-gradient .glass-container h1, .theme-gradient .glass-container h2, .theme-gradient .glass-container h3,
-.theme-gradient .glass-sidebar h1, .theme-gradient .glass-sidebar h2, .theme-gradient .glass-sidebar h3,
-.theme-gradient .glass-card span, .theme-gradient .glass-container span, .theme-gradient .glass-sidebar span,
-.theme-gradient .glass-card label, .theme-gradient .glass-container label, .theme-gradient .glass-sidebar label,
-.theme-gradient .glass-card p, .theme-gradient .glass-container p, .theme-gradient .glass-sidebar p,
-.theme-gradient .glass-card div, .theme-gradient .glass-container div, .theme-gradient .glass-sidebar div,
-.theme-gradient .glass-card td, .theme-gradient .glass-card th {
+.theme-gradient .glass-card h1, .theme-gradient-green .glass-card h1,
+.theme-gradient .glass-card h2, .theme-gradient-green .glass-card h2,
+.theme-gradient .glass-card h3, .theme-gradient-green .glass-card h3,
+.theme-gradient .glass-card h4, .theme-gradient-green .glass-card h4,
+.theme-gradient .glass-card h5, .theme-gradient-green .glass-card h5,
+.theme-gradient .glass-card h6, .theme-gradient-green .glass-card h6,
+.theme-gradient .glass-container h1, .theme-gradient-green .glass-container h1,
+.theme-gradient .glass-container h2, .theme-gradient-green .glass-container h2,
+.theme-gradient .glass-container h3, .theme-gradient-green .glass-container h3,
+.theme-gradient .glass-sidebar h1, .theme-gradient-green .glass-sidebar h1,
+.theme-gradient .glass-sidebar h2, .theme-gradient-green .glass-sidebar h2,
+.theme-gradient .glass-sidebar h3, .theme-gradient-green .glass-sidebar h3,
+.theme-gradient .glass-card span, .theme-gradient-green .glass-card span,
+.theme-gradient .glass-container span, .theme-gradient-green .glass-container span,
+.theme-gradient .glass-sidebar span, .theme-gradient-green .glass-sidebar span,
+.theme-gradient .glass-card label, .theme-gradient-green .glass-card label,
+.theme-gradient .glass-container label, .theme-gradient-green .glass-container label,
+.theme-gradient .glass-sidebar label, .theme-gradient-green .glass-sidebar label,
+.theme-gradient .glass-card p, .theme-gradient-green .glass-card p,
+.theme-gradient .glass-container p, .theme-gradient-green .glass-container p,
+.theme-gradient .glass-sidebar p, .theme-gradient-green .glass-sidebar p,
+.theme-gradient .glass-card div, .theme-gradient-green .glass-card div,
+.theme-gradient .glass-container div, .theme-gradient-green .glass-container div,
+.theme-gradient .glass-sidebar div, .theme-gradient-green .glass-sidebar div,
+.theme-gradient .glass-card td, .theme-gradient-green .glass-card td,
+.theme-gradient .glass-card th, .theme-gradient-green .glass-card th {
   color: #ffffff !important;
 }
 
-.theme-gradient .glass-card .text-slate-500, .theme-gradient .glass-card .text-slate-400, .theme-gradient .glass-card .text-emerald-800, .theme-gradient .glass-card .text-emerald-700, .theme-gradient .glass-card .text-emerald-900,
-.theme-gradient .glass-container .text-slate-500, .theme-gradient .glass-container .text-slate-400,
-.theme-gradient .glass-sidebar .text-slate-500, .theme-gradient .glass-sidebar .text-slate-400 {
+.theme-gradient .glass-card .text-slate-500, .theme-gradient-green .glass-card .text-slate-500,
+.theme-gradient .glass-card .text-slate-400, .theme-gradient-green .glass-card .text-slate-400,
+.theme-gradient .glass-card .text-emerald-800, .theme-gradient-green .glass-card .text-emerald-800,
+.theme-gradient .glass-card .text-emerald-700, .theme-gradient-green .glass-card .text-emerald-700,
+.theme-gradient .glass-card .text-emerald-900, .theme-gradient-green .glass-card .text-emerald-900,
+.theme-gradient .glass-container .text-slate-500, .theme-gradient-green .glass-container .text-slate-500,
+.theme-gradient .glass-container .text-slate-400, .theme-gradient-green .glass-container .text-slate-400,
+.theme-gradient .glass-sidebar .text-slate-500, .theme-gradient-green .glass-sidebar .text-slate-500,
+.theme-gradient .glass-sidebar .text-slate-400, .theme-gradient-green .glass-sidebar .text-slate-400 {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-.theme-gradient .glass-input {
+.theme-gradient .glass-input,
+.theme-gradient-green .glass-input {
   background-color: rgba(255, 255, 255, 0.12) !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
   color: #ffffff !important;
@@ -87,19 +117,99 @@ body {
   padding-left: 1.25rem;
   padding-right: 1.25rem;
 }
-.theme-gradient .glass-input::placeholder {
+.theme-gradient .glass-input::placeholder,
+.theme-gradient-green .glass-input::placeholder {
   color: rgba(255, 255, 255, 0.5) !important;
 }
-.theme-gradient .glass-input:focus {
+.theme-gradient .glass-input:focus,
+.theme-gradient-green .glass-input:focus {
   border-color: #4ade80 !important;
   box-shadow: 0 0 0 1px #4ade80 !important;
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 .theme-gradient option,
-.theme-gradient select.glass-input option {
+.theme-gradient-green option,
+.theme-gradient select.glass-input option,
+.theme-gradient-green select.glass-input option {
   color: #ffffff !important;
   background-color: #09324A !important;
+}
+
+
+/* --- THEME GRADIENT SUNSET (Atardecer Pastel Coral y Lavanda) --- */
+.theme-gradient-sunset body,
+.theme-gradient-sunset .dashboard-root {
+  background: linear-gradient(180deg, #E5A273 0%, #F1C3BA 45%, #E3D2FA 80%, #DDD2FA 100%) !important;
+  background-attachment: fixed !important;
+  color: #1e293b !important;
+}
+
+.theme-gradient-sunset .glass-container,
+.theme-gradient-sunset .glass-card {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(229, 162, 115, 0.22) !important;
+  box-shadow: 0 15px 35px rgba(229, 162, 115, 0.12) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #1e293b !important;
+}
+
+.theme-gradient-sunset .glass-sidebar {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-right: 1px solid rgba(229, 162, 115, 0.22) !important;
+  border-top-right-radius: 2.5rem !important;
+  border-bottom-right-radius: 2.5rem !important;
+  border-radius: 0px 2.5rem 2.5rem 0px !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #1e293b !important;
+}
+
+.theme-gradient-sunset .glass-card h1, .theme-gradient-sunset .glass-card h2, .theme-gradient-sunset .glass-card h3, .theme-gradient-sunset .glass-card h4, .theme-gradient-sunset .glass-card h5, .theme-gradient-sunset .glass-card h6,
+.theme-gradient-sunset .glass-container h1, .theme-gradient-sunset .glass-container h2, .theme-gradient-sunset .glass-container h3,
+.theme-gradient-sunset .glass-sidebar h1, .theme-gradient-sunset .glass-sidebar h2, .theme-gradient-sunset .glass-sidebar h3,
+.theme-gradient-sunset .glass-card span, .theme-gradient-sunset .glass-container span, .theme-gradient-sunset .glass-sidebar span,
+.theme-gradient-sunset .glass-card label, .theme-gradient-sunset .glass-container label, .theme-gradient-sunset .glass-sidebar label,
+.theme-gradient-sunset .glass-card p, .theme-gradient-sunset .glass-container p, .theme-gradient-sunset .glass-sidebar p,
+.theme-gradient-sunset .glass-card div, .theme-gradient-sunset .glass-container div, .theme-gradient-sunset .glass-sidebar div,
+.theme-gradient-sunset .glass-card td, .theme-gradient-sunset .glass-card th {
+  color: #1e293b !important;
+}
+
+.theme-gradient-sunset .glass-card .text-slate-500, .theme-gradient-sunset .glass-card .text-slate-400, .theme-gradient-sunset .glass-card .text-emerald-800, .theme-gradient-sunset .glass-card .text-emerald-700, .theme-gradient-sunset .glass-card .text-emerald-900,
+.theme-gradient-sunset .glass-container .text-slate-500, .theme-gradient-sunset .glass-container .text-slate-400,
+.theme-gradient-sunset .glass-sidebar .text-slate-500, .theme-gradient-sunset .glass-sidebar .text-slate-400 {
+  color: rgba(30, 41, 59, 0.75) !important;
+}
+
+.theme-gradient-sunset .glass-input {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(229, 162, 115, 0.25) !important;
+  color: #1e293b !important;
+  border-radius: 9999px !important;
+  outline: none;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.theme-gradient-sunset .glass-input::placeholder {
+  color: rgba(30, 41, 59, 0.5) !important;
+}
+.theme-gradient-sunset .glass-input:focus {
+  border-color: #E5A273 !important;
+  box-shadow: 0 0 0 1px #E5A273 !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.theme-gradient-sunset option,
+.theme-gradient-sunset select.glass-input option {
+  color: #1e293b !important;
+  background-color: #ffffff !important;
 }
 
 
@@ -343,20 +453,45 @@ button.bg-emerald-500:hover {
 .theme-red .text-sky-600, .theme-red .text-sky-500 { color: #ef4444 !important; }
 .theme-red.dark .text-sky-400, .dark .theme-red .text-sky-400 { color: #f87171 !important; }
 
-/* Uniform green-to-blue organic gradient inventory item cards with hover animation */
-.inventory-item-card {
+/* Scoped inventory card styles per visualTheme */
+.theme-gradient .inventory-item-card,
+.theme-gradient-green .inventory-item-card {
   background: linear-gradient(135deg, #09324A 0%, #1B6F81 60%, #AED0C9 100%) !important;
   border: 1px solid rgba(174, 208, 201, 0.4) !important;
   color: #ffffff !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow: 0 10px 25px rgba(9, 50, 74, 0.3) !important;
 }
-
-.inventory-item-card:hover {
+.theme-gradient .inventory-item-card:hover,
+.theme-gradient-green .inventory-item-card:hover {
   transform: translateY(-4px) scale(1.01) !important;
   box-shadow: 0 20px 30px rgba(9, 50, 74, 0.55) !important;
   border-color: rgba(174, 208, 201, 0.65) !important;
   filter: brightness(1.05);
+}
+
+.theme-gradient-sunset .inventory-item-card {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border: 1px solid rgba(229, 162, 115, 0.22) !important;
+  color: #1e293b !important;
+  box-shadow: 0 8px 20px rgba(229, 162, 115, 0.1) !important;
+}
+.theme-gradient-sunset .inventory-item-card:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  box-shadow: 0 18px 28px rgba(229, 162, 115, 0.20) !important;
+  border-color: rgba(229, 162, 115, 0.4) !important;
+  filter: brightness(0.98);
+}
+
+.theme-classic .inventory-item-card {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f8fafc !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+.theme-classic .inventory-item-card:hover {
+  transform: translateY(-2px) scale(1.01) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+  border-color: #475569 !important;
 }
 
 /* Dynamic Hover for standard buttons */
