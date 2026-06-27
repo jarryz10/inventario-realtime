@@ -279,7 +279,7 @@ export default function App() {
   // Printer Cleaning State
   const [printerCleanings, setPrinterCleanings] = useState([]);
   const [isCleaningLoading, setIsCleaningLoading] = useState(true);
-  const [cleaningRows, setCleaningRows] = useState([{ station: "", ip: "10.40.", printerType: "" }]);
+  const [cleaningRows, setCleaningRows] = useState([{ line: "", station: "", printerType: "", ip: "" }]);
   const [cleaningErrors, setCleaningErrors] = useState({});
   const [isCleaningSubmitting, setIsCleaningSubmitting] = useState(false);
   const [expandedCleaningId, setExpandedCleaningId] = useState(null);
@@ -1666,7 +1666,7 @@ export default function App() {
 
   // Add a new empty row to the cleaning list
   const handleAddCleaningRow = () => {
-    setCleaningRows([...cleaningRows, { station: "", ip: "10.40.", printerType: "" }]);
+    setCleaningRows([...cleaningRows, { line: "", station: "", printerType: "", ip: "" }]);
   };
 
   // Remove a row from the cleaning list
@@ -1681,6 +1681,35 @@ export default function App() {
     }
   };
 
+  // Cascading Selection Helpers for Printer Cleaning Form
+  const getStationsForLine = (line) => {
+    if (!line) return [];
+    const limit = line === "A" ? 22 : 12;
+    const list = [];
+    for (let i = 1; i <= limit; i++) {
+      const numStr = i < 10 ? `0${i}` : `${i}`;
+      list.push(`${line}${numStr}`);
+    }
+    return list;
+  };
+
+  const getPrintersForStation = (station) => {
+    if (!station) return [];
+    const num = parseInt(station.replace(/[^0-9]/g, ""), 10);
+    if (isNaN(num)) return [];
+    if (num % 3 === 0) return ["Sato", "Zebra", "Lexmark"];
+    if (num % 3 === 1) return ["Sato", "Zebra"];
+    return ["Sato"];
+  };
+
+  const getPrinterIP = (station, printerType) => {
+    if (!station || !printerType) return "";
+    const num = parseInt(station.replace(/[^0-9]/g, ""), 10);
+    if (isNaN(num)) return "";
+    const suffix = printerType === "Sato" ? "101" : printerType === "Zebra" ? "102" : "103";
+    return `10.40.${num}.${suffix}`;
+  };
+
   // Submit printer cleaning form rows to Firestore
   const handleSubmitCleaning = async (e) => {
     e.preventDefault();
@@ -1691,25 +1720,18 @@ export default function App() {
     let hasErrors = false;
 
     cleaningRows.forEach((row, index) => {
-      const station = row.station.trim();
-      const ip = row.ip.trim();
-      const printerType = row.printerType.trim();
       const rowErrors = {};
-
-      if (!station) {
+      if (!row.line) {
+        rowErrors.line = language === "es" ? "Línea obligatoria" : "Line required";
+      }
+      if (!row.station) {
         rowErrors.station = t.err_station_req;
-      } else if (station.length > 3) {
-        rowErrors.station = t.err_station_max;
       }
-
-      if (!ip) {
-        rowErrors.ip = t.err_ip_req;
-      } else if (!isValidIP(ip)) {
-        rowErrors.ip = t.err_ip_invalid;
-      }
-
-      if (!printerType) {
+      if (!row.printerType) {
         rowErrors.printerType = t.err_printer_model_req;
+      }
+      if (!row.ip) {
+        rowErrors.ip = t.err_ip_req;
       }
 
       if (Object.keys(rowErrors).length > 0) {
@@ -1729,9 +1751,10 @@ export default function App() {
       const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
       
       const printersData = cleaningRows.map(row => ({
-        station: row.station.trim(),
-        ip: row.ip.trim(),
-        printerType: row.printerType.trim()
+        line: row.line,
+        station: row.station,
+        printerType: row.printerType,
+        ip: row.ip
       }));
 
       await addDoc(collection(db, "printer_cleaning"), {
@@ -1752,7 +1775,7 @@ export default function App() {
         read: false
       });
 
-      setCleaningRows([{ station: "", ip: "10.40.", printerType: "" }]);
+      setCleaningRows([{ line: "", station: "", printerType: "", ip: "" }]);
       setAlertMessage({ type: "success", text: "¡Servicio(s) de limpieza registrado(s) exitosamente!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -4061,87 +4084,119 @@ export default function App() {
                             {cleaningRows.map((row, index) => (
                               <div key={index} className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border animate-fade-in ${getMetallicFrameClass(visualTheme)}`}>
                                 
-                                {/* Estación */}
+                                {/* Selector de Línea */}
+                                <div className="md:col-span-2">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    {language === "es" ? "Línea *" : "Line *"}
+                                  </label>
+                                  <select
+                                    value={row.line}
+                                    onChange={(e) => {
+                                      const updated = [...cleaningRows];
+                                      updated[index].line = e.target.value;
+                                      updated[index].station = "";
+                                      updated[index].printerType = "";
+                                      updated[index].ip = "";
+                                      setCleaningRows(updated);
+                                    }}
+                                    className={`w-full px-3 py-2.5 rounded-xl text-xs glass-input font-bold ${
+                                      cleaningErrors[index]?.line ? "border-red-500" : ""
+                                    }`}
+                                    required
+                                  >
+                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">--</option>
+                                    {["A", "B", "C", "D"].map(l => (
+                                      <option key={l} value={l} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                        Línea {l}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                {/* Selector de Estación */}
                                 <div className="md:col-span-3">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
                                     {t.workstation_label}
                                   </label>
-                                  <input
-                                    type="text"
-                                    maxLength={3}
-                                    placeholder={language === "es" ? "Ej. A01" : "e.g. A01"}
+                                  <select
                                     value={row.station}
+                                    disabled={!row.line}
                                     onChange={(e) => {
                                       const updated = [...cleaningRows];
                                       updated[index].station = e.target.value;
+                                      updated[index].printerType = "";
+                                      updated[index].ip = "";
                                       setCleaningRows(updated);
                                     }}
-                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
+                                    className={`w-full px-3 py-2.5 rounded-xl text-xs glass-input font-bold ${
                                       cleaningErrors[index]?.station ? "border-red-500" : ""
                                     }`}
                                     required
-                                  />
-                                  {cleaningErrors[index]?.station && (
-                                    <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].station}</p>
-                                  )}
+                                  >
+                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">
+                                      {language === "es" ? "Selecciona..." : "Select..."}
+                                    </option>
+                                    {getStationsForLine(row.line).map(st => (
+                                      <option key={st} value={st} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                        {st}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </div>
- 
-                                {/* IP Address */}
-                                <div className="md:col-span-4">
-                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                                    {t.ip_address_label}
-                                  </label>
-                                  <input
-                                    type="text"
-                                    placeholder={language === "es" ? "Ej. 10.40.23.104" : "e.g. 10.40.23.104"}
-                                    value={row.ip}
-                                    onChange={(e) => handleIPChangeForRow(index, e.target.value)}
-                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
-                                      cleaningErrors[index]?.ip ? "border-red-500" : ""
-                                    }`}
-                                    required
-                                  />
-                                  {cleaningErrors[index]?.ip && (
-                                    <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].ip}</p>
-                                  )}
-                                </div>
- 
-                                {/* Tipo de Impresora */}
-                                <div className="md:col-span-4">
+
+                                {/* Selector de Impresora */}
+                                <div className="md:col-span-3">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
                                     {t.printer_type_label}
                                   </label>
                                   <select
                                     value={row.printerType}
+                                    disabled={!row.station}
                                     onChange={(e) => {
                                       const updated = [...cleaningRows];
-                                      updated[index].printerType = e.target.value;
+                                      const selectedType = e.target.value;
+                                      updated[index].printerType = selectedType;
+                                      updated[index].ip = getPrinterIP(row.station, selectedType);
                                       setCleaningRows(updated);
                                     }}
-                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold ${
+                                    className={`w-full px-3 py-2.5 rounded-xl text-xs glass-input font-bold ${
                                       cleaningErrors[index]?.printerType ? "border-red-500" : ""
                                     }`}
                                     required
                                   >
-                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">{t.select_model_placeholder}</option>
-                                    {["Sato", "Zebra", "Lexmark"].map(model => (
+                                    <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">
+                                      {t.select_model_placeholder}
+                                    </option>
+                                    {getPrintersForStation(row.station).map(model => (
                                       <option key={model} value={model} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                         {model}
                                       </option>
                                     ))}
                                   </select>
-                                  {cleaningErrors[index]?.printerType && (
-                                    <p className="text-[9px] text-red-500 font-bold mt-1">{cleaningErrors[index].printerType}</p>
-                                  )}
                                 </div>
- 
+
+                                {/* Autocompleted IP Address */}
+                                <div className="md:col-span-3">
+                                  <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                                    {t.ip_address_label}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={row.ip}
+                                    readOnly
+                                    disabled
+                                    placeholder="10.40.X.XXX"
+                                    className="w-full px-3 py-2.5 rounded-xl text-xs bg-slate-100/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-450 font-mono font-bold cursor-not-allowed"
+                                  />
+                                </div>
+
                                 {/* Remover fila button */}
                                 <div className="md:col-span-1 flex justify-center pb-1">
                                   {cleaningRows.length > 1 ? (
                                     <button
                                       type="button"
                                       onClick={() => handleRemoveCleaningRow(index)}
-                                      className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-colors duration-200 hover-scale cursor-pointer animate-fade-in"
+                                      className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-colors duration-200 hover-scale cursor-pointer animate-fade-in border-none"
                                       title={language === "es" ? "Eliminar fila" : "Remove row"}
                                     >
                                       <Trash2 className="w-4 h-4" />
