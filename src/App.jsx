@@ -3104,9 +3104,9 @@ export default function App() {
           {/* Bottom Controls Panel */}
           <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
             {/* User Profile Card */}
-            <div className="p-3 bg-gradient-to-br from-emerald-950 to-emerald-800 text-white rounded-2xl border border-emerald-800/40 flex items-center justify-between shadow-inner">
+            <div className="p-3 bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-2xl border-none flex items-center justify-between shadow-md transition-all duration-300 hover:scale-[1.02] hover:brightness-110">
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-emerald-900 to-emerald-700 text-white border border-emerald-500/35 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner">
                   {currentUser?.username === "1234" ? "UM" : (currentUser?.username || "U").substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
@@ -3150,29 +3150,29 @@ export default function App() {
                 setLanguage(nextLang);
                 localStorage.setItem("app_language", nextLang);
               }}
-              className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-semibold border border-slate-200 dark:border-slate-700 select-none cursor-pointer transition-colors duration-200 shadow-sm"
+              className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-800 to-emerald-600 text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-110 shadow-md"
             >
-              <Globe className="w-3.5 h-3.5 text-slate-400" />
+              <Globe className="w-3.5 h-3.5 text-white/80" />
               <span>{language === "es" ? "Switch to English" : "Cambiar a Español"}</span>
             </button>
           </div>
         </div>
 
         {/* RIGHT WORKSPACE */}
-        <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-[#064e3b] to-[#4ade80] p-6 sm:p-8 relative">
+        <div className="flex-1 flex flex-col overflow-hidden bg-transparent p-6 sm:p-8 relative">
           
           {/* Decorative Fluid Shapes */}
           <div className="absolute w-[500px] h-[500px] rounded-full bg-emerald-500/10 -top-40 -left-40 blur-3xl pointer-events-none" />
           <div className="absolute w-[600px] h-[600px] rounded-full bg-lime-400/5 -bottom-40 -right-40 blur-3xl pointer-events-none" />
           
           {/* Greeting Banner */}
-          <div className="glass-card rounded-[2rem] px-6 py-4 flex items-center justify-between mb-6 shrink-0 border border-emerald-700/35 bg-white/95 shadow-lg relative z-30 text-slate-800">
+          <div className="glass-card rounded-[2rem] px-6 py-4 flex items-center justify-between mb-6 shrink-0 relative z-30">
             <div className="flex items-center gap-4">
               <div>
-                <h2 className="text-base font-extrabold text-emerald-900">
+                <h2 className="text-base font-extrabold text-white">
                   {language === "es" ? `Hola, ${userDisplayName}` : `Hello, ${userDisplayName}`}
                 </h2>
-                <p className="text-[10px] text-emerald-700 font-bold mt-0.5">
+                <p className="text-[10px] text-white/85 font-bold mt-0.5">
                   {language === "es" 
                     ? `Turno: ${userShift} | Acceso: Nivel ${userLevel}`
                     : `Shift: ${userShift} | Access: Level ${userLevel}`}
