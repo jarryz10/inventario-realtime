@@ -284,6 +284,14 @@ export default function App() {
   const [isCleaningSubmitting, setIsCleaningSubmitting] = useState(false);
   const [expandedCleaningId, setExpandedCleaningId] = useState(null);
 
+  // Printer Catalog Configuration States
+  const [printerCatalog, setPrinterCatalog] = useState([]);
+  const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
+  const [isCatalogSaving, setIsCatalogSaving] = useState(false);
+  const [tempCatalog, setTempCatalog] = useState([]);
+  const [newCatalogItem, setNewCatalogItem] = useState({ line: "A", station: "", printerType: "Sato", ip: "" });
+  const [catalogError, setCatalogError] = useState("");
+
   // RFID Verification State
   const [rfidVerifications, setRfidVerifications] = useState([]);
   const [isRfidLoading, setIsRfidLoading] = useState(true);
@@ -838,6 +846,55 @@ export default function App() {
       setIsNotificationsLoading(false);
     }
   }, [currentUser]);
+
+  // Effect to fetch printer catalog in real-time from Firestore, seeding it if empty
+  useEffect(() => {
+    try {
+      const unsubscribe = onSnapshot(
+        collection(db, "printer_catalog"),
+        async (snapshot) => {
+          if (snapshot.empty) {
+            console.log("Seeding printer catalog in Firestore...");
+            const batchSeed = [];
+            ["A", "B", "C", "D"].forEach(line => {
+              const limit = line === "A" ? 22 : 12;
+              for (let i = 1; i <= limit; i++) {
+                const numStr = i < 10 ? `0${i}` : `${i}`;
+                const station = `${line}${numStr}`;
+                batchSeed.push({ line, station, printerType: "Sato", ip: `10.40.${i}.101` });
+                if (i % 3 === 0) {
+                  batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
+                  batchSeed.push({ line, station, printerType: "Lexmark", ip: `10.40.${i}.103` });
+                } else if (i % 3 === 1) {
+                  batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
+                }
+              }
+            });
+            for (const item of batchSeed) {
+              await addDoc(collection(db, "printer_catalog"), item);
+            }
+          } else {
+            const list = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            list.sort((a, b) => {
+              if (a.line !== b.line) return a.line.localeCompare(b.line);
+              if (a.station !== b.station) return a.station.localeCompare(b.station);
+              return a.printerType.localeCompare(b.printerType);
+            });
+            setPrinterCatalog(list);
+          }
+        },
+        (error) => {
+          console.error("Firestore printer catalog query error:", error);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup printer catalog listener:", error);
+    }
+  }, []);
 
   // Effect to close the notification popover when clicking outside of it
   useEffect(() => {
@@ -1681,33 +1738,27 @@ export default function App() {
     }
   };
 
-  // Cascading Selection Helpers for Printer Cleaning Form
+  // Cascading Selection Helpers for Printer Cleaning Form (Dynamic from database)
   const getStationsForLine = (line) => {
     if (!line) return [];
-    const limit = line === "A" ? 22 : 12;
-    const list = [];
-    for (let i = 1; i <= limit; i++) {
-      const numStr = i < 10 ? `0${i}` : `${i}`;
-      list.push(`${line}${numStr}`);
-    }
-    return list;
+    const stations = printerCatalog
+      .filter(item => item.line === line)
+      .map(item => item.station);
+    return [...new Set(stations)].sort();
   };
 
   const getPrintersForStation = (station) => {
     if (!station) return [];
-    const num = parseInt(station.replace(/[^0-9]/g, ""), 10);
-    if (isNaN(num)) return [];
-    if (num % 3 === 0) return ["Sato", "Zebra", "Lexmark"];
-    if (num % 3 === 1) return ["Sato", "Zebra"];
-    return ["Sato"];
+    const printers = printerCatalog
+      .filter(item => item.station === station)
+      .map(item => item.printerType);
+    return [...new Set(printers)].sort();
   };
 
   const getPrinterIP = (station, printerType) => {
     if (!station || !printerType) return "";
-    const num = parseInt(station.replace(/[^0-9]/g, ""), 10);
-    if (isNaN(num)) return "";
-    const suffix = printerType === "Sato" ? "101" : printerType === "Zebra" ? "102" : "103";
-    return `10.40.${num}.${suffix}`;
+    const matched = printerCatalog.find(item => item.station === station && item.printerType === printerType);
+    return matched ? matched.ip : "";
   };
 
   // Submit printer cleaning form rows to Firestore
@@ -1783,6 +1834,59 @@ export default function App() {
       setAlertMessage({ type: "error", text: "Error al registrar la limpieza." });
     } finally {
       setIsCleaningSubmitting(false);
+    }
+  };
+
+  // Handle saving modified printer catalog changes to Firestore
+  const handleSavePrinterCatalog = async () => {
+    setIsCatalogSaving(true);
+    setCatalogError("");
+    try {
+      // 1. Find deleted items
+      const deletedItems = printerCatalog.filter(orig => !tempCatalog.some(temp => temp.id === orig.id));
+      for (const item of deletedItems) {
+        await deleteDoc(doc(db, "printer_catalog", item.id));
+      }
+
+      // 2. Find modified or added items
+      for (const item of tempCatalog) {
+        if (!item.id) {
+          // New item
+          await addDoc(collection(db, "printer_catalog"), {
+            line: item.line,
+            station: item.station,
+            printerType: item.printerType,
+            ip: item.ip
+          });
+        } else {
+          // Check if modified
+          const original = printerCatalog.find(orig => orig.id === item.id);
+          if (original && (original.line !== item.line || original.station !== item.station || original.printerType !== item.printerType || original.ip !== item.ip)) {
+            await updateDoc(doc(db, "printer_catalog", item.id), {
+              line: item.line,
+              station: item.station,
+              printerType: item.printerType,
+              ip: item.ip
+            });
+          }
+        }
+      }
+
+      setAlertMessage({
+        type: "success",
+        text: language === "es" ? "Catálogo de impresoras actualizado con éxito" : "Printer catalog updated successfully"
+      });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+      setIsCatalogModalOpen(false);
+    } catch (err) {
+      console.error("Error saving printer catalog:", err);
+      setCatalogError(
+        language === "es"
+          ? "Error al guardar el catálogo en la base de datos."
+          : "Error saving catalog to the database."
+      );
+    } finally {
+      setIsCatalogSaving(false);
     }
   };
 
@@ -4074,9 +4178,24 @@ export default function App() {
                     {/* Form: create cleaning logs (full width) */}
                     <div className="w-full flex flex-col h-auto">
                       <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col`}>
-                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                          {t.printer_form_title}
-                        </h2>
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            {t.printer_form_title}
+                          </h2>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTempCatalog(JSON.parse(JSON.stringify(printerCatalog)));
+                              setCatalogError("");
+                              setNewCatalogItem({ line: "A", station: "", printerType: "Sato", ip: "" });
+                              setIsCatalogModalOpen(true);
+                            }}
+                            className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-[10px] text-slate-600 dark:text-slate-300 font-extrabold hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150 flex items-center gap-1 cursor-pointer"
+                          >
+                            <Settings className="w-3.5 h-3.5" />
+                            <span>{language === "es" ? "Gestionar Catálogo" : "Manage Catalog"}</span>
+                          </button>
+                        </div>
                         
                         <form onSubmit={handleSubmitCleaning} className="flex flex-col gap-5">
                           {/* List of dynamic rows */}
@@ -6316,6 +6435,210 @@ export default function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Gestionar Catálogo de Impresoras */}
+      {isCatalogModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#064e3b] text-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in border border-emerald-800/40 flex flex-col max-h-[85vh]">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-3 shrink-0">
+              <div>
+                <h2 className="text-base font-bold text-white font-serif-premium">
+                  {language === "es" ? "Gestionar Catálogo de Impresoras" : "Manage Printer Catalog"}
+                </h2>
+                <p className="text-[10px] text-emerald-250 mt-0.5 opacity-85">
+                  {language === "es" 
+                    ? "Agrega, edita direcciones IP o remueve equipos del catálogo." 
+                    : "Add, edit IP addresses or remove equipment from the catalog."}
+                </p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsCatalogModalOpen(false)} 
+                className="w-8 h-8 rounded-full hover:bg-white/10 text-white/75 hover:text-white flex items-center justify-center transition-colors border-none cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form to Add New Equipment */}
+            <div className="bg-white/5 border border-white/10 p-3.5 rounded-2xl flex flex-wrap gap-2.5 items-end mb-3.5">
+              <div className="flex-1 min-w-[70px]">
+                <label className="text-[9px] font-bold text-slate-450 block mb-1">Línea</label>
+                <select
+                  value={newCatalogItem.line}
+                  onChange={(e) => setNewCatalogItem({ ...newCatalogItem, line: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                >
+                  {["A", "B", "C", "D"].map(l => (
+                    <option key={l} value={l}>Línea {l}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[80px]">
+                <label className="text-[9px] font-bold text-slate-455 block mb-1">Estación</label>
+                <input
+                  type="text"
+                  placeholder="Ej. A01"
+                  value={newCatalogItem.station}
+                  onChange={(e) => {
+                    const st = e.target.value.toUpperCase();
+                    setNewCatalogItem({ ...newCatalogItem, station: st });
+                  }}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[90px]">
+                <label className="text-[9px] font-bold text-slate-455 block mb-1">Impresora</label>
+                <select
+                  value={newCatalogItem.printerType}
+                  onChange={(e) => {
+                    const selectedType = e.target.value;
+                    const suggestedIP = getPrinterIP(newCatalogItem.station, selectedType) || `10.40.1.101`;
+                    setNewCatalogItem({ ...newCatalogItem, printerType: selectedType, ip: suggestedIP });
+                  }}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                >
+                  {["Sato", "Zebra", "Lexmark"].map(model => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-2 min-w-[120px]">
+                <label className="text-[9px] font-bold text-slate-455 block mb-1">Dirección IP</label>
+                <input
+                  type="text"
+                  placeholder="Ej. 10.40.1.101"
+                  value={newCatalogItem.ip}
+                  onChange={(e) => setNewCatalogItem({ ...newCatalogItem, ip: e.target.value })}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-mono font-bold outline-none focus:border-emerald-500"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!newCatalogItem.station.trim() || !newCatalogItem.ip.trim()) {
+                    alert(language === "es" ? "Por favor completa la estación e IP." : "Please fill station and IP.");
+                    return;
+                  }
+                  const cleanedStation = newCatalogItem.station.trim();
+                  const exists = tempCatalog.some(item => item.station === cleanedStation && item.printerType === newCatalogItem.printerType);
+                  if (exists) {
+                    alert(language === "es" ? "Este equipo ya existe en el catálogo." : "This equipment already exists in the catalog.");
+                    return;
+                  }
+                  setTempCatalog([...tempCatalog, { ...newCatalogItem, station: cleanedStation }]);
+                  setNewCatalogItem({ ...newCatalogItem, station: "", ip: "" });
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-lime-400 hover:bg-lime-300 text-emerald-950 font-black text-xs hover-scale border-none cursor-pointer shrink-0"
+              >
+                + {language === "es" ? "Agregar" : "Add"}
+              </button>
+            </div>
+
+            {/* Scrollable list of existing catalog items */}
+            <div className="flex-1 overflow-y-auto pr-1 my-2 scroll-glass max-h-[40vh] border border-white/10 rounded-2xl p-2.5 bg-slate-950/20">
+              {tempCatalog.length === 0 ? (
+                <div className="text-center py-8 text-xs text-emerald-200/50 font-bold">
+                  {language === "es" ? "No hay equipos en este catálogo." : "No equipment in this catalog."}
+                </div>
+              ) : (
+                tempCatalog.map((item, idx) => (
+                  <div key={idx} className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 p-2 border-b border-white/5 last:border-b-0 animate-fade-in">
+                    <div className="w-12 text-[10px] font-black text-emerald-300 shrink-0">Línea {item.line}</div>
+                    
+                    <input
+                      type="text"
+                      value={item.station}
+                      onChange={(e) => {
+                        const updated = [...tempCatalog];
+                        updated[idx].station = e.target.value.toUpperCase();
+                        setTempCatalog(updated);
+                      }}
+                      className="w-16 px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-700/50 text-[11px] font-bold text-slate-800 dark:text-white outline-none"
+                    />
+
+                    <select
+                      value={item.printerType}
+                      onChange={(e) => {
+                        const updated = [...tempCatalog];
+                        updated[idx].printerType = e.target.value;
+                        setTempCatalog(updated);
+                      }}
+                      className="w-24 px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-700/50 text-[11px] font-bold text-slate-800 dark:text-white outline-none"
+                    >
+                      {["Sato", "Zebra", "Lexmark"].map(model => (
+                        <option key={model} value={model}>{model}</option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="text"
+                      value={item.ip}
+                      onChange={(e) => {
+                        const updated = [...tempCatalog];
+                        updated[idx].ip = e.target.value;
+                        setTempCatalog(updated);
+                      }}
+                      placeholder="10.40.X.X"
+                      className="flex-1 min-w-[110px] px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-700/50 text-[11px] font-mono font-bold text-slate-800 dark:text-white outline-none"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = tempCatalog.filter((_, i) => i !== idx);
+                        setTempCatalog(updated);
+                      }}
+                      className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-colors duration-150 border-none cursor-pointer shrink-0"
+                      title={language === "es" ? "Eliminar equipo" : "Delete equipment"}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {catalogError && (
+              <div className="flex items-center gap-1.5 p-2 rounded-xl bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20 mb-2 shrink-0">
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>{catalogError}</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-3.5 border-t border-white/10 mt-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsCatalogModalOpen(false)}
+                disabled={isCatalogSaving}
+                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
+              >
+                {t.cancel}
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePrinterCatalog}
+                disabled={isCatalogSaving}
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
+              >
+                {isCatalogSaving ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {isCatalogSaving 
+                    ? (language === "es" ? "Guardando..." : "Saving...") 
+                    : (language === "es" ? "Guardar Cambios" : "Save Changes")}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       )}
