@@ -863,30 +863,47 @@ export default function App() {
     let isMounted = true;
     let unsubscribe = null;
 
-    try {
-      const colRef = collection(db, "printer_catalog");
-      unsubscribe = onSnapshot(
-        colRef,
-        (snapshot) => {
-          if (!isMounted) return;
-          const list = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          list.sort((a, b) => {
-            if (a.line !== b.line) return a.line.localeCompare(b.line);
-            if (a.station !== b.station) return a.station.localeCompare(b.station);
-            return a.printerType.localeCompare(b.printerType);
-          });
-          setPrinterCatalog(list);
-        },
-        (error) => {
-          console.error("Firestore printer catalog query error:", error);
+    const runCleanupAndListen = async () => {
+      try {
+        const colRef = collection(db, "printer_catalog");
+
+        // One-time database truncate/cleanup script to clean up old persistent data
+        const clearedKey = "printer_catalog_cleared_v2";
+        if (!localStorage.getItem(clearedKey)) {
+          console.log("Truncating printer catalog collection on the server...");
+          const snapshot = await getDocs(colRef);
+          for (const docObj of snapshot.docs) {
+            await deleteDoc(docObj.ref);
+          }
+          localStorage.setItem(clearedKey, "true");
+          console.log("Database printer catalog truncated successfully.");
         }
-      );
-    } catch (err) {
-      console.error("Error setting up printer catalog snapshot:", err);
-    }
+
+        if (!isMounted) return;
+        unsubscribe = onSnapshot(
+          colRef,
+          (snapshot) => {
+            const list = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            list.sort((a, b) => {
+              if (a.line !== b.line) return a.line.localeCompare(b.line);
+              if (a.station !== b.station) return a.station.localeCompare(b.station);
+              return a.printerType.localeCompare(b.printerType);
+            });
+            setPrinterCatalog(list);
+          },
+          (error) => {
+            console.error("Firestore printer catalog query error:", error);
+          }
+        );
+      } catch (err) {
+        console.error("Error setting up printer catalog snapshot:", err);
+      }
+    };
+
+    runCleanupAndListen();
 
     return () => {
       isMounted = false;
