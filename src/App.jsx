@@ -861,13 +861,11 @@ export default function App() {
               for (let i = 1; i <= limit; i++) {
                 const numStr = i < 10 ? `0${i}` : `${i}`;
                 const station = `${line}${numStr}`;
+                // Assign all 4 printer models with unique IP addresses
                 batchSeed.push({ line, station, printerType: "Sato", ip: `10.40.${i}.101` });
-                if (i % 3 === 0) {
-                  batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
-                  batchSeed.push({ line, station, printerType: "Lexmark", ip: `10.40.${i}.103` });
-                } else if (i % 3 === 1) {
-                  batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
-                }
+                batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
+                batchSeed.push({ line, station, printerType: "Zebra 4x8", ip: `10.40.${i}.103` });
+                batchSeed.push({ line, station, printerType: "Lexmark", ip: `10.40.${i}.104` });
               }
             });
             for (const item of batchSeed) {
@@ -878,6 +876,17 @@ export default function App() {
               id: doc.id,
               ...doc.data()
             }));
+
+            // Check if database needs migration (doesn't contain "Zebra 4x8" yet)
+            const needsMigration = list.length > 0 && !list.some(item => item.printerType === "Zebra 4x8");
+            if (needsMigration) {
+              console.log("Migrating database: clearing old catalog to seed 4 printers per station...");
+              for (const docObj of snapshot.docs) {
+                await deleteDoc(docObj.ref);
+              }
+              return;
+            }
+
             list.sort((a, b) => {
               if (a.line !== b.line) return a.line.localeCompare(b.line);
               if (a.station !== b.station) return a.station.localeCompare(b.station);
@@ -6503,7 +6512,7 @@ export default function App() {
                   }}
                   className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
                 >
-                  {["Sato", "Zebra", "Lexmark"].map(model => (
+                  {["Sato", "Zebra", "Zebra 4x8", "Lexmark"].map(model => (
                     <option key={model} value={model}>{model}</option>
                   ))}
                 </select>
@@ -6571,7 +6580,7 @@ export default function App() {
                       }}
                       className="w-24 px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-700/50 text-[11px] font-bold text-slate-800 dark:text-white outline-none"
                     >
-                      {["Sato", "Zebra", "Lexmark"].map(model => (
+                      {["Sato", "Zebra", "Zebra 4x8", "Lexmark"].map(model => (
                         <option key={model} value={model}>{model}</option>
                       ))}
                     </select>
