@@ -5938,8 +5938,8 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Row 3: Ubicación Física & Stock Mínimo */}
-                <div className="grid grid-cols-2 gap-4">
+                {/* Row 3: Ubicación Física */}
+                <div className="grid grid-cols-1">
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
                     <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{language === "es" ? "Ubicación Física *" : "Physical Location *"}</span>
                     {isEditingDetail ? (
@@ -5957,6 +5957,10 @@ export default function App() {
                       </span>
                     )}
                   </div>
+                </div>
+
+                {/* Row 4: Stock Mínimo & Stock Total */}
+                <div className={`grid ${isEditingDetail ? "grid-cols-1" : "grid-cols-2"} gap-4`}>
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30">
                     <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block mb-1">{t.min_stock_label}</span>
                     {isEditingDetail ? (
@@ -5974,6 +5978,16 @@ export default function App() {
                       </span>
                     )}
                   </div>
+                  {!isEditingDetail && (
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/30 animate-fade-in">
+                      <span className="text-[9px] text-emerald-600 dark:text-emerald-400 uppercase font-black tracking-wider block mb-1">
+                        {language === "es" ? "Stock Total" : "Total Stock"}
+                      </span>
+                      <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">
+                        {selectedProduct?.stock}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Description */}
@@ -6091,15 +6105,7 @@ export default function App() {
                       <span>{isStockSubmitting ? (language === "es" ? "Aplicando..." : "Applying...") : (language === "es" ? "Aplicar Movimiento" : "Apply Movement")}</span>
                     </button>
                   </form>
-                ) : (
-                  <div className="p-4 rounded-2xl bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/40 dark:border-slate-800/40 flex items-center justify-center text-center py-6">
-                    <div className="flex flex-col items-center gap-1">
-                      <Lock className="w-5 h-5 text-slate-400" />
-                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{language === "es" ? "Control de Stock Bloqueado" : "Stock Control Locked"}</span>
-                      <span className="text-[10px] text-slate-400 max-w-xs">{language === "es" ? "Ingrese el SKU válido arriba para revelar el formulario de ajuste de stock." : "Enter a valid SKU above to reveal the stock adjustment form."}</span>
-                    </div>
-                  </div>
-                )}
+                ) : null}
 
               </div>
 
