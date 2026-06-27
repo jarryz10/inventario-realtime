@@ -277,16 +277,20 @@ export default function App() {
   const [rfidVerifications, setRfidVerifications] = useState([]);
   const [isRfidLoading, setIsRfidLoading] = useState(true);
   const [rfidRows, setRfidRows] = useState(() => {
-    const saved = localStorage.getItem("rfidRows");
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem("rfidRows");
+      if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          // Robust check: filter only valid objects having station and ip fields
+          const clean = parsed.filter(item => item && typeof item === "object" && "station" in item && "ip" in item);
+          if (clean.length > 0) {
+            return clean;
+          }
         }
-      } catch (e) {
-        console.error("Error parsing saved rfidRows:", e);
       }
+    } catch (e) {
+      console.error("Error reading/parsing saved rfidRows:", e);
     }
     return [{ station: "", ip: "10.40.", antennaStatus: "" }];
   });
@@ -5888,7 +5892,7 @@ export default function App() {
                     <span className="text-[9px] text-slate-500 dark:text-emerald-300 uppercase font-black tracking-wider">
                       {language === "es" ? "Validación por SKU para modificar Stock" : "SKU Validation to modify Stock"}
                     </span>
-                    {detailSkuInput.trim().toUpperCase() === (selectedProduct.sku || "").trim().toUpperCase() ? (
+                    {selectedProduct && detailSkuInput.trim().toUpperCase() === (selectedProduct?.sku || "").trim().toUpperCase() ? (
                       <span className="text-[10px] text-lime-600 dark:text-lime-400 font-extrabold flex items-center gap-1">
                         <CheckCircle className="w-3.5 h-3.5" />
                         {language === "es" ? "Verificado" : "Verified"}
@@ -5923,21 +5927,21 @@ export default function App() {
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
-                      onClick={() => handleAdjustStock(selectedProduct.id, -1, selectedProduct.stock)}
-                      disabled={detailSkuInput.trim().toUpperCase() !== (selectedProduct.sku || "").trim().toUpperCase() || selectedProduct.stock <= 0}
+                      onClick={() => selectedProduct && handleAdjustStock(selectedProduct.id, -1, selectedProduct.stock)}
+                      disabled={!selectedProduct || detailSkuInput.trim().toUpperCase() !== (selectedProduct?.sku || "").trim().toUpperCase() || (selectedProduct?.stock || 0) <= 0}
                       className="w-8 h-8 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-black text-base disabled:opacity-40 hover-scale transition-colors cursor-pointer"
                       title={t.subtract_unit_tooltip}
                     >
                       -
                     </button>
                     <div className="text-center min-w-[50px]">
-                      <span className="text-2xl font-black text-slate-800 dark:text-white block">{selectedProduct.stock}</span>
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t.min_prefix} {selectedProduct.minStock}</span>
+                      <span className="text-2xl font-black text-slate-800 dark:text-white block">{selectedProduct?.stock}</span>
+                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t.min_prefix} {selectedProduct?.minStock}</span>
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleAdjustStock(selectedProduct.id, 1, selectedProduct.stock)}
-                      disabled={detailSkuInput.trim().toUpperCase() !== (selectedProduct.sku || "").trim().toUpperCase()}
+                      onClick={() => selectedProduct && handleAdjustStock(selectedProduct.id, 1, selectedProduct.stock)}
+                      disabled={!selectedProduct || detailSkuInput.trim().toUpperCase() !== (selectedProduct?.sku || "").trim().toUpperCase()}
                       className="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-black text-base hover-scale transition-colors cursor-pointer disabled:opacity-40"
                       title={t.add_unit_tooltip}
                     >
