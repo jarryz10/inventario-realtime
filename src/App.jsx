@@ -202,6 +202,13 @@ export default function App() {
   const [isStockSubmitting, setIsStockSubmitting] = useState(false);
   const [stockFormError, setStockFormError] = useState("");
 
+  // Direct User Password Reset Modal States
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [resetPasswordTargetUser, setResetPasswordTargetUser] = useState(null);
+  const [newDirectPassword, setNewDirectPassword] = useState("");
+  const [isResetPasswordSubmitting, setIsResetPasswordSubmitting] = useState(false);
+  const [resetPasswordError, setResetPasswordError] = useState("");
+
   const filteredProducts = products.filter(product => {
     const nameMatch = (product.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     const brandMatch = (product.brand || "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -2107,52 +2114,60 @@ export default function App() {
 
   // Delete user from Firestore
   // Send Password Reset Email via Firebase Auth
-  const handleSendPasswordReset = async (user) => {
-    let email = user.email || "";
-    if (!email) {
-      if (user.id.includes("@")) {
-        email = user.id;
-      } else {
-        const inputEmail = prompt(
-          language === "es"
-            ? `El usuario "${user.name}" no tiene un correo electrónico registrado. Por favor, introduce su correo para enviar el restablecimiento:`
-            : `User "${user.name}" does not have a registered email. Please enter their email to send the reset link:`
-        );
-        if (!inputEmail) return;
-        email = inputEmail.trim();
-        
-        try {
-          await updateDoc(doc(db, "users", user.id), { email });
-        } catch (err) {
-          console.error("Error saving user email:", err);
-        }
-      }
+  // Handle password reset directly by updating the Firestore document
+  const handleDirectPasswordResetSubmit = async (e) => {
+    e.preventDefault();
+    if (!resetPasswordTargetUser) return;
+    setResetPasswordError("");
+
+    const newPwd = newDirectPassword.trim();
+    if (!newPwd) {
+      setResetPasswordError(
+        language === "es"
+          ? "La contraseña no puede estar vacía."
+          : "Password cannot be empty."
+      );
+      return;
     }
 
+    setIsResetPasswordSubmitting(true);
     try {
-      await sendPasswordResetEmail(auth, email);
-      alert(
-        language === "es"
-          ? `Se ha enviado con éxito el correo de restablecimiento de contraseña a: ${email}`
-          : `Password reset email successfully sent to: ${email}`
-      );
-      
+      // Update directly in the Firestore users collection
+      const userDocRef = doc(db, "users", resetPasswordTargetUser.id);
+      await updateDoc(userDocRef, {
+        password: newPwd
+      });
+
+      // Also create system notification
       await addDoc(collection(db, "notifications"), {
         timestamp: serverTimestamp(),
         type: "seguridad",
         message: language === "es"
-          ? `Solicitud de restablecimiento de contraseña enviada para el usuario "${user.name}" al correo ${email}.`
-          : `Password reset link sent for user "${user.name}" to email ${email}.`,
-        title: language === "es" ? "Restablecimiento de Contraseña" : "Password Reset",
+          ? `La contraseña del usuario "${resetPasswordTargetUser.name}" ha sido restablecida directamente por el administrador.`
+          : `The password of user "${resetPasswordTargetUser.name}" has been directly reset by the administrator.`,
+        title: language === "es" ? "Contraseña Restablecida" : "Password Reset",
+        itemName: resetPasswordTargetUser.name,
         read: false
       });
-    } catch (error) {
-      console.error("Error sending password reset email:", error);
-      alert(
+
+      setAlertMessage({
+        type: "success",
+        text: language === "es" ? "Contraseña actualizada con éxito" : "Password updated successfully"
+      });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+
+      setIsResetPasswordModalOpen(false);
+      setResetPasswordTargetUser(null);
+      setNewDirectPassword("");
+    } catch (err) {
+      console.error("Error resetting password directly:", err);
+      setResetPasswordError(
         language === "es"
-          ? `Error al enviar el correo de restablecimiento: ${error.message}`
-          : `Failed to send reset email: ${error.message}`
+          ? "Error al actualizar la contraseña en la base de datos."
+          : "Error updating the password in the database."
       );
+    } finally {
+      setIsResetPasswordSubmitting(false);
     }
   };
 
@@ -5025,7 +5040,12 @@ export default function App() {
                                         {/* Reset Password Button */}
                                         <button
                                           type="button"
-                                          onClick={() => handleSendPasswordReset(user)}
+                                          onClick={() => {
+                                            setResetPasswordTargetUser(user);
+                                            setNewDirectPassword("");
+                                            setResetPasswordError("");
+                                            setIsResetPasswordModalOpen(true);
+                                          }}
                                           className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white transition-all cursor-pointer hover-scale flex items-center justify-center"
                                           title={language === "es" ? "Restablecer contraseña" : "Reset password"}
                                         >
@@ -6148,6 +6168,99 @@ export default function App() {
               )}
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Asignación Directa de Contraseña (Administrador) */}
+      {isResetPasswordModalOpen && resetPasswordTargetUser && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#064e3b] text-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in border border-emerald-800/40 flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
+              <div>
+                <h2 className="text-lg font-bold text-white font-serif-premium">
+                  {language === "es" ? "Restablecer Contraseña" : "Reset Password"}
+                </h2>
+                <p className="text-xs text-emerald-200 mt-0.5 opacity-80">
+                  {language === "es" 
+                    ? `Asigna directamente una nueva contraseña a "${resetPasswordTargetUser.name}".` 
+                    : `Directly assign a new password to "${resetPasswordTargetUser.name}".`}
+                </p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setIsResetPasswordModalOpen(false);
+                  setResetPasswordTargetUser(null);
+                  setNewDirectPassword("");
+                }} 
+                className="w-8 h-8 rounded-full hover:bg-white/10 text-white/75 hover:text-white flex items-center justify-center transition-colors border-none"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleDirectPasswordResetSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="text-[10px] font-bold text-emerald-250 uppercase tracking-wider block mb-1">
+                  {language === "es" ? "Nueva Contraseña para el Usuario *" : "New Password for User *"}
+                </label>
+                <div className="relative">
+                  <Key className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
+                  <input
+                    type="password"
+                    placeholder={language === "es" ? "Ej. nuevaContrase123" : "e.g. newPassword123"}
+                    value={newDirectPassword}
+                    onChange={(e) => setNewDirectPassword(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                    required
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              {resetPasswordError && (
+                <div className="flex items-center gap-1.5 p-2 rounded-xl bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>{resetPasswordError}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-3 border-t border-white/10 mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsResetPasswordModalOpen(false);
+                    setResetPasswordTargetUser(null);
+                    setNewDirectPassword("");
+                  }}
+                  disabled={isResetPasswordSubmitting}
+                  className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isResetPasswordSubmitting}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
+                >
+                  {isResetPasswordSubmitting ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3.5 h-3.5" />
+                  )}
+                  <span>
+                    {isResetPasswordSubmitting 
+                      ? (language === "es" ? "Confirmando..." : "Confirming...") 
+                      : (language === "es" ? "Confirmar Restablecimiento" : "Confirm Reset")}
+                  </span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
