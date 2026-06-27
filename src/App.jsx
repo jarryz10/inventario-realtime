@@ -197,6 +197,10 @@ export default function App() {
 
   // SKU Verification state in the Detail / Stock Control Modal
   const [detailSkuInput, setDetailSkuInput] = useState("");
+  const [stockActionAmount, setStockActionAmount] = useState("");
+  const [stockActionType, setStockActionType] = useState("add"); // "add" or "subtract"
+  const [isStockSubmitting, setIsStockSubmitting] = useState(false);
+  const [stockFormError, setStockFormError] = useState("");
 
   const filteredProducts = products.filter(product => {
     const nameMatch = (product.name || "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -846,9 +850,12 @@ export default function App() {
     localStorage.setItem("rfidRows", JSON.stringify(rfidRows));
   }, [rfidRows]);
 
-  // Effect to reset SKU input when details modal opens/closes
+  // Effect to reset SKU and stock form inputs when details modal opens/closes
   useEffect(() => {
     setDetailSkuInput("");
+    setStockActionAmount("");
+    setStockActionType("add");
+    setStockFormError("");
   }, [selectedProductId]);
 
   // Effect to auto-clean notifications older than 5 days
@@ -2605,6 +2612,106 @@ export default function App() {
       });
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  // Handle complete stock adjustment submission from detail modal
+  const handleApplyStockMovement = async (e) => {
+    e.preventDefault();
+    if (!selectedProduct) return;
+    setStockFormError("");
+
+    const amountVal = parseInt(stockActionAmount, 10);
+    if (isNaN(amountVal) || amountVal <= 0) {
+      setStockFormError(
+        language === "es"
+          ? "Por favor introduce una cantidad válida mayor a 0."
+          : "Please enter a valid quantity greater than 0."
+      );
+      return;
+    }
+
+    const currentStock = selectedProduct.stock || 0;
+    const isSubtraction = stockActionType === "subtract";
+
+    if (isSubtraction && amountVal > currentStock) {
+      setStockFormError(
+        language === "es"
+          ? `No puedes restar más existencias de las disponibles (${currentStock}).`
+          : `Cannot subtract more than the available stock (${currentStock}).`
+      );
+      return;
+    }
+
+    setIsStockSubmitting(true);
+    try {
+      const type = !isSubtraction ? "Entrada" : "Salida";
+      const adjustAmount = !isSubtraction ? amountVal : -amountVal;
+      const newStock = Math.max(0, currentStock + adjustAmount);
+      const minStock = selectedProduct.minStock || 0;
+
+      // Log movement to history
+      await logMovement(selectedProduct.name, type, amountVal);
+
+      // Construct notification message specifically as requested
+      const actionText = !isSubtraction
+        ? (language === "es" ? "ha agregado" : "has added")
+        : (language === "es" ? "ha restado" : "has subtracted");
+      const notificationMsg = language === "es"
+        ? `El operador ${actionText} ${amountVal} unidades al artículo "${selectedProduct.name}".`
+        : `The operator ${actionText} ${amountVal} units to the item "${selectedProduct.name}".`;
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: !isSubtraction ? "entrada_stock" : "salida_stock",
+        message: notificationMsg,
+        title: language === "es" ? `Movimiento (${type})` : `Movement (${type})`,
+        itemName: selectedProduct.name,
+        read: false
+      });
+
+      // Low stock notification if applicable
+      if (newStock <= minStock) {
+        try {
+          await addDoc(collection(db, "notifications"), {
+            timestamp: serverTimestamp(),
+            type: "stock_minimo",
+            message: language === "es"
+              ? `Alerta de Stock Mínimo: "${selectedProduct.name}" tiene ${newStock} unidades (mínimo requerido: ${minStock}).`
+              : `Low Stock Alert: "${selectedProduct.name}" has ${newStock} units (minimum required: ${minStock}).`,
+            title: language === "es" ? "Stock Mínimo Bajo" : "Low Stock Alert",
+            itemName: selectedProduct.name,
+            read: false
+          });
+        } catch (err) {
+          console.error("Error creating low stock notification:", err);
+        }
+      }
+
+      // Update Firebase
+      const docRef = doc(db, "items", selectedProduct.id);
+      await updateDoc(docRef, {
+        stock: newStock
+      });
+
+      // Reset form states
+      setStockActionAmount("");
+      setDetailSkuInput("");
+      
+      alert(
+        language === "es"
+          ? "¡Movimiento de stock aplicado exitosamente!"
+          : "Stock movement applied successfully!"
+      );
+    } catch (error) {
+      console.error("Error applying stock movement:", error);
+      setStockFormError(
+        language === "es"
+          ? "Error al guardar el movimiento en la base de datos."
+          : "Error saving movement to the database."
+      );
+    } finally {
+      setIsStockSubmitting(false);
     }
   };
 
@@ -5916,39 +6023,83 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Row 4: Stock controls & Min stock */}
-                <div className="p-4 rounded-2xl bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/40 dark:border-slate-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex flex-col text-center sm:text-left">
-                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider mb-0.5">{t.stock_control}</span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{t.stock_control_desc}</span>
-                  </div>
-                  
-                  {/* Stock adjuster controls */}
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => selectedProduct && handleAdjustStock(selectedProduct.id, -1, selectedProduct.stock)}
-                      disabled={!selectedProduct || detailSkuInput.trim().toUpperCase() !== (selectedProduct?.sku || "").trim().toUpperCase() || (selectedProduct?.stock || 0) <= 0}
-                      className="w-8 h-8 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-black text-base disabled:opacity-40 hover-scale transition-colors cursor-pointer"
-                      title={t.subtract_unit_tooltip}
-                    >
-                      -
-                    </button>
-                    <div className="text-center min-w-[50px]">
-                      <span className="text-2xl font-black text-slate-800 dark:text-white block">{selectedProduct?.stock}</span>
-                      <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider block">{t.min_prefix} {selectedProduct?.minStock}</span>
+                {/* Conditional Form: Stock Control Panel */}
+                {selectedProduct && detailSkuInput.trim().toUpperCase() === (selectedProduct?.sku || "").trim().toUpperCase() ? (
+                  <form onSubmit={handleApplyStockMovement} className="p-4 rounded-2xl bg-emerald-950/10 dark:bg-emerald-900/5 border border-emerald-800/10 dark:border-emerald-700/10 flex flex-col gap-4 animate-fade-in">
+                    <div className="flex items-center justify-between border-b border-emerald-800/10 pb-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-black tracking-wider">{language === "es" ? "Nuevo Ajuste de Existencias" : "New Stock Adjustment"}</span>
+                        <span className="text-[9px] text-slate-400">{language === "es" ? "Escribe la cantidad e indica la acción" : "Enter quantity and select action"}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] text-slate-400 uppercase font-bold block">{language === "es" ? "Stock Actual" : "Current Stock"}</span>
+                        <span className="text-sm font-black text-slate-700 dark:text-white">{selectedProduct?.stock} (Min: {selectedProduct?.minStock})</span>
+                      </div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {/* Cantidad Input */}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-450 block mb-1">
+                          {language === "es" ? "Cantidad a Modificar *" : "Quantity to Modify *"}
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder={language === "es" ? "Ej. 10" : "e.g. 10"}
+                          value={stockActionAmount}
+                          onChange={(e) => setStockActionAmount(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                          required
+                        />
+                      </div>
+
+                      {/* Selector de Acción */}
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-455 block mb-1">
+                          {language === "es" ? "Acción *" : "Action *"}
+                        </label>
+                        <select
+                          value={stockActionType}
+                          onChange={(e) => setStockActionType(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                          required
+                        >
+                          <option value="add">{language === "es" ? "Agregar al Stock" : "Add to Stock"}</option>
+                          <option value="subtract">{language === "es" ? "Restar del Stock" : "Subtract from Stock"}</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {stockFormError && (
+                      <div className="flex items-center gap-1.5 p-2 rounded-xl bg-red-500/10 text-red-500 text-[10px] font-bold border border-red-500/20">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>{stockFormError}</span>
+                      </div>
+                    )}
+
                     <button
-                      type="button"
-                      onClick={() => selectedProduct && handleAdjustStock(selectedProduct.id, 1, selectedProduct.stock)}
-                      disabled={!selectedProduct || detailSkuInput.trim().toUpperCase() !== (selectedProduct?.sku || "").trim().toUpperCase()}
-                      className="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-black text-base hover-scale transition-colors cursor-pointer disabled:opacity-40"
-                      title={t.add_unit_tooltip}
+                      type="submit"
+                      disabled={isStockSubmitting}
+                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50 hover-scale cursor-pointer border-none"
                     >
-                      +
+                      {isStockSubmitting ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-3.5 h-3.5" />
+                      )}
+                      <span>{isStockSubmitting ? (language === "es" ? "Aplicando..." : "Applying...") : (language === "es" ? "Aplicar Movimiento" : "Apply Movement")}</span>
                     </button>
+                  </form>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/40 dark:border-slate-800/40 flex items-center justify-center text-center py-6">
+                    <div className="flex flex-col items-center gap-1">
+                      <Lock className="w-5 h-5 text-slate-400" />
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{language === "es" ? "Control de Stock Bloqueado" : "Stock Control Locked"}</span>
+                      <span className="text-[10px] text-slate-400 max-w-xs">{language === "es" ? "Ingrese el SKU válido arriba para revelar el formulario de ajuste de stock." : "Enter a valid SKU above to reveal the stock adjustment form."}</span>
+                    </div>
                   </div>
-                </div>
+                )}
 
               </div>
 
