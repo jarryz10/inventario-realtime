@@ -3194,15 +3194,15 @@ export default function App() {
                       <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
                       <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
                     </div>
-                  ) : products.length === 0 ? (
+                  ) : !products || products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
                       <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.empty_inventory}</h3>
+                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.empty_inventory || "No hay componentes registrados"}</h3>
                       <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                        {t.empty_inventory_desc}
+                        {t.empty_inventory_desc || "No se registran componentes."}
                       </p>
                     </div>
-                  ) : filteredProducts.length === 0 ? (
+                  ) : !filteredProducts || filteredProducts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
                       <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
                       <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.no_matches}</h3>
@@ -3215,32 +3215,32 @@ export default function App() {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4">
                       {filteredProducts.map((product, index) => {
-                        const isUnlocked = unlockedSkuItems[product.id];
+                        if (!product) return null;
                         return (
                           <div
-                            key={product.id}
-                            onClick={() => setSelectedProductId(product.id)}
+                            key={product.id || index}
+                            onClick={() => product.id && setSelectedProductId(product.id)}
                             className="inventory-item-card rounded-[2rem] p-5 flex flex-col justify-between gap-4 cursor-pointer animate-fade-in"
                           >
                             <div className="flex gap-3">
                               {/* Oval Image Mask */}
                               <div className="w-14 h-20 rounded-full overflow-hidden bg-slate-950 shadow-inner shrink-0 border border-emerald-800/30 aspect-[2/3]">
                                 <img
-                                  src={product.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
-                                  alt={product.name}
+                                  src={product?.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
+                                  alt={product?.name || "Component"}
                                   className="w-full h-full object-cover"
                                 />
                               </div>
                               
                               <div className="min-w-0 flex-1">
                                 <span className="text-[9px] uppercase font-bold tracking-wider text-lime-300">
-                                  {product.brand || t.no_brand}
+                                  {product?.brand || t.no_brand}
                                 </span>
                                 <h3 className="font-black text-sm truncate leading-snug text-white">
-                                  {product.name}
+                                  {product?.name || ""}
                                 </h3>
                                 <p className="text-[11px] font-semibold mt-0.5 truncate text-emerald-100">
-                                  Mod: {product.model || t.na}
+                                  Mod: {product?.model || t.na}
                                 </p>
                               </div>
                             </div>
@@ -3248,12 +3248,12 @@ export default function App() {
                             <div className="grid grid-cols-2 gap-2 pt-3 border-t text-[11px] border-emerald-800/30">
                               <div className="p-2 rounded-2xl flex flex-col bg-emerald-950/40 border border-emerald-850/40">
                                 <span className="text-[8px] uppercase font-black tracking-wider mb-0.5 text-emerald-200">SKU</span>
-                                <span className="font-black truncate text-white">{product.sku || t.na}</span>
+                                <span className="font-black truncate text-white">{product?.sku || t.na}</span>
                               </div>
 
                               <div className="p-2 rounded-2xl flex flex-col bg-emerald-950/40 border border-emerald-850/40">
                                 <span className="text-[8px] uppercase font-black tracking-wider mb-0.5 text-emerald-200">{language === "es" ? "Ubicación" : "Location"}</span>
-                                <span className="font-black truncate text-white">{product.location || t.na}</span>
+                                <span className="font-black truncate text-white">{product?.location || t.na}</span>
                               </div>
                             </div>
 
@@ -3261,7 +3261,7 @@ export default function App() {
                               <div className="flex flex-col gap-1">
                                 <span className="text-[8px] uppercase font-black tracking-wider block text-emerald-200">{t.stock_status}</span>
                                 <div className="flex items-center gap-1.5">
-                                  {getStockStatus(product.stock, product.minStock)}
+                                  {getStockStatus(product?.stock || 0, product?.minStock || 0)}
                                 </div>
                               </div>
 
@@ -3269,7 +3269,7 @@ export default function App() {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDeleteProduct(product.id);
+                                    product.id && handleDeleteProduct(product.id);
                                   }}
                                   className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-150 text-emerald-300 hover:text-red-400 hover:bg-white/10"
                                   title={t.delete_firestore_tooltip}
