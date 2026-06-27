@@ -847,84 +847,35 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // Effect to fetch printer catalog in real-time from Firestore, seeding it if empty
+  // Effect to fetch printer catalog in real-time from Firestore
   useEffect(() => {
     let isMounted = true;
     let unsubscribe = null;
 
-    const initCatalog = async () => {
-      try {
-        const colRef = collection(db, "printer_catalog");
-        const querySnapshot = await getDocs(colRef);
-        
-        if (querySnapshot.empty) {
-          console.log("Seeding printer catalog in Firestore...");
-          const batchSeed = [];
-          ["A", "B", "C", "D"].forEach(line => {
-            const limit = line === "A" ? 22 : 12;
-            for (let i = 1; i <= limit; i++) {
-              const numStr = i < 10 ? `0${i}` : `${i}`;
-              const station = `${line}${numStr}`;
-              batchSeed.push({ line, station, printerType: "Sato", ip: `10.40.${i}.101` });
-              batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
-              batchSeed.push({ line, station, printerType: "Zebra 4x8", ip: `10.40.${i}.103` });
-              batchSeed.push({ line, station, printerType: "Lexmark", ip: `10.40.${i}.104` });
-            }
+    try {
+      const colRef = collection(db, "printer_catalog");
+      unsubscribe = onSnapshot(
+        colRef,
+        (snapshot) => {
+          if (!isMounted) return;
+          const list = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          list.sort((a, b) => {
+            if (a.line !== b.line) return a.line.localeCompare(b.line);
+            if (a.station !== b.station) return a.station.localeCompare(b.station);
+            return a.printerType.localeCompare(b.printerType);
           });
-          for (const item of batchSeed) {
-            await addDoc(colRef, item);
-          }
-        } else {
-          const docsList = querySnapshot.docs.map(d => d.data());
-          const needsMigration = !docsList.some(item => item.printerType === "Zebra 4x8");
-          if (needsMigration) {
-            console.log("Migrating database: clearing old catalog to seed 4 printers per station...");
-            for (const docObj of querySnapshot.docs) {
-              await deleteDoc(docObj.ref);
-            }
-            const batchSeed = [];
-            ["A", "B", "C", "D"].forEach(line => {
-              const limit = line === "A" ? 22 : 12;
-              for (let i = 1; i <= limit; i++) {
-                const numStr = i < 10 ? `0${i}` : `${i}`;
-                const station = `${line}${numStr}`;
-                batchSeed.push({ line, station, printerType: "Sato", ip: `10.40.${i}.101` });
-                batchSeed.push({ line, station, printerType: "Zebra", ip: `10.40.${i}.102` });
-                batchSeed.push({ line, station, printerType: "Zebra 4x8", ip: `10.40.${i}.103` });
-                batchSeed.push({ line, station, printerType: "Lexmark", ip: `10.40.${i}.104` });
-              }
-            });
-            for (const item of batchSeed) {
-              await addDoc(colRef, item);
-            }
-          }
+          setPrinterCatalog(list);
+        },
+        (error) => {
+          console.error("Firestore printer catalog query error:", error);
         }
-
-        if (!isMounted) return;
-        unsubscribe = onSnapshot(
-          colRef,
-          (snapshot) => {
-            const list = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            list.sort((a, b) => {
-              if (a.line !== b.line) return a.line.localeCompare(b.line);
-              if (a.station !== b.station) return a.station.localeCompare(b.station);
-              return a.printerType.localeCompare(b.printerType);
-            });
-            setPrinterCatalog(list);
-          },
-          (error) => {
-            console.error("Firestore printer catalog query error:", error);
-          }
-        );
-      } catch (err) {
-        console.error("Error initializing printer catalog database:", err);
-      }
-    };
-
-    initCatalog();
+      );
+    } catch (err) {
+      console.error("Error setting up printer catalog snapshot:", err);
+    }
 
     return () => {
       isMounted = false;
@@ -6562,7 +6513,7 @@ export default function App() {
                     return;
                   }
                   const cleanedStation = newCatalogItem.station.trim();
-                  const exists = tempCatalog.some(item => item.station === cleanedStation && item.printerType === newCatalogItem.printerType);
+                  const exists = tempCatalog.some(item => item.line === newCatalogItem.line && item.station === cleanedStation && item.printerType === newCatalogItem.printerType);
                   if (exists) {
                     alert(language === "es" ? "Este equipo ya existe en el catálogo." : "This equipment already exists in the catalog.");
                     return;
@@ -6579,8 +6530,10 @@ export default function App() {
             {/* Scrollable list of existing catalog items */}
             <div className="flex-1 overflow-y-auto pr-1 my-2 scroll-glass max-h-[40vh] border border-white/10 rounded-2xl p-2.5 bg-slate-950/20">
               {tempCatalog.length === 0 ? (
-                <div className="text-center py-8 text-xs text-emerald-200/50 font-bold">
-                  {language === "es" ? "No hay equipos en este catálogo." : "No equipment in this catalog."}
+                <div className="text-center py-8 text-xs text-emerald-250/60 font-bold max-w-sm mx-auto leading-relaxed">
+                  {language === "es" 
+                    ? "No hay equipos registrados. Utiliza el formulario de arriba para agregar el primero." 
+                    : "No equipment registered. Use the form above to add the first one."}
                 </div>
               ) : (
                 tempCatalog.map((item, idx) => (
