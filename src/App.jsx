@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { db, storage } from "./firebase";
+import { db, storage, auth } from "./firebase";
+import { sendPasswordResetEmail } from "firebase/auth";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { translations } from "./translations";
@@ -52,7 +53,9 @@ import {
   Palette,
   Shield,
   Bell,
-  History
+  History,
+  Key,
+  Settings
 } from "lucide-react";
 
 const TABS_CONFIG = [
@@ -192,6 +195,12 @@ export default function App() {
   const selectedProduct = products.find(p => p.id === selectedProductId) || null;
   const [searchTerm, setSearchTerm] = useState("");
 
+  // SKU Verification / Security States
+  const [unlockedSkuItems, setUnlockedSkuItems] = useState({});
+  const [skuVerifyModal, setSkuVerifyModal] = useState(null);
+  const [inputSku, setInputSku] = useState("");
+  const [skuError, setSkuError] = useState("");
+
   const filteredProducts = products.filter(product => {
     const nameMatch = (product.name || "").toLowerCase().includes(searchTerm.toLowerCase());
     const brandMatch = (product.brand || "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -284,7 +293,8 @@ export default function App() {
     shift: "Matutino",
     level: 1,
     username: "",
-    password: ""
+    password: "",
+    email: ""
   });
   const [userFormError, setUserFormError] = useState("");
   const [isUserSubmitting, setIsUserSubmitting] = useState(false);
@@ -294,7 +304,8 @@ export default function App() {
     position: "",
     shift: "Matutino",
     level: 1,
-    password: ""
+    password: "",
+    email: ""
   });
   const [isUserSaving, setIsUserSaving] = useState(false);
 
@@ -302,6 +313,16 @@ export default function App() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alertMessage, setAlertMessage] = useState({ type: "", text: "" });
+
+  // Change Password Modal State
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [changePasswordForm, setChangePasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: ""
+  });
+  const [changePasswordError, setChangePasswordError] = useState("");
+  const [isChangePasswordSubmitting, setIsChangePasswordSubmitting] = useState(false);
 
   // Refs & States for Firebase Storage file upload
   const fileInputRef = useRef(null);
@@ -1921,7 +1942,6 @@ export default function App() {
         read: false
       });
 
-      setRfidRows([{ station: "", ip: "10.40.", antennaStatus: "" }]);
       setAlertMessage({ type: "success", text: "¡Verificación(es) de RFID registrada(s) exitosamente!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
@@ -1945,6 +1965,7 @@ export default function App() {
     const level = Number(userForm.level);
     const username = userForm.username.trim().toLowerCase();
     const password = userForm.password;
+    const email = userForm.email.trim();
 
     if (!name || !position || !shift || !level || !username || !password) {
       setUserFormError(t.err_asterisk_fields);
@@ -1975,7 +1996,8 @@ export default function App() {
         shift,
         level,
         password,
-        role
+        role,
+        email
       });
 
       setUserForm({
@@ -1984,7 +2006,8 @@ export default function App() {
         shift: "Matutino",
         level: 1,
         username: "",
-        password: ""
+        password: "",
+        email: ""
       });
 
       setAlertMessage({
@@ -2012,7 +2035,8 @@ export default function App() {
       position: user.position || "",
       shift: user.shift || "Matutino",
       level: user.level || 1,
-      password: user.password || ""
+      password: user.password || "",
+      email: user.email || ""
     });
   };
 
@@ -2032,7 +2056,8 @@ export default function App() {
         shift: editUserForm.shift,
         level: levelNum,
         password: editUserForm.password,
-        role: role
+        role: role,
+        email: (editUserForm.email || "").trim()
       });
 
       setEditingUser(null);
@@ -2050,6 +2075,113 @@ export default function App() {
   };
 
   // Delete user from Firestore
+  // Send Password Reset Email via Firebase Auth
+  const handleSendPasswordReset = async (user) => {
+    let email = user.email || "";
+    if (!email) {
+      if (user.id.includes("@")) {
+        email = user.id;
+      } else {
+        const inputEmail = prompt(
+          language === "es"
+            ? `El usuario "${user.name}" no tiene un correo electrónico registrado. Por favor, introduce su correo para enviar el restablecimiento:`
+            : `User "${user.name}" does not have a registered email. Please enter their email to send the reset link:`
+        );
+        if (!inputEmail) return;
+        email = inputEmail.trim();
+        
+        try {
+          await updateDoc(doc(db, "users", user.id), { email });
+        } catch (err) {
+          console.error("Error saving user email:", err);
+        }
+      }
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert(
+        language === "es"
+          ? `Se ha enviado con éxito el correo de restablecimiento de contraseña a: ${email}`
+          : `Password reset email successfully sent to: ${email}`
+      );
+      
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "seguridad",
+        message: language === "es"
+          ? `Solicitud de restablecimiento de contraseña enviada para el usuario "${user.name}" al correo ${email}.`
+          : `Password reset link sent for user "${user.name}" to email ${email}.`,
+        title: language === "es" ? "Restablecimiento de Contraseña" : "Password Reset",
+        read: false
+      });
+    } catch (error) {
+      console.error("Error sending password reset email:", error);
+      alert(
+        language === "es"
+          ? `Error al enviar el correo de restablecimiento: ${error.message}`
+          : `Failed to send reset email: ${error.message}`
+      );
+    }
+  };
+
+  // Change Password for Logged-In User
+  const handleChangePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setChangePasswordError("");
+    const { currentPassword, newPassword, confirmNewPassword } = changePasswordForm;
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      setChangePasswordError(language === "es" ? "Todos los campos son obligatorios." : "All fields are required.");
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setChangePasswordError(language === "es" ? "Las nuevas contraseñas no coinciden." : "New passwords do not match.");
+      return;
+    }
+
+    const username = currentUser.username;
+    setIsChangePasswordSubmitting(true);
+
+    try {
+      const userDocRef = doc(db, "users", username);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        if (userData.password !== currentPassword) {
+          setChangePasswordError(language === "es" ? "La contraseña actual es incorrecta." : "Current password is incorrect.");
+          setIsChangePasswordSubmitting(false);
+          return;
+        }
+
+        await updateDoc(userDocRef, { password: newPassword });
+
+        alert(language === "es" ? "¡Contraseña cambiada exitosamente!" : "Password changed successfully!");
+        setIsChangePasswordOpen(false);
+        setChangePasswordForm({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
+        
+        await addDoc(collection(db, "notifications"), {
+          timestamp: serverTimestamp(),
+          type: "seguridad",
+          message: language === "es"
+            ? `El usuario "${userDisplayName}" ha actualizado su contraseña de acceso.`
+            : `User "${userDisplayName}" has updated their access password.`,
+          title: language === "es" ? "Contraseña Actualizada" : "Password Updated",
+          read: false
+        });
+      } else {
+        setChangePasswordError(language === "es" ? "Error: Documento de usuario no encontrado." : "Error: User document not found.");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      setChangePasswordError(language === "es" ? "Error al guardar en el servidor." : "Error saving to server.");
+    } finally {
+      setIsChangePasswordSubmitting(false);
+    }
+  };
+
   const handleDeleteUser = async (user) => {
     if (userLevel < 3) return;
     
@@ -2712,30 +2844,43 @@ export default function App() {
           {/* Bottom Controls Panel */}
           <div className="flex flex-col gap-4 mt-auto pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
             {/* User Profile Card */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-sm">
+            <div className="p-3 bg-gradient-to-br from-emerald-950 to-emerald-800 text-white rounded-2xl border border-emerald-800/40 flex items-center justify-between shadow-inner">
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                <div className="w-8 h-8 rounded-full bg-white/10 text-white border border-white/20 flex items-center justify-center font-bold text-xs shrink-0">
                   {currentUser?.username === "1234" ? "UM" : (currentUser?.username || "U").substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                  <span className="text-xs font-extrabold text-white truncate">
                     {userDisplayName}
                   </span>
-                  <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold leading-tight">
+                  <span className="text-[9px] text-emerald-100 font-bold leading-tight">
                     {userPosition}
                   </span>
-                  <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold leading-tight">
+                  <span className="text-[9px] text-emerald-200 font-semibold leading-tight">
                     Nivel {userLevel}
                   </span>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 text-slate-500 hover:text-red-500 transition-colors duration-200 cursor-pointer shrink-0 border border-transparent hover:border-red-500/20"
-                title={t.logout}
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => {
+                    setChangePasswordForm({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
+                    setChangePasswordError("");
+                    setIsChangePasswordOpen(true);
+                  }}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 text-white hover:text-emerald-300 transition-colors duration-200 cursor-pointer border border-transparent"
+                  title={language === "es" ? "Cambiar contraseña" : "Change password"}
+                >
+                  <Settings className="w-4 h-4 text-white" />
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 text-white hover:text-red-400 transition-colors duration-200 cursor-pointer border border-transparent"
+                  title={t.logout}
+                >
+                  <LogOut className="w-4 h-4 text-white" />
+                </button>
+              </div>
             </div>
 
             {/* Language Switcher */}
@@ -3046,20 +3191,16 @@ export default function App() {
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4">
                       {filteredProducts.map((product, index) => {
-                        const isVariantB = index % 3 === 1;
+                        const isUnlocked = unlockedSkuItems[product.id];
                         return (
                           <div
                             key={product.id}
                             onClick={() => setSelectedProductId(product.id)}
-                            className={`glass-card rounded-[2rem] p-5 flex flex-col justify-between gap-4 transition-all duration-300 hover-scale cursor-pointer animate-fade-in border ${
-                              isVariantB
-                                ? "bg-gradient-to-br from-emerald-950 via-emerald-800 to-emerald-600 text-white border-emerald-700/30 shadow-lg shadow-emerald-900/10"
-                                : "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border-slate-100 dark:border-slate-800 shadow-md shadow-slate-100/50 dark:shadow-none"
-                            }`}
+                            className="inventory-item-card rounded-[2rem] p-5 flex flex-col justify-between gap-4 cursor-pointer animate-fade-in"
                           >
                             <div className="flex gap-3">
                               {/* Oval Image Mask */}
-                              <div className="w-14 h-20 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-950 shadow-inner shrink-0 border border-slate-200/50 dark:border-slate-800/50 aspect-[2/3]">
+                              <div className="w-14 h-20 rounded-full overflow-hidden bg-slate-950 shadow-inner shrink-0 border border-emerald-800/30 aspect-[2/3]">
                                 <img
                                   src={product.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
                                   alt={product.name}
@@ -3068,86 +3209,79 @@ export default function App() {
                               </div>
                               
                               <div className="min-w-0 flex-1">
-                                <span className={`text-[9px] uppercase font-bold tracking-wider ${
-                                  isVariantB ? "text-lime-300" : "text-emerald-600 dark:text-emerald-400"
-                                }`}>
+                                <span className="text-[9px] uppercase font-bold tracking-wider text-lime-300">
                                   {product.brand || t.no_brand}
                                 </span>
-                                <h3 className={`font-black text-sm truncate leading-snug ${
-                                  isVariantB ? "text-white" : "text-slate-800 dark:text-white"
-                                }`}>
+                                <h3 className="font-black text-sm truncate leading-snug text-white">
                                   {product.name}
                                 </h3>
-                                <p className={`text-[11px] font-semibold mt-0.5 truncate ${
-                                  isVariantB ? "text-emerald-100" : "text-slate-400 dark:text-slate-500"
-                                }`}>
+                                <p className="text-[11px] font-semibold mt-0.5 truncate text-emerald-100">
                                   Mod: {product.model || t.na}
                                 </p>
                               </div>
                             </div>
 
-                            <div className={`grid grid-cols-2 gap-2 pt-3 border-t text-[11px] ${
-                              isVariantB ? "border-white/10" : "border-slate-100 dark:border-slate-800/50"
-                            }`}>
-                              <div className={`p-2 rounded-2xl flex flex-col ${
-                                isVariantB ? "bg-emerald-950/30 border border-emerald-800/30" : "bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800"
-                              }`}>
-                                <span className={`text-[8px] uppercase font-black tracking-wider mb-0.5 ${
-                                  isVariantB ? "text-emerald-200" : "text-slate-400 dark:text-slate-500"
-                                }`}>SKU</span>
-                                <span className={`font-black truncate ${
-                                  isVariantB ? "text-white" : "text-slate-700 dark:text-slate-200"
-                                }`}>{product.sku || t.na}</span>
+                            <div className="grid grid-cols-2 gap-2 pt-3 border-t text-[11px] border-emerald-800/30">
+                              <div className="p-2 rounded-2xl flex flex-col bg-emerald-950/40 border border-emerald-850/40">
+                                <span className="text-[8px] uppercase font-black tracking-wider mb-0.5 text-emerald-200">SKU</span>
+                                <span className="font-black truncate text-white">{product.sku || t.na}</span>
                               </div>
 
-                              <div className={`p-2 rounded-2xl flex flex-col ${
-                                isVariantB ? "bg-emerald-950/30 border border-emerald-800/30" : "bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800"
-                              }`}>
-                                <span className={`text-[8px] uppercase font-black tracking-wider mb-0.5 ${
-                                  isVariantB ? "text-emerald-200" : "text-slate-400 dark:text-slate-500"
-                                }`}>{language === "es" ? "Ubicación" : "Location"}</span>
-                                <span className={`font-black truncate ${
-                                  isVariantB ? "text-white" : "text-slate-700 dark:text-slate-200"
-                                }`}>{product.location || t.na}</span>
+                              <div className="p-2 rounded-2xl flex flex-col bg-emerald-950/40 border border-emerald-850/40">
+                                <span className="text-[8px] uppercase font-black tracking-wider mb-0.5 text-emerald-200">{language === "es" ? "Ubicación" : "Location"}</span>
+                                <span className="font-black truncate text-white">{product.location || t.na}</span>
                               </div>
                             </div>
 
-                            <div className={`flex items-center justify-between pt-2 border-t ${
-                              isVariantB ? "border-white/10" : "border-slate-100 dark:border-slate-800/30"
-                            }`}>
+                            <div className="flex items-center justify-between pt-2 border-t border-emerald-800/30">
                               <div className="flex flex-col gap-1">
-                                <span className={`text-[8px] uppercase font-black tracking-wider block ${
-                                  isVariantB ? "text-emerald-200" : "text-slate-400 dark:text-slate-500"
-                                }`}>{t.stock_status}</span>
+                                <span className="text-[8px] uppercase font-black tracking-wider block text-emerald-200">{t.stock_status}</span>
                                 <div className="flex items-center gap-1.5">
                                   {getStockStatus(product.stock, product.minStock)}
                                   
                                   <div className="flex items-center gap-1 ml-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAdjustStock(product.id, -1, product.stock);
-                                      }}
-                                      disabled={product.stock <= 0}
-                                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold disabled:opacity-40 hover-scale transition-colors cursor-pointer ${
-                                        isVariantB ? "bg-emerald-900 text-white hover:bg-emerald-950" : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                                      }`}
-                                      title={t.subtract_unit_tooltip}
-                                    >
-                                      -
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleAdjustStock(product.id, 1, product.stock);
-                                      }}
-                                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer ${
-                                        isVariantB ? "bg-lime-400 text-emerald-950 hover:bg-lime-300" : "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-                                      }`}
-                                      title={t.add_unit_tooltip}
-                                    >
-                                      +
-                                    </button>
+                                    {!isUnlocked ? (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSkuVerifyModal({ product, amount: 0, currentStock: product.stock });
+                                          setInputSku("");
+                                          setSkuError("");
+                                        }}
+                                        className="px-2.5 py-1 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500/30 text-[9px] font-black hover-scale flex items-center gap-1 cursor-pointer transition-colors duration-150 border border-red-500/30"
+                                        title={language === "es" ? "Desbloquear con SKU" : "Unlock with SKU"}
+                                      >
+                                        <Lock className="w-3 h-3 text-red-300 shrink-0" />
+                                        <span>{language === "es" ? "Bloqueado" : "Locked"}</span>
+                                      </button>
+                                    ) : (
+                                      <>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAdjustStock(product.id, -1, product.stock);
+                                          }}
+                                          disabled={product.stock <= 0}
+                                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold disabled:opacity-40 hover-scale transition-colors cursor-pointer bg-emerald-900 text-white hover:bg-emerald-950 border border-emerald-800/30"
+                                          title={t.subtract_unit_tooltip}
+                                        >
+                                          -
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAdjustStock(product.id, 1, product.stock);
+                                          }}
+                                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold hover-scale transition-colors cursor-pointer bg-lime-400 text-emerald-950 hover:bg-lime-300 border border-lime-300/30"
+                                          title={t.add_unit_tooltip}
+                                        >
+                                          +
+                                        </button>
+                                        <span className="text-[9px] text-lime-300 font-bold shrink-0 flex items-center gap-0.5 ml-1" title={language === "es" ? "Desbloqueado" : "Unlocked"}>
+                                          <CheckCircle className="w-3.5 h-3.5 text-lime-400" />
+                                        </span>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -3158,9 +3292,7 @@ export default function App() {
                                     e.stopPropagation();
                                     handleDeleteProduct(product.id);
                                   }}
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-150 ${
-                                    isVariantB ? "text-emerald-300 hover:text-red-400 hover:bg-white/10" : "text-slate-400 hover:text-red-500 hover:bg-red-500/10"
-                                  }`}
+                                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-150 text-emerald-300 hover:text-red-400 hover:bg-white/10"
                                   title={t.delete_firestore_tooltip}
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -4295,15 +4427,29 @@ export default function App() {
  
                           {/* Form actions */}
                           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                            <button
-                              type="button"
-                              onClick={handleAddRfidRow}
-                              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border-2 border-dashed border-slate-300/40 hover:border-slate-400 dark:border-slate-700/40 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-white/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
-                            >
-                              <PlusCircle className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
-                              <span>{t.add_rfid_btn}</span>
-                            </button>
- 
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                              <button
+                                type="button"
+                                onClick={handleAddRfidRow}
+                                className="px-5 py-2.5 rounded-xl border-2 border-dashed border-slate-300/40 hover:border-slate-400 dark:border-slate-700/40 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-white/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
+                              >
+                                <PlusCircle className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
+                                <span>{t.add_rfid_btn}</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRfidRows([{ station: "", ip: "10.40.", antennaStatus: "" }]);
+                                  setRfidErrors({});
+                                }}
+                                className="px-5 py-2.5 rounded-xl border border-red-500/30 hover:border-red-500 text-red-500 hover:bg-red-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                                <span>{language === "es" ? "Limpiar" : "Clear"}</span>
+                              </button>
+                            </div>
+
                             <button
                               type="submit"
                               disabled={isRfidSubmitting}
@@ -4676,6 +4822,20 @@ export default function App() {
                           />
                         </div>
 
+                        {/* Correo Electrónico */}
+                        <div>
+                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                            {language === "es" ? "Correo Electrónico" : "Email Address"}
+                          </label>
+                          <input
+                            type="email"
+                            placeholder="ejemplo@correo.com"
+                            value={userForm.email || ""}
+                            onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
+                            className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
+                          />
+                        </div>
+
                         {userFormError && (
                           <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-red-500/10 text-red-500 text-[10px] font-bold border border-red-500/20">
                             <AlertCircle className="w-3.5 h-3.5" />
@@ -4776,6 +4936,16 @@ export default function App() {
                                           <Edit3 className="w-3.5 h-3.5" />
                                         </button>
                                         
+                                        {/* Reset Password Button */}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSendPasswordReset(user)}
+                                          className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white transition-all cursor-pointer hover-scale flex items-center justify-center"
+                                          title={language === "es" ? "Restablecer contraseña" : "Reset password"}
+                                        >
+                                          <Key className="w-3.5 h-3.5" />
+                                        </button>
+
                                         {/* Delete Button */}
                                         <button
                                           type="button"
@@ -4926,6 +5096,20 @@ export default function App() {
                   onChange={(e) => setEditUserForm(prev => ({ ...prev, password: e.target.value }))}
                   className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
                   required
+                />
+              </div>
+
+              {/* Correo Electrónico */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                  {language === "es" ? "Correo Electrónico" : "Email Address"}
+                </label>
+                <input
+                  type="email"
+                  placeholder="ejemplo@correo.com"
+                  value={editUserForm.email || ""}
+                  onChange={(e) => setEditUserForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
                 />
               </div>
 
@@ -5797,6 +5981,197 @@ export default function App() {
               )}
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Verificación de SKU Obligatoria */}
+      {skuVerifyModal && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#064e3b] text-white w-full max-w-sm rounded-[2rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in border border-emerald-800/40">
+            <div className="flex justify-between items-center pb-3 border-b border-white/10 mb-4">
+              <h3 className="font-bold text-sm tracking-wide uppercase">
+                {language === "es" ? "Verificación de SKU" : "SKU Verification"}
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setSkuVerifyModal(null)} 
+                className="text-white/60 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs leading-relaxed text-emerald-100 mb-4 font-semibold">
+              {language === "es" 
+                ? `Para modificar el stock de "${skuVerifyModal.product.name}", por favor escanee o ingrese su SKU idéntico:` 
+                : `To modify the stock of "${skuVerifyModal.product.name}", please scan or enter its identical SKU:`}
+            </p>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const cleanInput = inputSku.trim().toUpperCase();
+                const cleanProductSku = (skuVerifyModal.product.sku || "").trim().toUpperCase();
+                if (cleanInput === cleanProductSku) {
+                  setUnlockedSkuItems(prev => ({ ...prev, [skuVerifyModal.product.id]: true }));
+                  if (skuVerifyModal.amount !== 0) {
+                    handleAdjustStock(skuVerifyModal.product.id, skuVerifyModal.amount, skuVerifyModal.product.stock);
+                  }
+                  setSkuVerifyModal(null);
+                } else {
+                  setSkuError(language === "es" ? "El SKU no coincide con el del artículo" : "SKU does not match item");
+                }
+              }}
+              className="flex flex-col gap-4"
+            >
+              <div className="relative">
+                <Lock className="absolute left-4 top-3 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder={language === "es" ? "Ej. TONHP.55A" : "e.g. TONHP.55A"}
+                  value={inputSku}
+                  onChange={(e) => {
+                    setInputSku(e.target.value);
+                    setSkuError("");
+                  }}
+                  className="w-full py-2.5 rounded-xl text-xs glass-input font-bold text-slate-800"
+                  style={{ paddingLeft: "40px" }}
+                  autoFocus
+                  required
+                />
+              </div>
+
+              {skuError && (
+                <p className="text-[10px] text-red-400 font-bold animate-pulse">{skuError}</p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-lg flex items-center justify-center gap-1.5 cursor-pointer border-none"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>{language === "es" ? "Validar y Desbloquear" : "Validate & Unlock"}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Cambiar Contraseña del Perfil */}
+      {isChangePasswordOpen && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#064e3b] text-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in border border-emerald-800/40 flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
+              <div>
+                <h2 className="text-lg font-bold text-white font-serif-premium">
+                  {language === "es" ? "Cambiar Contraseña" : "Change Password"}
+                </h2>
+                <p className="text-xs text-emerald-100 mt-0.5 opacity-80">
+                  {language === "es" ? "Actualiza tus credenciales de acceso técnico." : "Update your technical access credentials."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsChangePasswordOpen(false)}
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors hover-scale"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleChangePasswordSubmit} className="flex flex-col gap-4">
+              {/* Contraseña Actual */}
+              <div>
+                <label className="text-xs font-bold text-emerald-100 block mb-1">
+                  {language === "es" ? "Contraseña Actual" : "Current Password"}
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-3 w-4 h-4 text-slate-400" />
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={changePasswordForm.currentPassword}
+                    onChange={(e) => setChangePasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold text-slate-800"
+                    style={{ paddingLeft: "40px" }}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Nueva Contraseña */}
+              <div>
+                <label className="text-xs font-bold text-emerald-100 block mb-1">
+                  {language === "es" ? "Nueva Contraseña" : "New Password"}
+                </label>
+                <div className="relative">
+                  <Key className="absolute left-4 top-3 w-4 h-4 text-slate-400" />
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={changePasswordForm.newPassword}
+                    onChange={(e) => setChangePasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold text-slate-800"
+                    style={{ paddingLeft: "40px" }}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Confirmar Nueva Contraseña */}
+              <div>
+                <label className="text-xs font-bold text-emerald-100 block mb-1">
+                  {language === "es" ? "Confirmar Nueva Contraseña" : "Confirm New Password"}
+                </label>
+                <div className="relative">
+                  <CheckCircle className="absolute left-4 top-3.5 w-4 h-4 text-slate-400" />
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={changePasswordForm.confirmNewPassword}
+                    onChange={(e) => setChangePasswordForm(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
+                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold text-slate-800"
+                    style={{ paddingLeft: "40px" }}
+                    required
+                  />
+                </div>
+              </div>
+
+              {changePasswordError && (
+                <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-red-500/20 text-red-200 text-[10px] font-bold border border-red-500/30">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>{changePasswordError}</span>
+                </div>
+              )}
+
+              {/* Form Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsChangePasswordOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs hover-scale cursor-pointer"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isChangePasswordSubmitting}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
+                >
+                  {isChangePasswordSubmitting ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle className="w-3.5 h-3.5" />
+                  )}
+                  <span>{isChangePasswordSubmitting ? (language === "es" ? "Guardando..." : "Saving...") : (language === "es" ? "Guardar" : "Save")}</span>
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}
