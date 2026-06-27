@@ -1,24 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
-/* Base Body & App background styles with organic gradient */
+/* Base Transitions for smooth theme switching */
 body,
-.dashboard-root {
+.dashboard-root,
+.glass-card,
+.glass-container,
+.glass-sidebar,
+.inventory-item-card,
+.glass-input {
+  transition: background-color 0.5s ease-in-out, background 0.5s ease-in-out, border-color 0.5s ease-in-out, color 0.5s ease-in-out, box-shadow 0.5s ease-in-out !important;
+}
+
+body {
   margin: 0;
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
-  color: #ffffff;
-  background: linear-gradient(180deg, #09324A 0%, #1B6F81 35%, #AED0C9 70%, #FFFB08 100%) !important;
-  background-attachment: fixed !important;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.dark body {
-  color: #ffffff;
-  background: linear-gradient(180deg, #09324A 0%, #1B6F81 35%, #AED0C9 70%, #FFFB08 100%) !important;
-  background-attachment: fixed !important;
 }
 
 /* Serif Font Class override to Outfit Geometric */
@@ -27,9 +27,16 @@ body,
   font-weight: 800 !important;
 }
 
-/* Stadium/Capsule Design System (Semi-solid navy/teal with blur for maximum contrast) */
-.glass-container,
-.glass-card {
+/* --- THEME GRADIENT (Degradado Orgánico Continuo) --- */
+.theme-gradient body,
+.theme-gradient .dashboard-root {
+  background: linear-gradient(180deg, #09324A 0%, #1B6F81 35%, #AED0C9 70%, #FFFB08 100%) !important;
+  background-attachment: fixed !important;
+  color: #ffffff !important;
+}
+
+.theme-gradient .glass-container,
+.theme-gradient .glass-card {
   position: relative !important;
   isolation: isolate !important;
   background: rgba(9, 50, 74, 0.92) !important;
@@ -39,37 +46,9 @@ body,
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   color: #ffffff !important;
-  transition: all 0.3s ease-in-out !important;
 }
 
-.dark .glass-container,
-.dark .glass-card {
-  background: rgba(9, 50, 74, 0.92) !important;
-  border: 1px solid rgba(27, 111, 129, 0.35) !important;
-  box-shadow: 0 15px 35px rgba(9, 50, 74, 0.3) !important;
-  border-radius: 2rem !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-}
-
-/* Force high contrast white texts within these containers */
-.glass-card h1, .glass-card h2, .glass-card h3, .glass-card h4, .glass-card h5, .glass-card h6,
-.glass-container h1, .glass-container h2, .glass-container h3,
-.glass-card span, .glass-container span,
-.glass-card label, .glass-container label,
-.glass-card p, .glass-container p,
-.glass-card div, .glass-container div,
-.glass-card td, .glass-card th {
-  color: #ffffff !important;
-}
-
-.glass-card .text-slate-500, .glass-card .text-slate-400, .glass-card .text-emerald-800, .glass-card .text-emerald-700, .glass-card .text-emerald-900,
-.glass-container .text-slate-500, .glass-container .text-slate-400 {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-/* Sidebar: Deep navy semi-transparent capsule shape */
-.glass-sidebar {
+.theme-gradient .glass-sidebar {
   position: relative !important;
   isolation: isolate !important;
   background: rgba(9, 50, 74, 0.95) !important;
@@ -80,76 +59,130 @@ body,
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   color: #ffffff !important;
-  transition: all 0.3s ease-in-out !important;
 }
 
-.dark .glass-sidebar {
-  background: rgba(9, 50, 74, 0.95) !important;
-  border-right: 1px solid rgba(27, 111, 129, 0.35) !important;
-  border-top-right-radius: 2.5rem !important;
-  border-bottom-right-radius: 2.5rem !important;
-  border-radius: 0px 2.5rem 2.5rem 0px !important;
-}
-
-.glass-sidebar h1, .glass-sidebar h2, .glass-sidebar h3,
-.glass-sidebar span, .glass-sidebar label, .glass-sidebar p, .glass-sidebar div {
+.theme-gradient .glass-card h1, .theme-gradient .glass-card h2, .theme-gradient .glass-card h3, .theme-gradient .glass-card h4, .theme-gradient .glass-card h5, .theme-gradient .glass-card h6,
+.theme-gradient .glass-container h1, .theme-gradient .glass-container h2, .theme-gradient .glass-container h3,
+.theme-gradient .glass-sidebar h1, .theme-gradient .glass-sidebar h2, .theme-gradient .glass-sidebar h3,
+.theme-gradient .glass-card span, .theme-gradient .glass-container span, .theme-gradient .glass-sidebar span,
+.theme-gradient .glass-card label, .theme-gradient .glass-container label, .theme-gradient .glass-sidebar label,
+.theme-gradient .glass-card p, .theme-gradient .glass-container p, .theme-gradient .glass-sidebar p,
+.theme-gradient .glass-card div, .theme-gradient .glass-container div, .theme-gradient .glass-sidebar div,
+.theme-gradient .glass-card td, .theme-gradient .glass-card th {
   color: #ffffff !important;
 }
 
-.glass-sidebar .text-slate-500, .glass-sidebar .text-slate-400 {
+.theme-gradient .glass-card .text-slate-500, .theme-gradient .glass-card .text-slate-400, .theme-gradient .glass-card .text-emerald-800, .theme-gradient .glass-card .text-emerald-700, .theme-gradient .glass-card .text-emerald-900,
+.theme-gradient .glass-container .text-slate-500, .theme-gradient .glass-container .text-slate-400,
+.theme-gradient .glass-sidebar .text-slate-500, .theme-gradient .glass-sidebar .text-slate-400 {
   color: rgba(255, 255, 255, 0.8) !important;
 }
 
-/* Input Fields: Pill Stadium shape with transparent text compatibility */
-.glass-input {
+.theme-gradient .glass-input {
   background-color: rgba(255, 255, 255, 0.12) !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
   color: #ffffff !important;
+  border-radius: 9999px !important;
   outline: none;
-  border-radius: 9999px !important; /* Pill style */
   padding-left: 1.25rem;
   padding-right: 1.25rem;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  transition: all 0.2s ease-in-out !important;
 }
-
-.glass-input::placeholder {
+.theme-gradient .glass-input::placeholder {
   color: rgba(255, 255, 255, 0.5) !important;
 }
-
-.glass-input:focus {
+.theme-gradient .glass-input:focus {
   border-color: #4ade80 !important;
   box-shadow: 0 0 0 1px #4ade80 !important;
   background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.dark .glass-input {
-  background-color: rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  color: #ffffff !important;
-}
-
-.dark .glass-input::placeholder {
-  color: rgba(255, 255, 255, 0.5) !important;
-}
-
-.dark .glass-input:focus {
-  border-color: #4ade80 !important;
-  box-shadow: 0 0 0 1px #4ade80 !important;
-}
-
-/* Select option styles to keep them legible in all browsers */
-option,
-select.glass-input option {
+.theme-gradient option,
+.theme-gradient select.glass-input option {
   color: #ffffff !important;
   background-color: #09324A !important;
 }
 
-.dark option,
-.dark select.glass-input option {
+
+/* --- THEME CLASSIC (Diseño Oscuro/Minimalista Plano Anterior) --- */
+.theme-classic body,
+.theme-classic .dashboard-root {
+  background-color: #0f172a !important;
+  background-image: none !important;
+  color: #f8fafc !important;
+}
+
+.theme-classic .glass-container,
+.theme-classic .glass-card {
+  position: relative !important;
+  isolation: isolate !important;
+  background-color: #1e293b !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: #f8fafc !important;
+}
+
+.theme-classic .glass-sidebar {
+  position: relative !important;
+  isolation: isolate !important;
+  background-color: #0f172a !important;
+  border-right: 1px solid #1e293b !important;
+  border-top-right-radius: 2.5rem !important;
+  border-bottom-right-radius: 2.5rem !important;
+  border-radius: 0px 2.5rem 2.5rem 0px !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: #f8fafc !important;
+}
+
+.theme-classic .glass-card h1, .theme-classic .glass-card h2, .theme-classic .glass-card h3, .theme-classic .glass-card h4, .theme-classic .glass-card h5, .theme-classic .glass-card h6,
+.theme-classic .glass-container h1, .theme-classic .glass-container h2, .theme-classic .glass-container h3,
+.theme-classic .glass-sidebar h1, .theme-classic .glass-sidebar h2, .theme-classic .glass-sidebar h3 {
   color: #ffffff !important;
-  background-color: #09324A !important;
+}
+
+.theme-classic .glass-card span, .theme-classic .glass-container span, .theme-classic .glass-sidebar span,
+.theme-classic .glass-card p, .theme-classic .glass-container p, .theme-classic .glass-sidebar p {
+  color: #cbd5e1 !important;
+}
+
+.theme-classic .glass-card label, .theme-classic .glass-container label, .theme-classic .glass-sidebar label {
+  color: #94a3b8 !important;
+}
+
+.theme-classic .text-slate-800, .theme-classic .text-emerald-900, .theme-classic .text-slate-900 {
+  color: #cbd5e1 !important;
+}
+
+.theme-classic .text-slate-500, .theme-classic .text-slate-400, .theme-classic .text-emerald-700 {
+  color: #94a3b8 !important;
+}
+
+.theme-classic .glass-input {
+  background-color: #0f172a !important;
+  border: 1px solid #334155 !important;
+  color: #f8fafc !important;
+  border-radius: 9999px !important;
+  outline: none;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.theme-classic .glass-input::placeholder {
+  color: #64748b !important;
+}
+
+.theme-classic .glass-input:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 1px #10b981 !important;
+}
+
+.theme-classic option,
+.theme-classic select.glass-input option {
+  color: #f3f4f6 !important;
+  background-color: #1f2937 !important;
 }
 
 /* Custom Scrollbar */

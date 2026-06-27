@@ -156,6 +156,17 @@ export default function App() {
   // Visual Theme State
   const [visualTheme, setVisualTheme] = useState(() => localStorage.getItem("app_theme") || "classic");
 
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (visualTheme === "gradient") {
+      root.classList.add("theme-gradient");
+      root.classList.remove("theme-classic");
+    } else {
+      root.classList.add("theme-classic");
+      root.classList.remove("theme-gradient");
+    }
+  }, [visualTheme]);
+
   // Authentication & Roles State
   const [currentUser, setCurrentUser] = useState(null);
   const [userLevel, setUserLevel] = useState(1); // 1 = Operador, 2 = Supervisor, 3 = Administrador
@@ -3179,24 +3190,38 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Campana de Notificaciones Flotante */}
-              <div className="relative" ref={notificationRef}>
+              {/* Acciones de Cabecera: Selector de Tema & Notificaciones */}
+              <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => {
-                    setIsNotificationsOpen(!isNotificationsOpen);
-                    // Mark all as read when opening
-                    if (!isNotificationsOpen) {
-                      handleMarkAllAsRead();
-                    }
+                    const nextTheme = visualTheme === "gradient" ? "classic" : "gradient";
+                    setVisualTheme(nextTheme);
+                    localStorage.setItem("app_theme", nextTheme);
                   }}
-                  className="p-2 rounded-full hover:bg-emerald-50 dark:hover:bg-slate-800 text-emerald-800 dark:text-emerald-300 relative focus:outline-none transition-colors duration-200 cursor-pointer border-none bg-transparent"
-                  aria-label="Notifications"
+                  className="p-2 rounded-full hover:bg-white/10 text-white transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border-none bg-transparent"
+                  title={visualTheme === "gradient" ? "Tema Clásico" : "Tema Degradado"}
                 >
-                  <Bell className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white animate-pulse" />
-                  )}
+                  <Palette className="w-5 h-5 text-white/90" />
                 </button>
+
+                {/* Campana de Notificaciones Flotante */}
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    onClick={() => {
+                      setIsNotificationsOpen(!isNotificationsOpen);
+                      if (!isNotificationsOpen) {
+                        handleMarkAllAsRead();
+                      }
+                    }}
+                    className="p-2 rounded-full hover:bg-white/10 text-white relative focus:outline-none transition-colors duration-200 cursor-pointer border-none bg-transparent"
+                    aria-label="Notifications"
+                  >
+                    <Bell className="w-5 h-5 text-white/90" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white animate-pulse" />
+                    )}
+                  </button>
 
                 {isNotificationsOpen && (
                   <div 
@@ -3315,6 +3340,7 @@ export default function App() {
                 )}
               </div>
             </div>
+          </div>
             
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold uppercase tracking-wider select-none">
