@@ -171,20 +171,41 @@ body {
   color: #1e293b !important;
 }
 
-.theme-gradient-sunset .glass-card h1, .theme-gradient-sunset .glass-card h2, .theme-gradient-sunset .glass-card h3, .theme-gradient-sunset .glass-card h4, .theme-gradient-sunset .glass-card h5, .theme-gradient-sunset .glass-card h6,
-.theme-gradient-sunset .glass-container h1, .theme-gradient-sunset .glass-container h2, .theme-gradient-sunset .glass-container h3,
-.theme-gradient-sunset .glass-sidebar h1, .theme-gradient-sunset .glass-sidebar h2, .theme-gradient-sunset .glass-sidebar h3,
-.theme-gradient-sunset .glass-card span, .theme-gradient-sunset .glass-container span, .theme-gradient-sunset .glass-sidebar span,
-.theme-gradient-sunset .glass-card label, .theme-gradient-sunset .glass-container label, .theme-gradient-sunset .glass-sidebar label,
-.theme-gradient-sunset .glass-card p, .theme-gradient-sunset .glass-container p, .theme-gradient-sunset .glass-sidebar p,
-.theme-gradient-sunset .glass-card div, .theme-gradient-sunset .glass-container div, .theme-gradient-sunset .glass-sidebar div,
-.theme-gradient-sunset .glass-card td, .theme-gradient-sunset .glass-card th {
+/* Sunset Theme Text Overrides to guarantee readability and eliminate green or white text leakage */
+.theme-gradient-sunset h1,
+.theme-gradient-sunset h2,
+.theme-gradient-sunset h3,
+.theme-gradient-sunset h4,
+.theme-gradient-sunset h5,
+.theme-gradient-sunset h6,
+.theme-gradient-sunset p,
+.theme-gradient-sunset span,
+.theme-gradient-sunset label,
+.theme-gradient-sunset div,
+.theme-gradient-sunset td,
+.theme-gradient-sunset th,
+.theme-gradient-sunset .product-name-text,
+.theme-gradient-sunset .text-white,
+.theme-gradient-sunset .text-slate-100,
+.theme-gradient-sunset .text-slate-200,
+.theme-gradient-sunset .text-slate-300,
+.theme-gradient-sunset .text-slate-400,
+.theme-gradient-sunset .text-slate-500,
+.theme-gradient-sunset .text-slate-800,
+.theme-gradient-sunset .text-slate-900,
+.theme-gradient-sunset .text-emerald-800,
+.theme-gradient-sunset .text-emerald-950,
+.theme-gradient-sunset .text-emerald-700,
+.theme-gradient-sunset .text-emerald-900 {
   color: #1e293b !important;
 }
 
-.theme-gradient-sunset .glass-card .text-slate-500, .theme-gradient-sunset .glass-card .text-slate-400, .theme-gradient-sunset .glass-card .text-emerald-800, .theme-gradient-sunset .glass-card .text-emerald-700, .theme-gradient-sunset .glass-card .text-emerald-900,
-.theme-gradient-sunset .glass-container .text-slate-500, .theme-gradient-sunset .glass-container .text-slate-400,
-.theme-gradient-sunset .glass-sidebar .text-slate-500, .theme-gradient-sunset .glass-sidebar .text-slate-400 {
+.theme-gradient-sunset .glass-card .text-slate-500,
+.theme-gradient-sunset .glass-card .text-slate-400,
+.theme-gradient-sunset .glass-container .text-slate-500,
+.theme-gradient-sunset .glass-container .text-slate-400,
+.theme-gradient-sunset .glass-sidebar .text-slate-500,
+.theme-gradient-sunset .glass-sidebar .text-slate-400 {
   color: rgba(30, 41, 59, 0.75) !important;
 }
 
@@ -374,7 +395,7 @@ body {
   color: #f8fafc !important;
 }
 
-/* Buttons style: pill shape with fluid green gradient */
+/* Buttons base structure: pill shape and fonts */
 button.btn-metallic-bronze,
 button.btn-metallic-silver,
 button[type="submit"],
@@ -382,8 +403,6 @@ button.bg-gradient-to-r,
 button.bg-gradient-to-tr,
 button.bg-sky-500,
 button.bg-emerald-500 {
-  background: linear-gradient(135deg, #064e3b 0%, #10b981 60%, #4ade80 100%) !important;
-  color: #ffffff !important;
   border: none !important;
   border-radius: 9999px !important; /* Pill style */
   font-weight: 700 !important;
@@ -391,44 +410,90 @@ button.bg-emerald-500 {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   transition: all 0.25s ease-in-out !important;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
   text-shadow: none !important;
 }
 
-button.btn-metallic-bronze:hover,
-button.btn-metallic-silver:hover,
-button[type="submit"]:hover,
-button.bg-gradient-to-r:hover,
-button.bg-gradient-to-tr:hover,
-button.bg-sky-500:hover,
-button.bg-emerald-500:hover {
+/* Green Theme buttons styling */
+.theme-gradient button.btn-metallic-bronze,
+.theme-gradient-green button.btn-metallic-bronze,
+.theme-gradient button.btn-metallic-silver,
+.theme-gradient-green button.btn-metallic-silver,
+.theme-gradient button[type="submit"],
+.theme-gradient-green button[type="submit"],
+.theme-gradient button.bg-gradient-to-r,
+.theme-gradient-green button.bg-gradient-to-r,
+.theme-gradient button.bg-gradient-to-tr,
+.theme-gradient-green button.bg-gradient-to-tr,
+.theme-gradient button.bg-sky-500,
+.theme-gradient-green button.bg-sky-500,
+.theme-gradient button.bg-emerald-500,
+.theme-gradient-green button.bg-emerald-500 {
+  background: linear-gradient(135deg, #064e3b 0%, #10b981 60%, #4ade80 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25) !important;
+}
+.theme-gradient button.btn-metallic-bronze:hover,
+.theme-gradient-green button.btn-metallic-bronze:hover,
+.theme-gradient button.btn-metallic-silver:hover,
+.theme-gradient-green button.btn-metallic-silver:hover,
+.theme-gradient button[type="submit"]:hover,
+.theme-gradient-green button[type="submit"]:hover,
+.theme-gradient button.bg-gradient-to-r:hover,
+.theme-gradient-green button.bg-gradient-to-r:hover,
+.theme-gradient button.bg-gradient-to-tr:hover,
+.theme-gradient-green button.bg-gradient-to-tr:hover,
+.theme-gradient button.bg-sky-500:hover,
+.theme-gradient-green button.bg-sky-500:hover,
+.theme-gradient button.bg-emerald-500:hover,
+.theme-gradient-green button.bg-emerald-500:hover {
   background: linear-gradient(135deg, #022c22 0%, #059669 60%, #22c55e 100%) !important;
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
-  transform: translateY(-1px);
 }
 
-.dark button.btn-metallic-bronze,
-.dark button.btn-metallic-silver,
-.dark button[type="submit"],
-.dark button.bg-gradient-to-r,
-.dark button.bg-gradient-to-tr,
-.dark button.bg-sky-500,
-.dark button.bg-emerald-500 {
-  background: linear-gradient(135deg, #10b981 0%, #4ade80 100%) !important;
-  color: #064e3b !important;
-  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.2) !important;
+/* Sunset Theme buttons styling */
+.theme-gradient-sunset button.btn-metallic-bronze,
+.theme-gradient-sunset button.btn-metallic-silver,
+.theme-gradient-sunset button[type="submit"],
+.theme-gradient-sunset button.bg-gradient-to-r,
+.theme-gradient-sunset button.bg-gradient-to-tr,
+.theme-gradient-sunset button.bg-sky-500,
+.theme-gradient-sunset button.bg-emerald-500 {
+  background: linear-gradient(135deg, #E5A273 0%, #F08A5D 60%, #E3D2FA 100%) !important;
+  color: #1e293b !important;
+  box-shadow: 0 4px 15px rgba(229, 162, 115, 0.2) !important;
+}
+.theme-gradient-sunset button.btn-metallic-bronze:hover,
+.theme-gradient-sunset button.btn-metallic-silver:hover,
+.theme-gradient-sunset button[type="submit"]:hover,
+.theme-gradient-sunset button.bg-gradient-to-r:hover,
+.theme-gradient-sunset button.bg-gradient-to-tr:hover,
+.theme-gradient-sunset button.bg-sky-500:hover,
+.theme-gradient-sunset button.bg-emerald-500:hover {
+  background: linear-gradient(135deg, #F08A5D 0%, #E5A273 60%, #DDD2FA 100%) !important;
+  box-shadow: 0 6px 20px rgba(229, 162, 115, 0.35) !important;
 }
 
-.dark button.btn-metallic-bronze:hover,
-.dark button.btn-metallic-silver:hover,
-.dark button[type="submit"]:hover,
-.dark button.bg-gradient-to-r:hover,
-.dark button.bg-gradient-to-tr:hover,
-.dark button.bg-sky-500:hover,
-.dark button.bg-emerald-500:hover {
-  background: linear-gradient(135deg, #34d399 0%, #a7f3d0 100%) !important;
-  color: #064e3b !important;
-  box-shadow: 0 6px 20px rgba(52, 211, 153, 0.3) !important;
+/* Classic Theme buttons styling */
+.theme-classic button.btn-metallic-bronze,
+.theme-classic button.btn-metallic-silver,
+.theme-classic button[type="submit"],
+.theme-classic button.bg-gradient-to-r,
+.theme-classic button.bg-gradient-to-tr,
+.theme-classic button.bg-sky-500,
+.theme-classic button.bg-emerald-500 {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #475569 !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+}
+.theme-classic button.btn-metallic-bronze:hover,
+.theme-classic button.btn-metallic-silver:hover,
+.theme-classic button[type="submit"]:hover,
+.theme-classic button.bg-gradient-to-r:hover,
+.theme-classic button.bg-gradient-to-tr:hover,
+.theme-classic button.bg-sky-500:hover,
+.theme-classic button.bg-emerald-500:hover {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
 }
 
 /* Dashboard Fullscreen */
