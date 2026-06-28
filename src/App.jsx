@@ -514,6 +514,10 @@ export default function App() {
   const [solvingTicketId, setSolvingTicketId] = useState(null);
   const [isSolveModalOpen, setIsSolveModalOpen] = useState(false);
 
+  // Global Deletion Modal States (Level 3 exclusive)
+  const [deletingRecord, setDeletingRecord] = useState(null); // { id, collection }
+  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
+
   // RFID Verification State
   const [rfidVerifications, setRfidVerifications] = useState([]);
   const [isRfidLoading, setIsRfidLoading] = useState(true);
@@ -2784,6 +2788,39 @@ export default function App() {
           text: language === "es" ? "Error al eliminar el registro." : "Error deleting record." 
         });
       }
+    }
+  };
+
+  const handleConfirmDeleteRecord = async () => {
+    if (userLevel < 3 || !deletingRecord) return;
+    const { id, collection: colName } = deletingRecord;
+    try {
+      await deleteDoc(doc(db, colName, id));
+      
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "deletion",
+        message: language === "es"
+          ? `El administrador "${currentUser.username}" ha eliminado permanentemente un registro de la colección "${colName}".`
+          : `Administrator "${currentUser.username}" has permanently deleted a record from collection "${colName}".`,
+        title: language === "es" ? "Registro Eliminado" : "Record Deleted",
+        read: false
+      });
+
+      setAlertMessage({ 
+        type: "success", 
+        text: language === "es" ? "Registro eliminado permanentemente." : "Record permanently deleted." 
+      });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error(`Error deleting record from ${colName}:`, error);
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" ? "Error al eliminar el registro de la base de datos." : "Error deleting record from database." 
+      });
+    } finally {
+      setIsDeleteConfirmModalOpen(false);
+      setDeletingRecord(null);
     }
   };
 
@@ -5889,7 +5926,11 @@ export default function App() {
                                         <div className="flex items-center gap-2">
                                           {userLevel >= 3 && (
                                             <button
-                                              onClick={() => handleDeleteRfid(record.id)}
+                                              type="button"
+                                              onClick={() => {
+                                                setDeletingRecord({ id: record.id, collection: "rfid_verifications" });
+                                                setIsDeleteConfirmModalOpen(true);
+                                              }}
                                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
                                               title={t.delete_report_tooltip}
                                             >
@@ -6014,8 +6055,12 @@ export default function App() {
                                       <div className="flex items-center gap-2">
                                         {userLevel >= 3 && (
                                           <button
-                                            onClick={() => handleDeleteRfid(record.id)}
-                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
+                                            type="button"
+                                            onClick={() => {
+                                              setDeletingRecord({ id: record.id, collection: "rfid_verifications" });
+                                              setIsDeleteConfirmModalOpen(true);
+                                            }}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
                                             title={t.delete_report_tooltip}
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
@@ -6446,7 +6491,11 @@ export default function App() {
                                               {userLevel >= 3 && (
                                                 <td className="py-2 px-3 text-right">
                                                   <button
-                                                    onClick={() => handleDeleteRobotCleaning(record.id)}
+                                                    type="button"
+                                                    onClick={() => {
+                                                      setDeletingRecord({ id: record.id, collection: "robot_cleaning" });
+                                                      setIsDeleteConfirmModalOpen(true);
+                                                    }}
                                                     className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white transition-colors duration-200 border-none cursor-pointer hover-scale flex items-center justify-center ml-auto"
                                                     title={language === "es" ? "Eliminar Reporte" : "Delete Report"}
                                                   >
@@ -7221,7 +7270,11 @@ export default function App() {
                                   </span>
                                   {userLevel >= 3 && (
                                     <button
-                                      onClick={() => handleDeleteHospitalTicket(ticket.id)}
+                                      type="button"
+                                      onClick={() => {
+                                        setDeletingRecord({ id: ticket.id, collection: "hospital_locus" });
+                                        setIsDeleteConfirmModalOpen(true);
+                                      }}
                                       className="p-1 rounded bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white border-none cursor-pointer transition-colors duration-200 self-end sm:self-auto flex items-center justify-center"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -7291,7 +7344,11 @@ export default function App() {
                                 </span>
                                 {userLevel >= 3 && (
                                   <button
-                                    onClick={() => handleDeleteHospitalTicket(ticket.id)}
+                                    type="button"
+                                    onClick={() => {
+                                      setDeletingRecord({ id: ticket.id, collection: "hospital_locus" });
+                                      setIsDeleteConfirmModalOpen(true);
+                                    }}
                                     className="p-1 rounded bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white border-none cursor-pointer transition-colors duration-200 self-end mt-2 flex items-center justify-center"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
@@ -8467,6 +8524,58 @@ export default function App() {
                 }}
               >
                 {language === "es" ? "Confirmar Solución" : "Confirm Solution"}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL: Confirmación de Eliminación Permanente (Nivel 3) */}
+      {isDeleteConfirmModalOpen && deletingRecord && (
+        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col gap-4`}>
+            
+            {/* Modal Header */}
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-200/50 dark:border-slate-800/50 shrink-0">
+              <div className="p-2 rounded-xl flex items-center justify-center shrink-0 bg-red-500/10 text-red-500 dark:text-red-400">
+                <Trash2 className="w-5 h-5 animate-pulse" />
+              </div>
+              <h2 className="text-base font-extrabold uppercase tracking-wider text-slate-850 dark:text-white">
+                {language === "es" ? "Eliminar Reporte" : "Delete Report"}
+              </h2>
+            </div>
+
+            {/* Modal Body */}
+            <div className="text-center py-2 flex flex-col gap-3">
+              <p className="text-xs text-slate-650 dark:text-slate-300 font-bold leading-relaxed">
+                {language === "es"
+                  ? "¿Estás seguro de que deseas eliminar este reporte de forma permanente? Esta acción no se puede deshacer."
+                  : "Are you sure you want to delete this report permanently? This action cannot be undone."}
+              </p>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeleteConfirmModalOpen(false);
+                  setDeletingRecord(null);
+                }}
+                className="flex-1 py-2.5 rounded-full font-bold text-xs bg-slate-500/10 hover:bg-slate-500/20 text-slate-700 dark:text-slate-355 cursor-pointer border-none shadow-sm transition-all"
+              >
+                {language === "es" ? "Cancelar" : "Cancel"}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteRecord}
+                className="flex-1 py-2.5 rounded-full font-black text-xs hover-scale shadow-lg border-none cursor-pointer text-white"
+                style={{
+                  background: "linear-gradient(135deg, #ef4444 0%, #e11d48 100%)"
+                }}
+              >
+                {language === "es" ? "Confirmar" : "Confirm"}
               </button>
             </div>
 
