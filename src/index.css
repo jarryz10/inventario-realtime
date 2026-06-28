@@ -761,12 +761,15 @@ button.bg-emerald-500 {
 .theme-red.dark .text-sky-400, .dark .theme-red .text-sky-400 { color: #f87171 !important; }
 
 /* Scoped inventory card styles per visualTheme */
+
+/* 1. Green Theme */
 .theme-gradient .inventory-item-card,
 .theme-gradient-green .inventory-item-card {
   background: linear-gradient(135deg, #09324A 0%, #1B6F81 60%, #AED0C9 100%) !important;
   border: 1px solid rgba(174, 208, 201, 0.4) !important;
   color: #ffffff !important;
   box-shadow: 0 10px 25px rgba(9, 50, 74, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .theme-gradient .inventory-item-card:hover,
 .theme-gradient-green .inventory-item-card:hover {
@@ -775,56 +778,209 @@ button.bg-emerald-500 {
   border-color: rgba(174, 208, 201, 0.65) !important;
   filter: brightness(1.05);
 }
+.theme-gradient .card-brand-tag,
+.theme-gradient-green .card-brand-tag {
+  color: #a3e635 !important;
+}
+.theme-gradient .card-title-text,
+.theme-gradient-green .card-title-text,
+.theme-gradient .card-capsule-val,
+.theme-gradient-green .card-capsule-val {
+  color: #ffffff !important;
+}
+.theme-gradient .card-model-text,
+.theme-gradient-green .card-model-text {
+  color: #a7f3d0 !important;
+}
+.theme-gradient .card-divider,
+.theme-gradient-green .card-divider {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+.theme-gradient .card-capsule,
+.theme-gradient-green .card-capsule {
+  background-color: rgba(6, 78, 59, 0.45) !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+}
+.theme-gradient .card-capsule-label,
+.theme-gradient-green .card-capsule-label,
+.theme-gradient .card-stock-label,
+.theme-gradient-green .card-stock-label {
+  color: #a7f3d0 !important;
+}
+.theme-gradient .card-trash-btn,
+.theme-gradient-green .card-trash-btn {
+  color: #6ee7b7 !important;
+}
+.theme-gradient .card-trash-btn:hover,
+.theme-gradient-green .card-trash-btn:hover {
+  color: #f87171 !important;
+}
 
+/* 2. Sunset Theme */
 .theme-gradient-sunset .inventory-item-card {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border: 1px solid rgba(229, 162, 115, 0.22) !important;
+  background: linear-gradient(135deg, #F5D3C1 0%, #EADFFE 100%) !important;
+  border: 1px solid rgba(229, 162, 115, 0.3) !important;
   color: #1e293b !important;
-  box-shadow: 0 8px 20px rgba(229, 162, 115, 0.1) !important;
+  box-shadow: 0 10px 25px rgba(229, 162, 115, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .theme-gradient-sunset .inventory-item-card:hover {
   transform: translateY(-4px) scale(1.01) !important;
-  box-shadow: 0 18px 28px rgba(229, 162, 115, 0.20) !important;
-  border-color: rgba(229, 162, 115, 0.4) !important;
+  box-shadow: 0 20px 30px rgba(229, 162, 115, 0.25) !important;
+  border-color: rgba(229, 162, 115, 0.5) !important;
   filter: brightness(0.98);
 }
-
-.theme-gradient-warm .inventory-item-card {
-  background: rgba(255, 255, 255, 0.82) !important;
-  border: 1px solid rgba(248, 214, 117, 0.25) !important;
+.theme-gradient-sunset .card-brand-tag {
+  color: #e07a5f !important;
+}
+.theme-gradient-sunset .card-title-text,
+.theme-gradient-sunset .card-capsule-val {
   color: #1e293b !important;
-  box-shadow: 0 8px 20px rgba(249, 138, 139, 0.1) !important;
+}
+.theme-gradient-sunset .card-model-text {
+  color: #4f5d75 !important;
+}
+.theme-gradient-sunset .card-divider {
+  border-color: rgba(229, 162, 115, 0.2) !important;
+}
+.theme-gradient-sunset .card-capsule {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(229, 162, 115, 0.15) !important;
+}
+.theme-gradient-sunset .card-capsule-label,
+.theme-gradient-sunset .card-stock-label {
+  color: #6c757d !important;
+}
+.theme-gradient-sunset .card-trash-btn {
+  color: #e07a5f !important;
+}
+.theme-gradient-sunset .card-trash-btn:hover {
+  color: #dc2626 !important;
+}
+
+/* 3. Warm Theme */
+.theme-gradient-warm .inventory-item-card {
+  background: linear-gradient(135deg, #FBD5B5 0%, #FCA3A4 100%) !important;
+  border: 1px solid rgba(248, 214, 117, 0.3) !important;
+  color: #1e293b !important;
+  box-shadow: 0 10px 25px rgba(249, 138, 139, 0.12) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .theme-gradient-warm .inventory-item-card:hover {
   transform: translateY(-4px) scale(1.01) !important;
-  box-shadow: 0 18px 28px rgba(249, 138, 139, 0.20) !important;
-  border-color: rgba(248, 214, 117, 0.45) !important;
+  box-shadow: 0 20px 30px rgba(249, 138, 139, 0.28) !important;
+  border-color: rgba(248, 214, 117, 0.5) !important;
   filter: brightness(0.98);
 }
+.theme-gradient-warm .card-brand-tag {
+  color: #d946ef !important;
+}
+.theme-gradient-warm .card-title-text,
+.theme-gradient-warm .card-capsule-val {
+  color: #1e293b !important;
+}
+.theme-gradient-warm .card-model-text {
+  color: #4f5d75 !important;
+}
+.theme-gradient-warm .card-divider {
+  border-color: rgba(249, 138, 139, 0.2) !important;
+}
+.theme-gradient-warm .card-capsule {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(248, 214, 117, 0.15) !important;
+}
+.theme-gradient-warm .card-capsule-label,
+.theme-gradient-warm .card-stock-label {
+  color: #6c757d !important;
+}
+.theme-gradient-warm .card-trash-btn {
+  color: #e11d48 !important;
+}
+.theme-gradient-warm .card-trash-btn:hover {
+  color: #be123c !important;
+}
 
+/* 4. Muted Harmony Theme */
 .theme-gradient-muted-harmony .inventory-item-card {
-  background: rgba(255, 255, 255, 0.8) !important;
-  border: 1px solid rgba(143, 130, 133, 0.2) !important;
+  background: linear-gradient(135deg, #D4DFE2 0%, #E8D3C7 100%) !important;
+  border: 1px solid rgba(143, 130, 133, 0.25) !important;
   color: #334155 !important;
-  box-shadow: 0 8px 20px rgba(66, 108, 120, 0.08) !important;
+  box-shadow: 0 10px 25px rgba(66, 108, 120, 0.08) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .theme-gradient-muted-harmony .inventory-item-card:hover {
   transform: translateY(-4px) scale(1.01) !important;
-  box-shadow: 0 18px 28px rgba(66, 108, 120, 0.16) !important;
-  border-color: rgba(143, 130, 133, 0.35) !important;
+  box-shadow: 0 20px 30px rgba(66, 108, 120, 0.18) !important;
+  border-color: rgba(143, 130, 133, 0.4) !important;
   filter: brightness(0.98);
 }
+.theme-gradient-muted-harmony .card-brand-tag {
+  color: #426c78 !important;
+}
+.theme-gradient-muted-harmony .card-title-text,
+.theme-gradient-muted-harmony .card-capsule-val {
+  color: #334155 !important;
+}
+.theme-gradient-muted-harmony .card-model-text {
+  color: #4a5568 !important;
+}
+.theme-gradient-muted-harmony .card-divider {
+  border-color: rgba(143, 130, 133, 0.2) !important;
+}
+.theme-gradient-muted-harmony .card-capsule {
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  border: 1px solid rgba(143, 130, 133, 0.15) !important;
+}
+.theme-gradient-muted-harmony .card-capsule-label,
+.theme-gradient-muted-harmony .card-stock-label {
+  color: #4a5568 !important;
+}
+.theme-gradient-muted-harmony .card-trash-btn {
+  color: #426c78 !important;
+}
+.theme-gradient-muted-harmony .card-trash-btn:hover {
+  color: #e53e3e !important;
+}
 
+/* 5. Classic Theme */
 .theme-classic .inventory-item-card {
   background: #1e293b !important;
   border: 1px solid #334155 !important;
   color: #f8fafc !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .theme-classic .inventory-item-card:hover {
   transform: translateY(-2px) scale(1.01) !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
   border-color: #475569 !important;
+}
+.theme-classic .card-brand-tag {
+  color: #38bdf8 !important;
+}
+.theme-classic .card-title-text,
+.theme-classic .card-capsule-val {
+  color: #f8fafc !important;
+}
+.theme-classic .card-model-text {
+  color: #94a3b8 !important;
+}
+.theme-classic .card-divider {
+  border-color: #334155 !important;
+}
+.theme-classic .card-capsule {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid #334155 !important;
+}
+.theme-classic .card-capsule-label,
+.theme-classic .card-stock-label {
+  color: #94a3b8 !important;
+}
+.theme-classic .card-trash-btn {
+  color: #94a3b8 !important;
+}
+.theme-classic .card-trash-btn:hover {
+  color: #ef4444 !important;
 }
 
 /* Dynamic Hover for standard buttons */

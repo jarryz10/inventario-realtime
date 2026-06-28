@@ -3642,7 +3642,7 @@ export default function App() {
                           >
                             <div className="flex gap-3">
                               {/* Oval Image Mask */}
-                              <div className="w-14 h-20 rounded-full overflow-hidden bg-slate-950 shadow-inner shrink-0 border border-emerald-800/30 aspect-[2/3]">
+                              <div className="w-14 h-20 rounded-full overflow-hidden bg-slate-950 shadow-inner shrink-0 border border-slate-500/20 aspect-[2/3]">
                                 <img
                                   src={product?.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
                                   alt={product?.name || "Component"}
@@ -3651,33 +3651,33 @@ export default function App() {
                               </div>
                               
                               <div className="min-w-0 flex-1">
-                                <span className="text-[9px] uppercase font-bold tracking-wider text-lime-300">
+                                <span className="card-brand-tag text-[9px] uppercase font-bold tracking-wider">
                                   {product?.brand || t.no_brand}
                                 </span>
-                                <h3 className="font-black text-sm truncate leading-snug text-white">
+                                <h3 className="card-title-text font-black text-sm truncate leading-snug">
                                   {product?.name || ""}
                                 </h3>
-                                <p className="text-[11px] font-semibold mt-0.5 truncate text-emerald-100">
+                                <p className="card-model-text text-[11px] font-semibold mt-0.5 truncate">
                                   Mod: {product?.model || t.na}
                                 </p>
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 pt-3 border-t text-[11px] border-emerald-800/30">
-                              <div className="p-2 rounded-2xl flex flex-col bg-emerald-950/40 border border-emerald-850/40">
-                                <span className="text-[8px] uppercase font-black tracking-wider mb-0.5 text-emerald-200">SKU</span>
-                                <span className="font-black truncate text-white">{product?.sku || t.na}</span>
+                            <div className="card-divider grid grid-cols-2 gap-2 pt-3 border-t text-[11px]">
+                              <div className="card-capsule p-2 rounded-2xl flex flex-col">
+                                <span className="card-capsule-label text-[8px] uppercase font-black tracking-wider mb-0.5">SKU</span>
+                                <span className="card-capsule-val font-black truncate">{product?.sku || t.na}</span>
                               </div>
 
-                              <div className="p-2 rounded-2xl flex flex-col bg-emerald-950/40 border border-emerald-850/40">
-                                <span className="text-[8px] uppercase font-black tracking-wider mb-0.5 text-emerald-200">{language === "es" ? "Ubicación" : "Location"}</span>
-                                <span className="font-black truncate text-white">{product?.location || t.na}</span>
+                              <div className="card-capsule p-2 rounded-2xl flex flex-col">
+                                <span className="card-capsule-label text-[8px] uppercase font-black tracking-wider mb-0.5">{language === "es" ? "Ubicación" : "Location"}</span>
+                                <span className="card-capsule-val font-black truncate">{product?.location || t.na}</span>
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-2 border-t border-emerald-800/30">
+                            <div className="card-divider flex items-center justify-between pt-2 border-t">
                               <div className="flex flex-col gap-1">
-                                <span className="text-[8px] uppercase font-black tracking-wider block text-emerald-200">{t.stock_status}</span>
+                                <span className="card-stock-label text-[8px] uppercase font-black tracking-wider block">{t.stock_status}</span>
                                 <div className="flex items-center gap-1.5">
                                   {getStockStatus(product?.stock || 0, product?.minStock || 0)}
                                 </div>
@@ -3689,7 +3689,7 @@ export default function App() {
                                     e.stopPropagation();
                                     product.id && handleDeleteProduct(product.id);
                                   }}
-                                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-150 text-emerald-300 hover:text-red-400 hover:bg-white/10"
+                                  className="card-trash-btn w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-150"
                                   title={t.delete_firestore_tooltip}
                                 >
                                   <Trash2 className="w-4 h-4" />
