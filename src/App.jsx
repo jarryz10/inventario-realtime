@@ -432,6 +432,9 @@ export default function App() {
   const [reportRows, setReportRows] = useState([{ time: "08:00 AM - 09:00 AM", activity: "" }]);
   const [isReportSubmitting, setIsReportSubmitting] = useState(false);
   const [expandedReportId, setExpandedReportId] = useState(null);
+  const [editingReportId, setEditingReportId] = useState(null);
+  const [editingActivities, setEditingActivities] = useState([]);
+  const [isReportSaving, setIsReportSaving] = useState(false);
 
   // Printer Cleaning State
   const [printerCleanings, setPrinterCleanings] = useState([]);
@@ -1784,6 +1787,47 @@ export default function App() {
       setAlertMessage({ type: "error", text: "Error al enviar el reporte." });
     } finally {
       setIsReportSubmitting(false);
+    }
+  };
+
+  const handleSaveEditReport = async (reportId) => {
+    const reportObj = dailyReports.find(r => r.id === reportId);
+    if (!reportObj || reportObj.createdBy !== currentUser.username) {
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" 
+          ? "Acceso denegado: No eres el autor de este reporte." 
+          : "Access denied: You are not the author of this report." 
+      });
+      return;
+    }
+
+    const filledRows = editingActivities.filter(r => r.activity.trim() !== "");
+    if (filledRows.length === 0) {
+      alert(language === "es" ? "Debe registrar al menos una actividad." : "At least one activity is required.");
+      return;
+    }
+
+    setIsReportSaving(true);
+    try {
+      await updateDoc(doc(db, "daily_reports", reportId), {
+        activities: filledRows.map(r => ({ time: r.time, activity: r.activity.trim() }))
+      });
+      setEditingReportId(null);
+      setEditingActivities([]);
+      setAlertMessage({ 
+        type: "success", 
+        text: language === "es" ? "Reporte actualizado con éxito." : "Report updated successfully." 
+      });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (err) {
+      console.error("Error updating report:", err);
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" ? "Error al actualizar el reporte." : "Error updating report." 
+      });
+    } finally {
+      setIsReportSaving(false);
     }
   };
 
@@ -4726,7 +4770,10 @@ export default function App() {
                               return (
                                 <div 
                                   key={report.id} 
-                                  onClick={() => setExpandedReportId(isExpanded ? null : report.id)}
+                                  onClick={() => {
+                                    if (editingReportId === report.id) return;
+                                    setExpandedReportId(isExpanded ? null : report.id);
+                                  }}
                                   className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl p-4 hover:border-white/50 dark:hover:border-slate-700/35 transition-all duration-300 shadow-sm flex flex-col gap-3 cursor-pointer select-none animate-fade-in`}
                                 >
                                   <div className="flex items-center justify-between">
@@ -4740,7 +4787,22 @@ export default function App() {
                                         {report.userLevel === 2 ? t.supervisor_role : t.operator_role}
                                       </span>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2" onClick={(e) => { if (editingReportId === report.id) e.stopPropagation(); }}>
+                                      {report.createdBy === currentUser.username && editingReportId !== report.id && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingReportId(report.id);
+                                            setEditingActivities(report.activities ? JSON.parse(JSON.stringify(report.activities)) : []);
+                                            setExpandedReportId(report.id);
+                                          }}
+                                          className="p-1.5 rounded-lg text-slate-450 hover:text-sky-500 dark:text-slate-400 dark:hover:text-sky-400 transition-colors cursor-pointer hover-scale shrink-0 flex items-center justify-center border-none bg-transparent"
+                                          title={language === "es" ? "Editar Reporte" : "Edit Report"}
+                                        >
+                                          <Edit3 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
                                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{report.date}</span>
                                       <span className="text-[9px] text-slate-400 font-bold">{isExpanded ? "▲" : "▼"}</span>
                                     </div>
@@ -4748,36 +4810,122 @@ export default function App() {
                                   
                                   {isExpanded && (
                                     <div className="mt-2 pt-3 border-t border-slate-100 dark:border-slate-800/30 flex flex-col gap-3 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-                                      <div className="flex flex-col gap-2">
-                                        {report.activities?.map((row, idx) => (
-                                          <div key={idx} className="flex gap-3 text-xs leading-relaxed">
-                                            <span className="font-mono font-bold text-[10px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-2 py-0.5 rounded-lg h-fit">
-                                              {row.time}
-                                            </span>
-                                            <span className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{row.activity}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                      <div className="flex justify-end pt-2 gap-2">
-                                        {userLevel >= 3 && (
+                                      {editingReportId === report.id ? (
+                                        <div className="flex flex-col gap-3">
+                                          {editingActivities.map((row, idx) => (
+                                            <div key={idx} className="flex flex-col sm:flex-row gap-2 bg-slate-500/5 dark:bg-slate-900/10 p-2.5 rounded-xl border border-slate-200/10 dark:border-slate-800/10 animate-fade-in">
+                                              <select
+                                                value={row.time}
+                                                onChange={(e) => {
+                                                  const updated = [...editingActivities];
+                                                  updated[idx].time = e.target.value;
+                                                  setEditingActivities(updated);
+                                                }}
+                                                className="w-full sm:w-48 px-2.5 py-1.5 rounded-lg text-xs glass-input font-bold"
+                                              >
+                                                {[
+                                                  "12:00 AM - 01:00 AM", "01:00 AM - 02:00 AM", "02:00 AM - 03:00 AM", "03:00 AM - 04:00 AM",
+                                                  "04:00 AM - 05:00 AM", "05:00 AM - 06:00 AM", "06:00 AM - 07:00 AM", "07:00 AM - 08:00 AM",
+                                                  "08:00 AM - 09:00 AM", "09:00 AM - 10:00 AM", "10:00 AM - 11:00 AM", "11:00 AM - 12:00 PM",
+                                                  "12:00 PM - 01:00 PM", "01:00 PM - 02:00 PM", "02:00 PM - 03:00 PM", "03:00 PM - 04:00 PM",
+                                                  "04:00 PM - 05:00 PM", "05:00 PM - 06:00 PM", "06:00 PM - 07:00 PM", "07:00 PM - 08:00 PM",
+                                                  "08:00 PM - 09:00 PM", "09:00 PM - 10:00 PM", "10:00 PM - 11:00 PM", "11:00 PM - 12:00 AM"
+                                                ].map(block => (
+                                                  <option key={block} value={block} className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                                    {block}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                              <input
+                                                type="text"
+                                                value={row.activity}
+                                                onChange={(e) => {
+                                                  const updated = [...editingActivities];
+                                                  updated[idx].activity = e.target.value;
+                                                  setEditingActivities(updated);
+                                                }}
+                                                className="flex-1 px-2.5 py-1.5 rounded-lg text-xs glass-input font-semibold"
+                                                required
+                                              />
+                                              {editingActivities.length > 1 && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setEditingActivities(prev => prev.filter((_, i) => i !== idx))}
+                                                  className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors border-none cursor-pointer flex items-center justify-center"
+                                                  title={language === "es" ? "Eliminar Actividad" : "Delete Activity"}
+                                                >
+                                                  <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                              )}
+                                            </div>
+                                          ))}
+
                                           <button
-                                            onClick={() => handleDeleteDailyReport(report.id)}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
-                                            title={t.delete}
+                                            type="button"
+                                            onClick={() => setEditingActivities(prev => [...prev, { time: "08:00 AM - 09:00 AM", activity: "" }])}
+                                            className="py-1.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400 font-bold flex items-center justify-center gap-1 cursor-pointer hover:bg-slate-500/5 bg-transparent"
                                           >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                            <span>{t.delete}</span>
+                                            <PlusCircle className="w-3.5 h-3.5" />
+                                            <span>{language === "es" ? "Agregar Actividad" : "Add Activity"}</span>
                                           </button>
-                                        )}
-                                        <button
-                                          onClick={() => handleDownloadPDF(report)}
-                                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer"
-                                          title={t.download_report_pdf}
-                                        >
-                                          <FileText className="w-3.5 h-3.5 text-white" />
-                                          <span>{t.download_pdf}</span>
-                                        </button>
-                                      </div>
+
+                                          <div className="flex justify-end pt-2 gap-2 border-t border-slate-100 dark:border-slate-800/30">
+                                            <button
+                                              onClick={() => handleSaveEditReport(report.id)}
+                                              disabled={isReportSaving}
+                                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200 border-none ${getThemeActiveTabClass(visualTheme)}`}
+                                              title={language === "es" ? "Guardar Cambios" : "Save Changes"}
+                                            >
+                                              {isReportSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                                              <span>{language === "es" ? "Guardar Cambios" : "Save Changes"}</span>
+                                            </button>
+                                            <button
+                                              onClick={() => {
+                                                setEditingReportId(null);
+                                                setEditingActivities([]);
+                                              }}
+                                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 text-slate-500 hover:text-slate-700 text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200 border-none"
+                                              title={language === "es" ? "Cancelar" : "Cancel"}
+                                            >
+                                              <X className="w-3.5 h-3.5" />
+                                              <span>{language === "es" ? "Cancelar" : "Cancel"}</span>
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <div className="flex flex-col gap-2">
+                                            {report.activities?.map((row, idx) => (
+                                              <div key={idx} className="flex gap-3 text-xs leading-relaxed">
+                                                <span className="font-mono font-bold text-[10px] text-sky-600 dark:text-sky-400 shrink-0 bg-sky-500/5 px-2 py-0.5 rounded-lg h-fit">
+                                                  {row.time}
+                                                </span>
+                                                <span className="text-slate-600 dark:text-slate-350 whitespace-pre-wrap">{row.activity}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                          <div className="flex justify-end pt-2 gap-2">
+                                            {userLevel >= 3 && (
+                                              <button
+                                                onClick={() => handleDeleteDailyReport(report.id)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200 border-none"
+                                                title={t.delete}
+                                              >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                                <span>{t.delete}</span>
+                                              </button>
+                                            )}
+                                            <button
+                                              onClick={() => handleDownloadPDF(report)}
+                                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer border-none"
+                                              title={t.download_report_pdf}
+                                            >
+                                              <FileText className="w-3.5 h-3.5 text-white" />
+                                              <span>{t.download_pdf}</span>
+                                            </button>
+                                          </div>
+                                        </>
+                                      )}
                                     </div>
                                   )}
                                 </div>
