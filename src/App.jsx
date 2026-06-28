@@ -3374,121 +3374,185 @@ export default function App() {
                     )}
                   </button>
 
-                {isNotificationsOpen && (
-                  <div 
-                    className="absolute left-0 top-full mt-2 w-80 sm:w-96 rounded-[1.5rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-scale-in"
-                    style={{ zIndex: 9999 }}
-                  >
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                      <span className="text-xs font-extrabold text-slate-800 dark:text-white uppercase tracking-wider">
-                        {language === "es" ? "Notificaciones" : "Notifications"}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {unreadCount > 0 && (
-                          <button
-                            onClick={handleMarkAllAsRead}
-                            className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 font-extrabold cursor-pointer border-none bg-transparent"
-                          >
-                            {language === "es" ? "Leer todas" : "Read all"}
-                          </button>
-                        )}
-                        {notifications.length > 0 && (
-                          <button
-                            onClick={handleClearAllNotifications}
-                            className="text-[10px] text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 font-extrabold cursor-pointer border-none bg-transparent"
-                          >
-                            {language === "es" ? "Borrar todas" : "Clear all"}
-                          </button>
+                {isNotificationsOpen && (() => {
+                  const isWarm = visualTheme === "gradient-warm";
+                  const isCyber = visualTheme === "gradient-cyberpunk";
+
+                  // Container styling
+                  let notifContainerClass = "";
+                  if (isCyber) {
+                    notifContainerClass = "bg-[#260073]/80 backdrop-blur-md border border-fuchsia-500/30 text-white shadow-2xl shadow-fuchsia-500/10";
+                  } else if (isWarm) {
+                    notifContainerClass = "bg-white/80 backdrop-blur-md border border-orange-200/50 text-slate-900 shadow-lg shadow-amber-500/5";
+                  } else {
+                    // Pastel Green
+                    notifContainerClass = "bg-slate-900/80 backdrop-blur-md border border-emerald-500/20 text-white shadow-lg shadow-slate-950/40";
+                  }
+
+                  // Header styling
+                  let notifHeaderClass = "";
+                  if (isCyber) {
+                    notifHeaderClass = "border-b border-fuchsia-500/25 bg-fuchsia-950/20";
+                  } else if (isWarm) {
+                    notifHeaderClass = "border-b border-orange-100 bg-orange-50/30";
+                  } else {
+                    notifHeaderClass = "border-b border-emerald-900/30 bg-emerald-950/20";
+                  }
+
+                  // Header title text
+                  const notifHeaderTitleClass = isWarm ? "text-slate-800" : "text-white";
+
+                  // List divider class
+                  let notifDividerClass = "";
+                  if (isCyber) {
+                    notifDividerClass = "divide-y divide-fuchsia-500/15";
+                  } else if (isWarm) {
+                    notifDividerClass = "divide-y divide-orange-100";
+                  } else {
+                    notifDividerClass = "divide-y divide-emerald-900/10";
+                  }
+
+                  // Notif item bg & hover
+                  const getNotifItemClass = (notif) => {
+                    const isUnread = notif.read !== true;
+                    if (isWarm) {
+                      return `p-3 flex items-start gap-2.5 hover:bg-orange-500/5 transition-colors duration-150 relative group cursor-pointer ${
+                        isUnread ? "bg-orange-500/5" : ""
+                      }`;
+                    }
+                    if (isCyber) {
+                      return `p-3 flex items-start gap-2.5 hover:bg-fuchsia-500/10 transition-colors duration-150 relative group cursor-pointer ${
+                        isUnread ? "bg-fuchsia-500/10" : ""
+                      }`;
+                    }
+                    // Pastel Green
+                    return `p-3 flex items-start gap-2.5 hover:bg-emerald-500/10 transition-colors duration-150 relative group cursor-pointer ${
+                      isUnread ? "bg-emerald-500/10" : ""
+                    }`;
+                  };
+
+                  // Notif item title
+                  const notifItemTitleClass = isWarm ? "text-slate-800" : "text-slate-200";
+
+                  // Notif item message
+                  const notifItemMessageClass = isWarm ? "text-slate-600" : "text-slate-400";
+
+                  return (
+                    <div 
+                      className={`absolute left-0 top-full mt-2 w-80 sm:w-96 rounded-[1.5rem] overflow-hidden animate-scale-in border ${notifContainerClass}`}
+                      style={{ zIndex: 9999 }}
+                    >
+                      {/* Header */}
+                      <div className={`flex items-center justify-between px-4 py-3 ${notifHeaderClass}`}>
+                        <span className={`text-xs font-extrabold uppercase tracking-wider ${notifHeaderTitleClass}`}>
+                          {language === "es" ? "Notificaciones" : "Notifications"}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {unreadCount > 0 && (
+                            <button
+                              onClick={handleMarkAllAsRead}
+                              className={`text-[10px] font-extrabold cursor-pointer border-none bg-transparent ${
+                                isWarm ? "text-orange-600 hover:text-orange-700" : isCyber ? "text-fuchsia-400 hover:text-fuchsia-300" : "text-emerald-400 hover:text-emerald-300"
+                              }`}
+                            >
+                              {language === "es" ? "Leer todas" : "Read all"}
+                            </button>
+                          )}
+                          {notifications.length > 0 && (
+                            <button
+                              onClick={handleClearAllNotifications}
+                              className="text-[10px] text-rose-500 hover:text-rose-600 font-extrabold cursor-pointer border-none bg-transparent"
+                            >
+                              {language === "es" ? "Borrar todas" : "Clear all"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* List */}
+                      <div className={`max-h-72 overflow-y-auto ${notifDividerClass}`}>
+                        {isNotificationsLoading ? (
+                          <div className="flex flex-col items-center justify-center py-8">
+                            <Loader2 className={`w-6 h-6 animate-spin mb-1.5 ${isWarm ? "text-orange-500" : isCyber ? "text-fuchsia-500" : "text-emerald-500"}`} />
+                            <span className="text-[10px] text-slate-400 font-bold">{t.loading_database}</span>
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+                            <Bell className={`w-8 h-8 mb-1.5 ${isWarm ? "text-slate-300" : "text-slate-600"}`} />
+                            <p className={`text-xs font-bold ${isWarm ? "text-slate-500" : "text-slate-400"}`}>
+                              {language === "es" ? "No hay notificaciones" : "No notifications"}
+                            </p>
+                            <p className={`text-[9px] mt-0.5 ${isWarm ? "text-slate-400" : "text-slate-500"}`}>
+                              {language === "es" 
+                                ? "Las alertas y cambios se mostrarán aquí en tiempo real."
+                                : "Alerts and changes will be shown here in real time."}
+                            </p>
+                          </div>
+                        ) : (
+                          notifications.map((notif) => {
+                            const dateStr = notif.timestamp?.toDate
+                              ? notif.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
+                              : (notif.timestamp?.seconds ? new Date(notif.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
+
+                            let badgeColor = "bg-sky-500/10 text-sky-600 border-sky-500/20";
+                            if (notif.type === "stock_minimo") {
+                              badgeColor = "bg-rose-500/10 text-rose-600 border-rose-500/20";
+                            } else if (notif.type === "limpieza_impresora") {
+                              badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                            } else if (notif.type === "reporte_diario") {
+                              badgeColor = "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+                            } else if (notif.type === "rfid") {
+                              badgeColor = "bg-violet-500/10 text-violet-600 border-violet-500/20";
+                            } else if (notif.type?.includes("orden")) {
+                              badgeColor = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+                            } else if (notif.type?.includes("componente")) {
+                              badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+                            } else if (notif.type?.includes("stock")) {
+                              badgeColor = "bg-teal-500/10 text-teal-600 border-teal-500/20";
+                            }
+
+                            return (
+                              <div
+                                key={notif.id}
+                                onClick={() => handleNotificationClick(notif)}
+                                className={getNotifItemClass(notif)}
+                              >
+                                <span className={`px-1.5 py-0.5 text-[8px] font-black rounded border uppercase shrink-0 mt-0.5 ${badgeColor}`}>
+                                  {notif.type ? notif.type.replace("_", " ") : "Alerta"}
+                                </span>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <h4 className={`text-[11px] font-extrabold truncate ${notifItemTitleClass}`}>
+                                      {notif.title || "Notificación"}
+                                    </h4>
+                                    <span className="text-[8px] text-slate-400 shrink-0 font-mono font-semibold">
+                                      {dateStr}
+                                    </span>
+                                  </div>
+                                  <p className={`text-[10px] mt-0.5 leading-snug break-words ${notifItemMessageClass}`}>
+                                    {notif.message}
+                                  </p>
+                                </div>
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteNotification(notif.id);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-500 rounded transition-all duration-150 shrink-0 cursor-pointer border-none bg-transparent"
+                                  title={language === "es" ? "Eliminar" : "Delete"}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            );
+                          })
                         )}
                       </div>
                     </div>
-
-                    {/* List */}
-                    <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/50">
-                      {isNotificationsLoading ? (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 text-emerald-600 animate-spin mb-1.5" />
-                          <span className="text-[10px] text-slate-400 font-bold">{t.loading_database}</span>
-                        </div>
-                      ) : notifications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-10 text-center px-4">
-                          <Bell className="w-8 h-8 text-slate-300 dark:text-slate-700 mb-1.5" />
-                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                            {language === "es" ? "No hay notificaciones" : "No notifications"}
-                          </p>
-                          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
-                            {language === "es" 
-                              ? "Las alertas y cambios se mostrarán aquí en tiempo real."
-                              : "Alerts and changes will be shown here in real time."}
-                          </p>
-                        </div>
-                      ) : (
-                        notifications.map((notif) => {
-                          const dateStr = notif.timestamp?.toDate
-                            ? notif.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
-                            : (notif.timestamp?.seconds ? new Date(notif.timestamp.seconds * 1000).toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" }) : "N/D");
-
-                          let badgeColor = "bg-sky-500/10 text-sky-600 border-sky-500/20";
-                          if (notif.type === "stock_minimo") {
-                            badgeColor = "bg-rose-500/10 text-rose-600 border-rose-500/20";
-                          } else if (notif.type === "limpieza_impresora") {
-                            badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-                          } else if (notif.type === "reporte_diario") {
-                            badgeColor = "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
-                          } else if (notif.type === "rfid") {
-                            badgeColor = "bg-violet-500/10 text-violet-600 border-violet-500/20";
-                          } else if (notif.type?.includes("orden")) {
-                            badgeColor = "bg-amber-500/10 text-amber-600 border-amber-500/20";
-                          } else if (notif.type?.includes("componente")) {
-                            badgeColor = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
-                          } else if (notif.type?.includes("stock")) {
-                            badgeColor = "bg-teal-500/10 text-teal-600 border-teal-500/20";
-                          }
-
-                          return (
-                            <div
-                              key={notif.id}
-                              onClick={() => handleNotificationClick(notif)}
-                              className={`p-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors duration-150 relative group cursor-pointer ${
-                                notif.read !== true ? "bg-emerald-50/20 dark:bg-emerald-950/10" : ""
-                              }`}
-                            >
-                              <span className={`px-1.5 py-0.5 text-[8px] font-black rounded border uppercase shrink-0 mt-0.5 ${badgeColor}`}>
-                                {notif.type ? notif.type.replace("_", " ") : "Alerta"}
-                              </span>
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <h4 className="text-[11px] font-extrabold text-slate-700 dark:text-slate-200 truncate">
-                                    {notif.title || "Notificación"}
-                                  </h4>
-                                  <span className="text-[8px] text-slate-400 shrink-0 font-mono font-semibold">
-                                    {dateStr}
-                                  </span>
-                                </div>
-                                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug break-words">
-                                  {notif.message}
-                                </p>
-                              </div>
-
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteNotification(notif.id);
-                                }}
-                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-600 dark:text-slate-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/35 rounded transition-all duration-150 shrink-0 cursor-pointer border-none bg-transparent"
-                                title={language === "es" ? "Eliminar" : "Delete"}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             </div>
           </div>
@@ -3555,15 +3619,31 @@ export default function App() {
                 </div>
               )}
 
-              {activeTab === "inventario" && (
-                <button
-                  onClick={() => setIsMovementsModalOpen(true)}
-                  className="flex items-center gap-2 px-4.5 py-2.5 rounded-full text-xs font-extrabold shadow-md hover-scale cursor-pointer bg-white hover:bg-slate-50 text-emerald-950 border border-emerald-100"
-                >
-                  <History className="w-4 h-4 text-emerald-600" />
-                  <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
-                </button>
-              )}
+              {activeTab === "inventario" && (() => {
+                const isWarm = visualTheme === "gradient-warm";
+                const isCyber = visualTheme === "gradient-cyberpunk";
+                
+                let buttonStyle = "bg-white/15 backdrop-blur border border-emerald-500/30 text-white hover:bg-emerald-500/20 shadow-md shadow-emerald-950/10";
+                let iconStyle = "text-emerald-400";
+                
+                if (isWarm) {
+                  buttonStyle = "bg-white/80 backdrop-blur border border-orange-200/60 text-slate-900 hover:bg-white shadow-sm";
+                  iconStyle = "text-orange-500";
+                } else if (isCyber) {
+                  buttonStyle = "bg-slate-950/60 backdrop-blur border border-fuchsia-500/40 text-white hover:bg-fuchsia-500/25 shadow-lg shadow-fuchsia-500/5";
+                  iconStyle = "text-[#FFFF00]";
+                }
+                
+                return (
+                  <button
+                    onClick={() => setIsMovementsModalOpen(true)}
+                    className={`flex items-center gap-2 px-4.5 py-2.5 rounded-full text-xs font-extrabold shadow-md hover-scale cursor-pointer ${buttonStyle}`}
+                  >
+                    <History className={`w-4 h-4 ${iconStyle}`} />
+                    <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
+                  </button>
+                );
+              })()}
 
               {activeTab === "inventario" && userLevel >= 2 && (
                 <button
