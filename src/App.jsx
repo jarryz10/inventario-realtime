@@ -139,6 +139,9 @@ const getThemeActiveTabClass = (theme) => {
   if (theme === "gradient-warm") {
     return "bg-gradient-to-r from-[#FAAE87] to-[#F98A8B] text-[#1e293b] rounded-full font-bold shadow-md shadow-amber-500/10 border-none transition-all duration-300 hover:brightness-105";
   }
+  if (theme === "gradient-muted-harmony") {
+    return "bg-gradient-to-r from-[#5e727e] to-[#8f8285] text-white rounded-full font-bold shadow-md shadow-slate-500/10 border-none transition-all duration-300 hover:brightness-105";
+  }
   return "bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-full font-bold shadow-md shadow-emerald-800/10 border-none transition-all duration-300 hover:brightness-110";
 };
 
@@ -148,6 +151,9 @@ const getThemeProfileClass = (theme) => {
   }
   if (theme === "gradient-warm") {
     return "p-3 bg-gradient-to-r from-[#FAAE87] to-[#F98A8B] text-[#1e293b] rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
+  }
+  if (theme === "gradient-muted-harmony") {
+    return "p-3 bg-gradient-to-r from-[#5e727e] to-[#8f8285] text-white rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
   }
   return "p-3 bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-2xl border-none flex items-center justify-between shadow-md transition-all duration-300 hover:scale-[1.02] hover:brightness-110";
 };
@@ -159,6 +165,9 @@ const getThemeInitialsClass = (theme) => {
   if (theme === "gradient-warm") {
     return "w-8 h-8 rounded-full bg-white/40 text-[#1e293b] border border-[#F8D675]/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
   }
+  if (theme === "gradient-muted-harmony") {
+    return "w-8 h-8 rounded-full bg-white/20 text-white border border-[#5e727e]/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
+  }
   return "w-8 h-8 rounded-full bg-gradient-to-r from-emerald-900 to-emerald-700 text-white border border-emerald-500/35 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
 };
 
@@ -168,6 +177,9 @@ const getThemeLanguageSwitcherClass = (theme) => {
   }
   if (theme === "gradient-warm") {
     return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#FAAE87] to-[#F98A8B] text-[#1e293b] text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
+  }
+  if (theme === "gradient-muted-harmony") {
+    return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#5e727e] to-[#8f8285] text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
   }
   return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-800 to-emerald-600 text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-110 shadow-md";
 };
@@ -193,12 +205,14 @@ export default function App() {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove("theme-classic", "theme-gradient", "theme-gradient-green", "theme-gradient-sunset", "theme-gradient-warm");
+    root.classList.remove("theme-classic", "theme-gradient", "theme-gradient-green", "theme-gradient-sunset", "theme-gradient-warm", "theme-gradient-muted-harmony");
     
     if (visualTheme === "gradient-sunset") {
       root.classList.add("theme-gradient-sunset");
     } else if (visualTheme === "gradient-warm") {
       root.classList.add("theme-gradient-warm");
+    } else if (visualTheme === "gradient-muted-harmony") {
+      root.classList.add("theme-gradient-muted-harmony");
     } else if (visualTheme === "gradient-green" || visualTheme === "gradient") {
       root.classList.add("theme-gradient-green");
     } else {
@@ -3327,6 +3341,21 @@ export default function App() {
                       >
                         <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#F8D675] to-[#F98A8B] border border-amber-300/20 block shrink-0" />
                         <span>Warm Coral</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVisualTheme("gradient-muted-harmony");
+                          localStorage.setItem("app_theme", "gradient-muted-harmony");
+                          setIsThemeDropdownOpen(false);
+                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
+                          visualTheme === "gradient-muted-harmony" ? "bg-white/10 text-white" : "text-white/80"
+                        }`}
+                      >
+                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#426C78] to-[#DAA88D] border border-amber-300/20 block shrink-0" />
+                        <span>Muted Harmony</span>
                       </button>
                     </div>
                   )}

@@ -332,6 +332,104 @@ body {
 }
 
 
+/* --- THEME GRADIENT MUTED HARMONY (Muted Harmony - Azul Acero a Durazno) --- */
+.theme-gradient-muted-harmony body,
+.theme-gradient-muted-harmony .dashboard-root {
+  background: linear-gradient(180deg, #426C78 0%, #8E8A9E 50%, #DAA88D 100%) !important;
+  background-attachment: fixed !important;
+  color: #334155 !important;
+}
+
+.theme-gradient-muted-harmony .glass-container,
+.theme-gradient-muted-harmony .glass-card {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(247, 245, 240, 0.85) !important;
+  border: 1px solid rgba(143, 130, 133, 0.25) !important;
+  box-shadow: 0 15px 35px rgba(66, 108, 120, 0.08) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #334155 !important;
+}
+
+.theme-gradient-muted-harmony .glass-sidebar {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(247, 245, 240, 0.9) !important;
+  border-right: 1px solid rgba(143, 130, 133, 0.25) !important;
+  border-top-right-radius: 2.5rem !important;
+  border-bottom-right-radius: 2.5rem !important;
+  border-radius: 0px 2.5rem 2.5rem 0px !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #334155 !important;
+}
+
+/* Muted Harmony Text Overrides to guarantee readability and eliminate green or white text leakage */
+.theme-gradient-muted-harmony h1,
+.theme-gradient-muted-harmony h2,
+.theme-gradient-muted-harmony h3,
+.theme-gradient-muted-harmony h4,
+.theme-gradient-muted-harmony h5,
+.theme-gradient-muted-harmony h6,
+.theme-gradient-muted-harmony p,
+.theme-gradient-muted-harmony span,
+.theme-gradient-muted-harmony label,
+.theme-gradient-muted-harmony div,
+.theme-gradient-muted-harmony td,
+.theme-gradient-muted-harmony th,
+.theme-gradient-muted-harmony .product-name-text,
+.theme-gradient-muted-harmony .text-white,
+.theme-gradient-muted-harmony .text-slate-100,
+.theme-gradient-muted-harmony .text-slate-200,
+.theme-gradient-muted-harmony .text-slate-300,
+.theme-gradient-muted-harmony .text-slate-400,
+.theme-gradient-muted-harmony .text-slate-500,
+.theme-gradient-muted-harmony .text-slate-800,
+.theme-gradient-muted-harmony .text-slate-900,
+.theme-gradient-muted-harmony .text-emerald-800,
+.theme-gradient-muted-harmony .text-emerald-955,
+.theme-gradient-muted-harmony .text-emerald-950,
+.theme-gradient-muted-harmony .text-emerald-700,
+.theme-gradient-muted-harmony .text-emerald-900 {
+  color: #334155 !important;
+}
+
+.theme-gradient-muted-harmony .glass-card .text-slate-500,
+.theme-gradient-muted-harmony .glass-card .text-slate-400,
+.theme-gradient-muted-harmony .glass-container .text-slate-500,
+.theme-gradient-muted-harmony .glass-container .text-slate-400,
+.theme-gradient-muted-harmony .glass-sidebar .text-slate-500,
+.theme-gradient-muted-harmony .glass-sidebar .text-slate-400 {
+  color: rgba(51, 65, 85, 0.75) !important;
+}
+
+.theme-gradient-muted-harmony .glass-input {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(143, 130, 133, 0.25) !important;
+  color: #334155 !important;
+  border-radius: 9999px !important;
+  outline: none;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.theme-gradient-muted-harmony .glass-input::placeholder {
+  color: rgba(51, 65, 85, 0.5) !important;
+}
+.theme-gradient-muted-harmony .glass-input:focus {
+  border-color: #426C78 !important;
+  box-shadow: 0 0 0 1px #426C78 !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.theme-gradient-muted-harmony option,
+.theme-gradient-muted-harmony select.glass-input option {
+  color: #334155 !important;
+  background-color: #ffffff !important;
+}
+
+
 /* --- THEME CLASSIC (Diseño Oscuro/Minimalista Plano Anterior) --- */
 .theme-classic body,
 .theme-classic .dashboard-root {
@@ -594,6 +692,29 @@ button.bg-emerald-500 {
   box-shadow: 0 6px 20px rgba(249, 138, 139, 0.35) !important;
 }
 
+/* Muted Harmony Theme buttons styling */
+.theme-gradient-muted-harmony button.btn-metallic-bronze,
+.theme-gradient-muted-harmony button.btn-metallic-silver,
+.theme-gradient-muted-harmony button[type="submit"],
+.theme-gradient-muted-harmony button.bg-gradient-to-r,
+.theme-gradient-muted-harmony button.bg-gradient-to-tr,
+.theme-gradient-muted-harmony button.bg-sky-500,
+.theme-gradient-muted-harmony button.bg-emerald-500 {
+  background: linear-gradient(135deg, #5e727e 0%, #76808f 60%, #8f8285 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(94, 114, 126, 0.2) !important;
+}
+.theme-gradient-muted-harmony button.btn-metallic-bronze:hover,
+.theme-gradient-muted-harmony button.btn-metallic-silver:hover,
+.theme-gradient-muted-harmony button[type="submit"]:hover,
+.theme-gradient-muted-harmony button.bg-gradient-to-r:hover,
+.theme-gradient-muted-harmony button.bg-gradient-to-tr:hover,
+.theme-gradient-muted-harmony button.bg-sky-500:hover,
+.theme-gradient-muted-harmony button.bg-emerald-500:hover {
+  background: linear-gradient(135deg, #8f8285 0%, #76808f 60%, #5e727e 100%) !important;
+  box-shadow: 0 6px 20px rgba(94, 114, 126, 0.35) !important;
+}
+
 /* Classic Theme buttons styling */
 .theme-classic button.btn-metallic-bronze,
 .theme-classic button.btn-metallic-silver,
@@ -678,6 +799,19 @@ button.bg-emerald-500 {
   transform: translateY(-4px) scale(1.01) !important;
   box-shadow: 0 18px 28px rgba(249, 138, 139, 0.20) !important;
   border-color: rgba(248, 214, 117, 0.45) !important;
+  filter: brightness(0.98);
+}
+
+.theme-gradient-muted-harmony .inventory-item-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(143, 130, 133, 0.2) !important;
+  color: #334155 !important;
+  box-shadow: 0 8px 20px rgba(66, 108, 120, 0.08) !important;
+}
+.theme-gradient-muted-harmony .inventory-item-card:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  box-shadow: 0 18px 28px rgba(66, 108, 120, 0.16) !important;
+  border-color: rgba(143, 130, 133, 0.35) !important;
   filter: brightness(0.98);
 }
 
