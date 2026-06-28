@@ -139,6 +139,9 @@ const getThemeActiveTabClass = (theme) => {
   if (theme === "gradient-cyberpunk") {
     return "bg-gradient-to-r from-[#260073] to-[#D82EFF] text-white rounded-full font-bold shadow-md shadow-fuchsia-500/20 border-none transition-all duration-300 hover:brightness-105";
   }
+  if (theme === "gradient-electric-blue") {
+    return "bg-gradient-to-r from-[#00B4FF] to-[#3262FF] text-white rounded-full font-bold shadow-md shadow-blue-500/20 border-none transition-all duration-300 hover:brightness-105";
+  }
   return "bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-full font-bold shadow-md shadow-emerald-800/10 border-none transition-all duration-300 hover:brightness-110";
 };
 
@@ -148,6 +151,9 @@ const getThemeProfileClass = (theme) => {
   }
   if (theme === "gradient-cyberpunk") {
     return "p-3 bg-gradient-to-r from-[#260073] to-[#D82EFF] text-white rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
+  }
+  if (theme === "gradient-electric-blue") {
+    return "p-3 bg-gradient-to-r from-[#00B4FF] to-[#3262FF] text-white rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
   }
   return "p-3 bg-gradient-to-r from-emerald-800 to-emerald-600 text-white rounded-2xl border-none flex items-center justify-between shadow-md transition-all duration-300 hover:scale-[1.02] hover:brightness-110";
 };
@@ -159,6 +165,9 @@ const getThemeInitialsClass = (theme) => {
   if (theme === "gradient-cyberpunk") {
     return "w-8 h-8 rounded-full bg-white/20 text-[#FFFF00] border border-[#D82EFF]/40 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
   }
+  if (theme === "gradient-electric-blue") {
+    return "w-8 h-8 rounded-full bg-white/30 text-white border border-white/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
+  }
   return "w-8 h-8 rounded-full bg-gradient-to-r from-emerald-900 to-emerald-700 text-white border border-emerald-500/35 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
 };
 
@@ -168,6 +177,9 @@ const getThemeLanguageSwitcherClass = (theme) => {
   }
   if (theme === "gradient-cyberpunk") {
     return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#260073] to-[#D82EFF] text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
+  }
+  if (theme === "gradient-electric-blue") {
+    return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#00B4FF] to-[#3262FF] text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
   }
   return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-emerald-800 to-emerald-600 text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-110 shadow-md";
 };
@@ -181,6 +193,9 @@ const getHeaderBtnClass = (theme) => {
   }
   if (theme === "gradient-cyberpunk") {
     return "bg-gradient-to-r from-[#260073] to-[#D82EFF] shadow-md shadow-fuchsia-500/25 hover:brightness-105";
+  }
+  if (theme === "gradient-electric-blue") {
+    return "bg-gradient-to-r from-[#00B4FF] to-[#3262FF] shadow-md shadow-blue-500/20 hover:brightness-105";
   }
   return "bg-gradient-to-r from-emerald-800 to-emerald-600 shadow-md shadow-emerald-800/10 hover:brightness-110";
 };
@@ -199,6 +214,9 @@ const getThemeInactiveTabClass = (theme) => {
   if (theme === "gradient-cyberpunk") {
     return "text-fuchsia-300/80 hover:text-white hover:bg-fuchsia-500/20";
   }
+  if (theme === "gradient-electric-blue") {
+    return "text-slate-650 hover:text-slate-900 hover:bg-blue-500/10";
+  }
   return "text-emerald-300/80 hover:text-white hover:bg-emerald-500/15";
 };
 
@@ -209,6 +227,9 @@ const getThemeSecondaryBtnClass = (theme) => {
   if (theme === "gradient-cyberpunk") {
     return "bg-fuchsia-950/40 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 transition-all duration-200";
   }
+  if (theme === "gradient-electric-blue") {
+    return "bg-blue-500/10 hover:bg-blue-500/20 text-blue-800 border border-blue-200/50 shadow-sm transition-all duration-200";
+  }
   return "bg-emerald-950/40 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/20 transition-all duration-200";
 };
 
@@ -218,6 +239,9 @@ const getThemeCloseBtnClass = (theme) => {
   }
   if (theme === "gradient-cyberpunk") {
     return "bg-fuchsia-950/45 hover:bg-fuchsia-500/25 text-fuchsia-300 border border-fuchsia-500/30 transition-colors duration-150";
+  }
+  if (theme === "gradient-electric-blue") {
+    return "bg-blue-500/10 hover:bg-blue-500/25 text-blue-700 border border-blue-200/40 transition-colors duration-150";
   }
   return "bg-emerald-950/40 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-colors duration-150";
 };
@@ -238,7 +262,7 @@ export default function App() {
   // Visual Theme State
   const [visualTheme, setVisualTheme] = useState(() => {
     const saved = localStorage.getItem("app_theme");
-    const allowed = ["gradient-green", "gradient-warm", "gradient-cyberpunk"];
+    const allowed = ["gradient-green", "gradient-warm", "gradient-cyberpunk", "gradient-electric-blue"];
     if (allowed.includes(saved)) {
       return saved;
     }
@@ -248,12 +272,23 @@ export default function App() {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove("theme-classic", "theme-gradient", "theme-gradient-green", "theme-gradient-sunset", "theme-gradient-warm", "theme-gradient-muted-harmony", "theme-gradient-cyberpunk");
+    root.classList.remove(
+      "theme-classic", 
+      "theme-gradient", 
+      "theme-gradient-green", 
+      "theme-gradient-sunset", 
+      "theme-gradient-warm", 
+      "theme-gradient-muted-harmony", 
+      "theme-gradient-cyberpunk",
+      "theme-gradient-electric-blue"
+    );
     
     if (visualTheme === "gradient-warm") {
       root.classList.add("theme-gradient-warm");
     } else if (visualTheme === "gradient-cyberpunk") {
       root.classList.add("theme-gradient-cyberpunk");
+    } else if (visualTheme === "gradient-electric-blue") {
+      root.classList.add("theme-gradient-electric-blue");
     } else {
       root.classList.add("theme-gradient-green");
     }
@@ -3335,14 +3370,14 @@ export default function App() {
                   </button>
 
                   {isThemeDropdownOpen && (() => {
-                    const isWarm = visualTheme === "gradient-warm";
-                    const dropdownBgClass = isWarm 
-                      ? "bg-white/80 border-white/20 text-slate-900 shadow-lg shadow-amber-500/5"
+                    const isClearGlass = visualTheme === "gradient-warm" || visualTheme === "gradient-electric-blue";
+                    const dropdownBgClass = isClearGlass 
+                      ? "bg-white/75 border-white/30 text-slate-900 shadow-2xl"
                       : "bg-slate-900/80 border-slate-700/30 text-white shadow-lg shadow-slate-950/40";
                     
                     return (
                       <div 
-                        className={`absolute right-0 top-full mt-2 w-48 rounded-[1.25rem] backdrop-blur-md border p-2 z-50 flex flex-col gap-1 animate-scale-in ${dropdownBgClass}`}
+                        className={`absolute right-0 top-full mt-2 w-48 rounded-[1.25rem] backdrop-blur-lg border p-2 z-50 flex flex-col gap-1 animate-scale-in ${dropdownBgClass}`}
                         style={{ zIndex: 9999 }}
                       >
                         {/* Green Theme */}
@@ -3355,8 +3390,8 @@ export default function App() {
                           }}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full ${
                             visualTheme === "gradient-green" 
-                              ? (isWarm ? "bg-emerald-500/20 text-emerald-600" : "bg-[#10b981]/25 text-[#10b981]")
-                              : (isWarm ? "text-slate-700 hover:bg-emerald-500/10 hover:text-emerald-600" : "text-white/80 hover:bg-[#10b981]/15 hover:text-[#10b981]")
+                              ? (isClearGlass ? "bg-emerald-500/20 text-emerald-600" : "bg-[#10b981]/25 text-[#10b981]")
+                              : (isClearGlass ? "text-slate-700 hover:bg-emerald-500/10 hover:text-emerald-600" : "text-white/80 hover:bg-[#10b981]/15 hover:text-[#10b981]")
                           }`}
                         >
                           <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-emerald-800 to-lime-400 border border-emerald-500/20 block shrink-0" />
@@ -3373,8 +3408,8 @@ export default function App() {
                           }}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full ${
                             visualTheme === "gradient-warm"
-                              ? (isWarm ? "bg-orange-500/20 text-orange-600" : "bg-orange-500/25 text-orange-300")
-                              : (isWarm ? "text-slate-700 hover:bg-orange-500/10 hover:text-orange-600" : "text-white/80 hover:bg-orange-500/15 hover:text-orange-350")
+                              ? (isClearGlass ? "bg-orange-500/20 text-orange-600" : "bg-orange-500/25 text-orange-300")
+                              : (isClearGlass ? "text-slate-700 hover:bg-orange-500/10 hover:text-orange-600" : "text-white/80 hover:bg-orange-500/15 hover:text-orange-350")
                           }`}
                         >
                           <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#F8D675] to-[#F98A8B] border border-amber-300/20 block shrink-0" />
@@ -3391,12 +3426,30 @@ export default function App() {
                           }}
                           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full ${
                             visualTheme === "gradient-cyberpunk"
-                              ? (isWarm ? "bg-fuchsia-500/20 text-fuchsia-600" : "bg-fuchsia-500/25 text-fuchsia-300")
-                              : (isWarm ? "text-slate-700 hover:bg-fuchsia-500/10 hover:text-fuchsia-600" : "text-white/80 hover:bg-fuchsia-500/15 hover:text-fuchsia-300")
+                              ? (isClearGlass ? "bg-fuchsia-500/20 text-fuchsia-600" : "bg-fuchsia-500/25 text-fuchsia-300")
+                              : (isClearGlass ? "text-slate-700 hover:bg-fuchsia-500/10 hover:text-fuchsia-600" : "text-white/80 hover:bg-fuchsia-500/15 hover:text-fuchsia-300")
                           }`}
                         >
                           <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#260073] via-[#D82EFF] to-[#FFFF00] border border-amber-300/20 block shrink-0" />
                           <span>Neon Cyber</span>
+                        </button>
+
+                        {/* Electric Blue Theme */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVisualTheme("gradient-electric-blue");
+                            localStorage.setItem("app_theme", "gradient-electric-blue");
+                            setIsThemeDropdownOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full ${
+                            visualTheme === "gradient-electric-blue"
+                              ? (isClearGlass ? "bg-blue-50/20 text-blue-600" : "bg-blue-500/25 text-blue-300")
+                              : (isClearGlass ? "text-slate-700 hover:bg-blue-500/10 hover:text-blue-600" : "text-white/80 hover:bg-blue-500/15 hover:text-blue-300")
+                          }`}
+                        >
+                          <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#3EFFD4] via-[#00B4FF] to-[#3262FF] border border-blue-300/20 block shrink-0" />
+                          <span>Electric Ocean</span>
                         </button>
                       </div>
                     );
@@ -3424,11 +3477,15 @@ export default function App() {
                 {isNotificationsOpen && (() => {
                   const isWarm = visualTheme === "gradient-warm";
                   const isCyber = visualTheme === "gradient-cyberpunk";
+                  const isElectric = visualTheme === "gradient-electric-blue";
+                  const isClearGlass = isWarm || isElectric;
 
                   // Container styling
                   let notifContainerClass = "";
                   if (isCyber) {
                     notifContainerClass = "bg-[#260073]/80 backdrop-blur-md border border-fuchsia-500/30 text-white shadow-2xl shadow-fuchsia-500/10";
+                  } else if (isElectric) {
+                    notifContainerClass = "bg-white/75 backdrop-blur-lg border border-white/30 text-slate-900 shadow-2xl";
                   } else if (isWarm) {
                     notifContainerClass = "bg-white/80 backdrop-blur-md border border-orange-200/50 text-slate-900 shadow-lg shadow-amber-500/5";
                   } else {
@@ -3440,6 +3497,8 @@ export default function App() {
                   let notifHeaderClass = "";
                   if (isCyber) {
                     notifHeaderClass = "border-b border-fuchsia-500/25 bg-fuchsia-950/20";
+                  } else if (isElectric) {
+                    notifHeaderClass = "border-b border-blue-100 bg-blue-50/30";
                   } else if (isWarm) {
                     notifHeaderClass = "border-b border-orange-100 bg-orange-50/30";
                   } else {
@@ -3447,12 +3506,14 @@ export default function App() {
                   }
 
                   // Header title text
-                  const notifHeaderTitleClass = isWarm ? "text-slate-800" : "text-white";
+                  const notifHeaderTitleClass = isClearGlass ? "text-slate-800 font-extrabold" : "text-white";
 
                   // List divider class
                   let notifDividerClass = "";
                   if (isCyber) {
                     notifDividerClass = "divide-y divide-fuchsia-500/15";
+                  } else if (isElectric) {
+                    notifDividerClass = "divide-y divide-blue-100";
                   } else if (isWarm) {
                     notifDividerClass = "divide-y divide-orange-100";
                   } else {
@@ -3462,6 +3523,11 @@ export default function App() {
                   // Notif item bg & hover
                   const getNotifItemClass = (notif) => {
                     const isUnread = notif.read !== true;
+                    if (isElectric) {
+                      return `p-3 flex items-start gap-2.5 hover:bg-blue-500/5 transition-colors duration-150 relative group cursor-pointer ${
+                        isUnread ? "bg-blue-500/5" : ""
+                      }`;
+                    }
                     if (isWarm) {
                       return `p-3 flex items-start gap-2.5 hover:bg-orange-500/5 transition-colors duration-150 relative group cursor-pointer ${
                         isUnread ? "bg-orange-500/5" : ""
@@ -3479,10 +3545,10 @@ export default function App() {
                   };
 
                   // Notif item title
-                  const notifItemTitleClass = isWarm ? "text-slate-800" : "text-slate-200";
+                  const notifItemTitleClass = isClearGlass ? "text-slate-800" : "text-slate-200";
 
                   // Notif item message
-                  const notifItemMessageClass = isWarm ? "text-slate-600" : "text-slate-400";
+                  const notifItemMessageClass = isClearGlass ? "text-slate-600" : "text-slate-400";
 
                   return (
                     <div 

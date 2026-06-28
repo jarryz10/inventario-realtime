@@ -331,6 +331,104 @@ body {
   background-color: #260073 !important;
 }
 
+
+/* --- THEME GRADIENT ELECTRIC BLUE (Electric Ocean - Cian, Celeste y Azul) --- */
+.theme-gradient-electric-blue body,
+.theme-gradient-electric-blue .dashboard-root {
+  background: linear-gradient(135deg, #3EFFD4 0%, #00B4FF 50%, #3262FF 100%) !important;
+  background-attachment: fixed !important;
+  color: #1e293b !important;
+}
+
+.theme-gradient-electric-blue .glass-container,
+.theme-gradient-electric-blue .glass-card {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #1e293b !important;
+}
+
+.theme-gradient-electric-blue .glass-sidebar {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-right: 1px solid rgba(0, 180, 255, 0.25) !important;
+  border-top-right-radius: 2.5rem !important;
+  border-bottom-right-radius: 2.5rem !important;
+  border-radius: 0px 2.5rem 2.5rem 0px !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #1e293b !important;
+}
+
+/* Electric Blue Theme Text overrides to guarantee readability on light background */
+.theme-gradient-electric-blue h1,
+.theme-gradient-electric-blue h2,
+.theme-gradient-electric-blue h3,
+.theme-gradient-electric-blue h4,
+.theme-gradient-electric-blue h5,
+.theme-gradient-electric-blue h6,
+.theme-gradient-electric-blue p,
+.theme-gradient-electric-blue span,
+.theme-gradient-electric-blue label,
+.theme-gradient-electric-blue div,
+.theme-gradient-electric-blue td,
+.theme-gradient-electric-blue th,
+.theme-gradient-electric-blue .product-name-text,
+.theme-gradient-electric-blue .text-white,
+.theme-gradient-electric-blue .text-slate-100,
+.theme-gradient-electric-blue .text-slate-200,
+.theme-gradient-electric-blue .text-slate-300,
+.theme-gradient-electric-blue .text-slate-400,
+.theme-gradient-electric-blue .text-slate-500,
+.theme-gradient-electric-blue .text-slate-800,
+.theme-gradient-electric-blue .text-slate-900,
+.theme-gradient-electric-blue .text-emerald-800,
+.theme-gradient-electric-blue .text-emerald-955,
+.theme-gradient-electric-blue .text-emerald-950,
+.theme-gradient-electric-blue .text-emerald-700,
+.theme-gradient-electric-blue .text-emerald-900 {
+  color: #1e293b !important;
+}
+
+.theme-gradient-electric-blue .glass-card .text-slate-500,
+.theme-gradient-electric-blue .glass-card .text-slate-400,
+.theme-gradient-electric-blue .glass-container .text-slate-500,
+.theme-gradient-electric-blue .glass-container .text-slate-400,
+.theme-gradient-electric-blue .glass-sidebar .text-slate-500,
+.theme-gradient-electric-blue .glass-sidebar .text-slate-400 {
+  color: rgba(30, 41, 59, 0.75) !important;
+}
+
+.theme-gradient-electric-blue .glass-input {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+  border: 1px solid rgba(0, 180, 255, 0.25) !important;
+  color: #1e293b !important;
+  border-radius: 9999px !important;
+  outline: none;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.theme-gradient-electric-blue .glass-input::placeholder {
+  color: rgba(30, 41, 59, 0.5) !important;
+}
+.theme-gradient-electric-blue .glass-input:focus {
+  border-color: #3EFFD4 !important;
+  box-shadow: 0 0 0 1px #3EFFD4 !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.theme-gradient-electric-blue option,
+.theme-gradient-electric-blue select.glass-input option {
+  color: #1e293b !important;
+  background-color: #ffffff !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -514,6 +612,30 @@ button.bg-emerald-500 {
 }
 
 
+/* Electric Blue Theme buttons styling */
+.theme-gradient-electric-blue button.btn-metallic-bronze,
+.theme-gradient-electric-blue button.btn-metallic-silver,
+.theme-gradient-electric-blue button[type="submit"],
+.theme-gradient-electric-blue button.bg-gradient-to-r,
+.theme-gradient-electric-blue button.bg-gradient-to-tr,
+.theme-gradient-electric-blue button.bg-sky-500,
+.theme-gradient-electric-blue button.bg-emerald-500 {
+  background: linear-gradient(135deg, #00B4FF 0%, #3262FF 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(0, 180, 255, 0.35) !important;
+}
+.theme-gradient-electric-blue button.btn-metallic-bronze:hover,
+.theme-gradient-electric-blue button.btn-metallic-silver:hover,
+.theme-gradient-electric-blue button[type="submit"]:hover,
+.theme-gradient-electric-blue button.bg-gradient-to-r:hover,
+.theme-gradient-electric-blue button.bg-gradient-to-tr:hover,
+.theme-gradient-electric-blue button.bg-sky-500:hover,
+.theme-gradient-electric-blue button.bg-emerald-500:hover {
+  background: linear-gradient(135deg, #3262FF 0%, #00B4FF 100%) !important;
+  box-shadow: 0 6px 20px rgba(0, 180, 255, 0.5) !important;
+}
+
+
 /* Dashboard Fullscreen */
 .dashboard-root {
   border-radius: 0px !important;
@@ -684,6 +806,60 @@ button.bg-emerald-500 {
 }
 .theme-gradient-cyberpunk .card-trash-btn:hover {
   color: #FFFF00 !important;
+}
+
+
+/* 7. Electric Blue Theme */
+.theme-gradient-electric-blue .inventory-item-card {
+  background: linear-gradient(135deg, rgba(62, 255, 212, 0.12) 0%, rgba(0, 180, 255, 0.12) 50%, rgba(50, 98, 255, 0.12) 100%) !important;
+  border: 1px solid rgba(0, 180, 255, 0.35) !important;
+  color: #1e293b !important;
+  box-shadow: 0 10px 25px rgba(0, 180, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.theme-gradient-electric-blue .inventory-item-card:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  box-shadow: 0 20px 30px rgba(0, 180, 255, 0.18) !important;
+  border-color: rgba(62, 255, 212, 0.6) !important;
+  filter: brightness(1.02);
+}
+.theme-gradient-electric-blue .card-brand-tag {
+  color: #3262FF !important;
+}
+.theme-gradient-electric-blue .card-title-text {
+  color: #1e293b !important;
+}
+.theme-gradient-electric-blue .card-model-text {
+  color: #4b5563 !important;
+}
+.theme-gradient-electric-blue .card-divider {
+  border-color: rgba(0, 180, 255, 0.2) !important;
+}
+.theme-gradient-electric-blue .card-capsule {
+  background: linear-gradient(135deg, #3EFFD4 0%, #00B4FF 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 180, 255, 0.15) !important;
+}
+.theme-gradient-electric-blue .card-capsule-label {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+  opacity: 0.9;
+}
+.theme-gradient-electric-blue .card-capsule-val {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+.theme-gradient-electric-blue .card-stock-label {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+.theme-gradient-electric-blue .card-trash-btn {
+  color: #ef4444 !important;
+}
+.theme-gradient-electric-blue .card-trash-btn:hover {
+  color: #dc2626 !important;
 }
 
 /* Dynamic Hover for standard buttons */
