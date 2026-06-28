@@ -192,6 +192,36 @@ const getHeaderIconColor = (theme) => {
   return "text-white";
 };
 
+const getThemeInactiveTabClass = (theme) => {
+  if (theme === "gradient-warm") {
+    return "text-slate-650 hover:text-slate-900 hover:bg-orange-500/10";
+  }
+  if (theme === "gradient-cyberpunk") {
+    return "text-fuchsia-300/80 hover:text-white hover:bg-fuchsia-500/20";
+  }
+  return "text-emerald-300/80 hover:text-white hover:bg-emerald-500/15";
+};
+
+const getThemeSecondaryBtnClass = (theme) => {
+  if (theme === "gradient-warm") {
+    return "bg-orange-500/10 hover:bg-orange-500/20 text-orange-850 border border-orange-200/50 shadow-sm transition-all duration-200";
+  }
+  if (theme === "gradient-cyberpunk") {
+    return "bg-fuchsia-950/40 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 transition-all duration-200";
+  }
+  return "bg-emerald-950/40 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/20 transition-all duration-200";
+};
+
+const getThemeCloseBtnClass = (theme) => {
+  if (theme === "gradient-warm") {
+    return "bg-orange-500/10 hover:bg-orange-500/25 text-orange-700 border border-orange-200/40 transition-colors duration-150";
+  }
+  if (theme === "gradient-cyberpunk") {
+    return "bg-fuchsia-950/45 hover:bg-fuchsia-500/25 text-fuchsia-300 border border-fuchsia-500/30 transition-colors duration-150";
+  }
+  return "bg-emerald-950/40 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-colors duration-150";
+};
+
 
 const MOCK_ICONS = [
   { name: "CPU", url: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?w=100&auto=format&fit=crop&q=80" },
@@ -3201,7 +3231,7 @@ export default function App() {
                     className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-full transition-all duration-200 cursor-pointer text-left ${
                       isActive
                         ? getThemeActiveTabClass(visualTheme)
-                        : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        : getThemeInactiveTabClass(visualTheme)
                     }`}
                     title={tabTitle}
                   >
@@ -5538,7 +5568,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setEditingUser(null)}
-                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale"
+                className={`w-9 h-9 rounded-full flex items-center justify-center hover-scale cursor-pointer ${getThemeCloseBtnClass(visualTheme)}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -5659,7 +5689,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs hover-scale cursor-pointer"
+                  className={`px-4 py-2 rounded-xl font-bold text-xs hover-scale cursor-pointer ${getThemeSecondaryBtnClass(visualTheme)}`}
                 >
                   {t.cancel}
                 </button>
@@ -5711,7 +5741,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsMovementsModalOpen(false)}
-                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale cursor-pointer"
+                  className={`w-9 h-9 rounded-full flex items-center justify-center hover-scale cursor-pointer ${getThemeCloseBtnClass(visualTheme)}`}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -5783,7 +5813,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsMovementsModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs hover-scale cursor-pointer"
+                className={`px-5 py-2 rounded-xl font-bold text-xs hover-scale cursor-pointer ${getThemeSecondaryBtnClass(visualTheme)}`}
               >
                 {t.cancel}
               </button>
@@ -5811,7 +5841,7 @@ export default function App() {
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale"
+                className={`w-9 h-9 rounded-full flex items-center justify-center hover-scale cursor-pointer ${getThemeCloseBtnClass(visualTheme)}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -6098,7 +6128,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs transition-colors hover-scale"
+                  className={`flex-1 py-3 rounded-xl font-bold text-xs hover-scale ${getThemeSecondaryBtnClass(visualTheme)}`}
                 >
                   {t.cancel}
                 </button>
@@ -6160,7 +6190,7 @@ export default function App() {
                     setSelectedProductId(null);
                     setIsEditingDetail(false);
                   }}
-                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale"
+                  className={`w-9 h-9 rounded-full flex items-center justify-center hover-scale cursor-pointer ${getThemeCloseBtnClass(visualTheme)}`}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -6574,7 +6604,7 @@ export default function App() {
                     type="button"
                     onClick={() => setIsEditingDetail(false)}
                     disabled={isSavingDetail || isUploading}
-                    className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors disabled:opacity-50"
+                    className={`flex-1 py-3 rounded-xl font-bold text-xs hover-scale disabled:opacity-50 ${getThemeSecondaryBtnClass(visualTheme)}`}
                   >
                     {t.cancel}
                   </button>
@@ -6631,7 +6661,7 @@ export default function App() {
                   setResetPasswordTargetUser(null);
                   setNewDirectPassword("");
                 }} 
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale cursor-pointer border-none"
+                className={`w-8 h-8 rounded-full flex items-center justify-center hover-scale cursor-pointer ${getThemeCloseBtnClass(visualTheme)}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -6674,7 +6704,7 @@ export default function App() {
                     setNewDirectPassword("");
                   }}
                   disabled={isResetPasswordSubmitting}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
+                  className={`flex-1 py-2.5 rounded-xl font-bold text-xs hover-scale cursor-pointer ${getThemeSecondaryBtnClass(visualTheme)}`}
                 >
                   {t.cancel}
                 </button>
@@ -6720,7 +6750,7 @@ export default function App() {
               <button 
                 type="button" 
                 onClick={() => setIsCatalogModalOpen(false)} 
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors border-none cursor-pointer hover-scale"
+                className={`w-8 h-8 rounded-full flex items-center justify-center hover-scale cursor-pointer ${getThemeCloseBtnClass(visualTheme)}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -6880,7 +6910,7 @@ export default function App() {
                 type="button"
                 onClick={() => setIsCatalogModalOpen(false)}
                 disabled={isCatalogSaving}
-                className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
+                className={`flex-1 py-2.5 rounded-xl font-bold text-xs hover-scale cursor-pointer ${getThemeSecondaryBtnClass(visualTheme)}`}
               >
                 {t.cancel}
               </button>
@@ -6924,7 +6954,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setIsChangePasswordOpen(false)}
-                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale cursor-pointer border-none"
+                className={`w-9 h-9 rounded-full flex items-center justify-center hover-scale cursor-pointer ${getThemeCloseBtnClass(visualTheme)}`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -7001,7 +7031,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() => setIsChangePasswordOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs hover-scale cursor-pointer border-none"
+                  className={`px-4 py-2 rounded-xl font-bold text-xs hover-scale cursor-pointer ${getThemeSecondaryBtnClass(visualTheme)}`}
                 >
                   {t.cancel}
                 </button>
