@@ -6489,15 +6489,15 @@ export default function App() {
       {/* POPUP MODAL: Asignación Directa de Contraseña (Administrador) */}
       {isResetPasswordModalOpen && resetPasswordTargetUser && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[#064e3b] text-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in border border-emerald-800/40 flex flex-col">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col`}>
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-white font-serif-premium">
+                <h2 className="text-lg font-bold font-serif-premium">
                   {language === "es" ? "Restablecer Contraseña" : "Reset Password"}
                 </h2>
-                <p className="text-xs text-emerald-200 mt-0.5 opacity-80">
+                <p className="text-xs mt-0.5 opacity-80">
                   {language === "es" 
                     ? `Asigna directamente una nueva contraseña a "${resetPasswordTargetUser.name}".` 
                     : `Directly assign a new password to "${resetPasswordTargetUser.name}".`}
@@ -6510,7 +6510,7 @@ export default function App() {
                   setResetPasswordTargetUser(null);
                   setNewDirectPassword("");
                 }} 
-                className="w-8 h-8 rounded-full hover:bg-white/10 text-white/75 hover:text-white flex items-center justify-center transition-colors border-none"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale cursor-pointer border-none"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -6519,7 +6519,7 @@ export default function App() {
             {/* Modal Body */}
             <form onSubmit={handleDirectPasswordResetSubmit} className="flex flex-col gap-4">
               <div>
-                <label className="text-[10px] font-bold text-emerald-250 uppercase tracking-wider block mb-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider block mb-1 opacity-80">
                   {language === "es" ? "Nueva Contraseña para el Usuario *" : "New Password for User *"}
                 </label>
                 <div className="relative">
@@ -6529,7 +6529,7 @@ export default function App() {
                     placeholder={language === "es" ? "Ej. nuevaContrase123" : "e.g. newPassword123"}
                     value={newDirectPassword}
                     onChange={(e) => setNewDirectPassword(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl text-xs glass-input font-bold"
                     required
                     autoFocus
                   />
@@ -6544,7 +6544,7 @@ export default function App() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-3 border-t border-white/10 mt-2">
+              <div className="flex gap-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/50 mt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -6553,14 +6553,14 @@ export default function App() {
                     setNewDirectPassword("");
                   }}
                   disabled={isResetPasswordSubmitting}
-                  className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={isResetPasswordSubmitting}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
+                  className="flex-1 py-2.5 rounded-xl font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
                 >
                   {isResetPasswordSubmitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -6582,15 +6582,15 @@ export default function App() {
       {/* POPUP MODAL: Gestionar Catálogo de Impresoras */}
       {isCatalogModalOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[#064e3b] text-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in border border-emerald-800/40 flex flex-col max-h-[85vh]">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col max-h-[85vh]`}>
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-3 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-3 shrink-0">
               <div>
-                <h2 className="text-base font-bold text-white font-serif-premium">
+                <h2 className="text-base font-bold font-serif-premium">
                   {language === "es" ? "Gestionar Catálogo de Impresoras" : "Manage Printer Catalog"}
                 </h2>
-                <p className="text-[10px] text-emerald-250 mt-0.5 opacity-85">
+                <p className="text-[10px] mt-0.5 opacity-85">
                   {language === "es" 
                     ? "Agrega, edita direcciones IP o remueve equipos del catálogo." 
                     : "Add, edit IP addresses or remove equipment from the catalog."}
@@ -6599,20 +6599,20 @@ export default function App() {
               <button 
                 type="button" 
                 onClick={() => setIsCatalogModalOpen(false)} 
-                className="w-8 h-8 rounded-full hover:bg-white/10 text-white/75 hover:text-white flex items-center justify-center transition-colors border-none cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors border-none cursor-pointer hover-scale"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Form to Add New Equipment */}
-            <div className="bg-white/5 border border-white/10 p-3.5 rounded-2xl flex flex-wrap gap-2.5 items-end mb-3.5">
+            <div className="bg-slate-500/5 border border-slate-200/50 dark:border-slate-800/40 p-3.5 rounded-2xl flex flex-wrap gap-2.5 items-end mb-3.5">
               <div className="flex-1 min-w-[70px]">
-                <label className="text-[9px] font-bold text-slate-450 block mb-1">Línea</label>
+                <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Línea</label>
                 <select
                   value={newCatalogItem.line}
                   onChange={(e) => setNewCatalogItem({ ...newCatalogItem, line: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs glass-input font-bold"
                 >
                   {["A", "B", "C", "D"].map(l => (
                     <option key={l} value={l}>Línea {l}</option>
@@ -6620,7 +6620,7 @@ export default function App() {
                 </select>
               </div>
               <div className="flex-1 min-w-[80px]">
-                <label className="text-[9px] font-bold text-slate-455 block mb-1">Estación</label>
+                <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Estación</label>
                 <input
                   type="text"
                   placeholder="Ej. A01"
@@ -6629,11 +6629,11 @@ export default function App() {
                     const st = e.target.value.toUpperCase();
                     setNewCatalogItem({ ...newCatalogItem, station: st });
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs glass-input font-bold"
                 />
               </div>
               <div className="flex-1 min-w-[90px]">
-                <label className="text-[9px] font-bold text-slate-455 block mb-1">Impresora</label>
+                <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Impresora</label>
                 <select
                   value={newCatalogItem.printerType}
                   onChange={(e) => {
@@ -6641,7 +6641,7 @@ export default function App() {
                     const suggestedIP = getPrinterIP(newCatalogItem.station, selectedType) || `10.40.1.101`;
                     setNewCatalogItem({ ...newCatalogItem, printerType: selectedType, ip: suggestedIP });
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-bold outline-none focus:border-emerald-500"
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs glass-input font-bold"
                 >
                   {["Sato", "Zebra", "Zebra 4x8", "Lexmark"].map(model => (
                     <option key={model} value={model}>{model}</option>
@@ -6649,13 +6649,13 @@ export default function App() {
                 </select>
               </div>
               <div className="flex-2 min-w-[120px]">
-                <label className="text-[9px] font-bold text-slate-455 block mb-1">Dirección IP</label>
+                <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Dirección IP</label>
                 <input
                   type="text"
                   placeholder="Ej. 10.40.1.101"
                   value={newCatalogItem.ip}
                   onChange={(e) => setNewCatalogItem({ ...newCatalogItem, ip: e.target.value })}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-700 text-xs text-slate-800 dark:text-white font-mono font-bold outline-none focus:border-emerald-500"
+                  className="w-full px-2.5 py-1.5 rounded-lg text-xs glass-input font-mono font-bold"
                 />
               </div>
               <button
@@ -6674,24 +6674,24 @@ export default function App() {
                   setTempCatalog([...tempCatalog, { ...newCatalogItem, station: cleanedStation }]);
                   setNewCatalogItem({ ...newCatalogItem, station: "", ip: "" });
                 }}
-                className="px-3.5 py-1.5 rounded-lg bg-lime-400 hover:bg-lime-300 text-emerald-950 font-black text-xs hover-scale border-none cursor-pointer shrink-0"
+                className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-black text-xs hover-scale border-none cursor-pointer shrink-0"
               >
                 + {language === "es" ? "Agregar" : "Add"}
               </button>
             </div>
 
             {/* Scrollable list of existing catalog items */}
-            <div className="flex-1 overflow-y-auto pr-1 my-2 scroll-glass max-h-[40vh] border border-white/10 rounded-2xl p-2.5 bg-slate-950/20">
+            <div className="flex-1 overflow-y-auto pr-1 my-2 scroll-glass max-h-[40vh] border border-slate-200/50 dark:border-slate-800/40 rounded-2xl p-2.5 bg-slate-950/5 dark:bg-slate-950/25">
               {tempCatalog.length === 0 ? (
-                <div className="text-center py-8 text-xs text-emerald-250/60 font-bold max-w-sm mx-auto leading-relaxed">
+                <div className="text-center py-8 text-xs text-slate-500 dark:text-slate-400 font-bold max-w-sm mx-auto leading-relaxed">
                   {language === "es" 
                     ? "No hay equipos registrados. Utiliza el formulario de arriba para agregar el primero." 
                     : "No equipment registered. Use the form above to add the first one."}
                 </div>
               ) : (
                 tempCatalog.map((item, idx) => (
-                  <div key={idx} className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 p-2 border-b border-white/5 last:border-b-0 animate-fade-in">
-                    <div className="w-12 text-[10px] font-black text-emerald-300 shrink-0">Línea {item.line}</div>
+                  <div key={idx} className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 p-2 border-b border-slate-200/50 dark:border-slate-800/20 last:border-b-0 animate-fade-in">
+                    <div className="w-12 text-[10px] font-black text-slate-650 dark:text-slate-350 shrink-0">Línea {item.line}</div>
                     
                     <input
                       type="text"
@@ -6701,7 +6701,7 @@ export default function App() {
                         updated[idx].station = e.target.value.toUpperCase();
                         setTempCatalog(updated);
                       }}
-                      className="w-16 px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-700/50 text-[11px] font-bold text-slate-800 dark:text-white outline-none"
+                      className="w-16 px-2 py-1 rounded text-[11px] font-bold glass-input"
                     />
 
                     <select
@@ -6711,7 +6711,7 @@ export default function App() {
                         updated[idx].printerType = e.target.value;
                         setTempCatalog(updated);
                       }}
-                      className="w-24 px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-700/50 text-[11px] font-bold text-slate-800 dark:text-white outline-none"
+                      className="w-24 px-2 py-1 rounded text-[11px] font-bold glass-input"
                     >
                       {["Sato", "Zebra", "Zebra 4x8", "Lexmark"].map(model => (
                         <option key={model} value={model}>{model}</option>
@@ -6727,7 +6727,7 @@ export default function App() {
                         setTempCatalog(updated);
                       }}
                       placeholder="10.40.X.X"
-                      className="flex-1 min-w-[110px] px-2 py-1 rounded bg-white dark:bg-slate-900 border border-slate-700/50 text-[11px] font-mono font-bold text-slate-800 dark:text-white outline-none"
+                      className="flex-1 min-w-[110px] px-2 py-1 rounded text-[11px] font-mono font-bold glass-input"
                     />
 
                     <button
@@ -6754,12 +6754,12 @@ export default function App() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-3.5 border-t border-white/10 mt-3 shrink-0">
+            <div className="flex gap-3 pt-3.5 border-t border-slate-200/50 dark:border-slate-800/50 mt-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsCatalogModalOpen(false)}
                 disabled={isCatalogSaving}
-                className="flex-1 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover-scale transition-colors border-none cursor-pointer"
               >
                 {t.cancel}
               </button>
@@ -6767,7 +6767,7 @@ export default function App() {
                 type="button"
                 onClick={handleSavePrinterCatalog}
                 disabled={isCatalogSaving}
-                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
+                className="flex-1 py-2.5 rounded-xl font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
               >
                 {isCatalogSaving ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -6788,22 +6788,22 @@ export default function App() {
       {/* POPUP MODAL: Cambiar Contraseña del Perfil */}
       {isChangePasswordOpen && (
         <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-[#064e3b] text-white w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in border border-emerald-800/40 flex flex-col">
+          <div className={`glass-card ${getMetallicFrameClass(visualTheme)} w-full max-w-md rounded-[2.5rem] shadow-2xl p-6 relative overflow-hidden animate-scale-in flex flex-col`}>
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200/50 dark:border-slate-800/50 mb-4 shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-white font-serif-premium">
+                <h2 className="text-lg font-bold font-serif-premium">
                   {language === "es" ? "Cambiar Contraseña" : "Change Password"}
                 </h2>
-                <p className="text-xs text-emerald-100 mt-0.5 opacity-80">
+                <p className="text-xs mt-0.5 opacity-80">
                   {language === "es" ? "Actualiza tus credenciales de acceso técnico." : "Update your technical access credentials."}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsChangePasswordOpen(false)}
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors hover-scale"
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-colors hover-scale cursor-pointer border-none"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -6813,7 +6813,7 @@ export default function App() {
             <form onSubmit={handleChangePasswordSubmit} className="flex flex-col gap-4">
               {/* Contraseña Actual */}
               <div>
-                <label className="text-xs font-bold text-emerald-100 block mb-1">
+                <label className="text-xs font-bold block mb-1 opacity-80">
                   {language === "es" ? "Contraseña Actual" : "Current Password"}
                 </label>
                 <div className="relative">
@@ -6823,7 +6823,7 @@ export default function App() {
                     placeholder="••••••••"
                     value={changePasswordForm.currentPassword}
                     onChange={(e) => setChangePasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold text-slate-800"
+                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold"
                     style={{ paddingLeft: "40px" }}
                     required
                   />
@@ -6832,7 +6832,7 @@ export default function App() {
 
               {/* Nueva Contraseña */}
               <div>
-                <label className="text-xs font-bold text-emerald-100 block mb-1">
+                <label className="text-xs font-bold block mb-1 opacity-80">
                   {language === "es" ? "Nueva Contraseña" : "New Password"}
                 </label>
                 <div className="relative">
@@ -6842,7 +6842,7 @@ export default function App() {
                     placeholder="••••••••"
                     value={changePasswordForm.newPassword}
                     onChange={(e) => setChangePasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold text-slate-800"
+                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold"
                     style={{ paddingLeft: "40px" }}
                     required
                   />
@@ -6851,7 +6851,7 @@ export default function App() {
 
               {/* Confirmar Nueva Contraseña */}
               <div>
-                <label className="text-xs font-bold text-emerald-100 block mb-1">
+                <label className="text-xs font-bold block mb-1 opacity-80">
                   {language === "es" ? "Confirmar Nueva Contraseña" : "Confirm New Password"}
                 </label>
                 <div className="relative">
@@ -6861,7 +6861,7 @@ export default function App() {
                     placeholder="••••••••"
                     value={changePasswordForm.confirmNewPassword}
                     onChange={(e) => setChangePasswordForm(prev => ({ ...prev, confirmNewPassword: e.target.value }))}
-                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold text-slate-800"
+                    className="w-full py-2.5 rounded-xl text-xs glass-input font-semibold"
                     style={{ paddingLeft: "40px" }}
                     required
                   />
@@ -6876,18 +6876,18 @@ export default function App() {
               )}
 
               {/* Form Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10 mt-2">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200/50 dark:border-slate-800/50 mt-2">
                 <button
                   type="button"
                   onClick={() => setIsChangePasswordOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs hover-scale cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 font-bold text-xs hover-scale cursor-pointer border-none"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={isChangePasswordSubmitting}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-lime-400 to-emerald-500 hover:from-lime-300 hover:to-emerald-400 text-emerald-950 font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
+                  className="px-6 py-2.5 rounded-xl font-black text-xs shadow-lg hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer border-none"
                 >
                   {isChangePasswordSubmitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
