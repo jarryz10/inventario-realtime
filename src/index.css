@@ -430,6 +430,102 @@ body {
 }
 
 
+/* --- THEME GRADIENT CYBERPUNK (Neon Cyber - Morado, Fucsia y Amarillo) --- */
+.theme-gradient-cyberpunk body,
+.theme-gradient-cyberpunk .dashboard-root {
+  background: linear-gradient(135deg, #260073 0%, #D82EFF 50%, #FFFF00 100%) !important;
+  background-attachment: fixed !important;
+  color: #ffffff !important;
+}
+
+.theme-gradient-cyberpunk .glass-container,
+.theme-gradient-cyberpunk .glass-card {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(38, 0, 115, 0.45) !important;
+  border: 1px solid rgba(216, 46, 255, 0.3) !important;
+  box-shadow: 0 15px 35px rgba(216, 46, 255, 0.15) !important;
+  border-radius: 2rem !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #ffffff !important;
+}
+
+.theme-gradient-cyberpunk .glass-sidebar {
+  position: relative !important;
+  isolation: isolate !important;
+  background: rgba(38, 0, 115, 0.6) !important;
+  border-right: 1px solid rgba(216, 46, 255, 0.3) !important;
+  border-top-right-radius: 2.5rem !important;
+  border-bottom-right-radius: 2.5rem !important;
+  border-radius: 0px 2.5rem 2.5rem 0px !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  color: #ffffff !important;
+}
+
+/* Modales y cuadros de diálogo en Cyberpunk */
+.theme-gradient-cyberpunk .glass-card[class*="w-full max-w-"] {
+  background: rgba(38, 0, 115, 0.9) !important;
+  border: 1px solid rgba(216, 46, 255, 0.5) !important;
+  box-shadow: 0 0 25px rgba(216, 46, 255, 0.3) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+}
+
+/* Cyberpunk Text overrides to force white/neon text instead of slate text colors */
+.theme-gradient-cyberpunk h1,
+.theme-gradient-cyberpunk h2,
+.theme-gradient-cyberpunk h3,
+.theme-gradient-cyberpunk h4,
+.theme-gradient-cyberpunk h5,
+.theme-gradient-cyberpunk h6,
+.theme-gradient-cyberpunk p,
+.theme-gradient-cyberpunk span,
+.theme-gradient-cyberpunk label,
+.theme-gradient-cyberpunk div,
+.theme-gradient-cyberpunk td,
+.theme-gradient-cyberpunk th,
+.theme-gradient-cyberpunk .product-name-text,
+.theme-gradient-cyberpunk .text-slate-800,
+.theme-gradient-cyberpunk .text-slate-900 {
+  color: #ffffff !important;
+}
+
+.theme-gradient-cyberpunk .glass-card .text-slate-500,
+.theme-gradient-cyberpunk .glass-card .text-slate-400,
+.theme-gradient-cyberpunk .glass-container .text-slate-500,
+.theme-gradient-cyberpunk .glass-container .text-slate-400,
+.theme-gradient-cyberpunk .glass-sidebar .text-slate-500,
+.theme-gradient-cyberpunk .glass-sidebar .text-slate-400 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.theme-gradient-cyberpunk .glass-input {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(216, 46, 255, 0.4) !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  outline: none;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.theme-gradient-cyberpunk .glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+.theme-gradient-cyberpunk .glass-input:focus {
+  border-color: #FFFF00 !important;
+  box-shadow: 0 0 0 1px #FFFF00 !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.theme-gradient-cyberpunk option,
+.theme-gradient-cyberpunk select.glass-input option {
+  color: #ffffff !important;
+  background-color: #260073 !important;
+}
+
+
 /* --- THEME CLASSIC (Diseño Oscuro/Minimalista Plano Anterior) --- */
 .theme-classic body,
 .theme-classic .dashboard-root {
@@ -715,6 +811,29 @@ button.bg-emerald-500 {
   box-shadow: 0 6px 20px rgba(94, 114, 126, 0.35) !important;
 }
 
+/* Cyberpunk Theme buttons styling */
+.theme-gradient-cyberpunk button.btn-metallic-bronze,
+.theme-gradient-cyberpunk button.btn-metallic-silver,
+.theme-gradient-cyberpunk button[type="submit"],
+.theme-gradient-cyberpunk button.bg-gradient-to-r,
+.theme-gradient-cyberpunk button.bg-gradient-to-tr,
+.theme-gradient-cyberpunk button.bg-sky-500,
+.theme-gradient-cyberpunk button.bg-emerald-500 {
+  background: linear-gradient(135deg, #260073 0%, #D82EFF 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(216, 46, 255, 0.3) !important;
+}
+.theme-gradient-cyberpunk button.btn-metallic-bronze:hover,
+.theme-gradient-cyberpunk button.btn-metallic-silver:hover,
+.theme-gradient-cyberpunk button[type="submit"]:hover,
+.theme-gradient-cyberpunk button.bg-gradient-to-r:hover,
+.theme-gradient-cyberpunk button.bg-gradient-to-tr:hover,
+.theme-gradient-cyberpunk button.bg-sky-500:hover,
+.theme-gradient-cyberpunk button.bg-emerald-500:hover {
+  background: linear-gradient(135deg, #D82EFF 0%, #260073 100%) !important;
+  box-shadow: 0 6px 20px rgba(216, 46, 255, 0.5) !important;
+}
+
 /* Classic Theme buttons styling */
 .theme-classic button.btn-metallic-bronze,
 .theme-classic button.btn-metallic-silver,
@@ -981,6 +1100,58 @@ button.bg-emerald-500 {
 }
 .theme-classic .card-trash-btn:hover {
   color: #ef4444 !important;
+}
+
+/* 6. Cyberpunk Theme */
+.theme-gradient-cyberpunk .inventory-item-card {
+  background: linear-gradient(135deg, rgba(38, 0, 115, 0.55) 0%, rgba(216, 46, 255, 0.35) 100%) !important;
+  border: 1px solid rgba(216, 46, 255, 0.4) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 25px rgba(216, 46, 255, 0.15) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.theme-gradient-cyberpunk .inventory-item-card:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  box-shadow: 0 20px 30px rgba(216, 46, 255, 0.4) !important;
+  border-color: #FFFF00 !important;
+  filter: brightness(1.1);
+}
+.theme-gradient-cyberpunk .card-brand-tag {
+  color: #FFFF00 !important; /* neon yellow */
+}
+.theme-gradient-cyberpunk .card-title-text {
+  color: #ffffff !important;
+}
+.theme-gradient-cyberpunk .card-model-text {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+.theme-gradient-cyberpunk .card-divider {
+  border-color: rgba(216, 46, 255, 0.3) !important;
+}
+.theme-gradient-cyberpunk .card-capsule {
+  background: linear-gradient(135deg, #D82EFF 0%, #FFFF00 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(216, 46, 255, 0.2) !important;
+}
+.theme-gradient-cyberpunk .card-capsule-label {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+  opacity: 0.9;
+}
+.theme-gradient-cyberpunk .card-capsule-val {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+.theme-gradient-cyberpunk .card-stock-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+.theme-gradient-cyberpunk .card-trash-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.theme-gradient-cyberpunk .card-trash-btn:hover {
+  color: #FFFF00 !important;
 }
 
 /* Dynamic Hover for standard buttons */
