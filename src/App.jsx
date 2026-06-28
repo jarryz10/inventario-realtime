@@ -48,6 +48,7 @@ import {
   FileText,
   Printer,
   Radio,
+  Cpu,
   Users,
   Globe,
   Palette,
@@ -95,6 +96,13 @@ const TABS_CONFIG = [
     iconName: "Radio"
   },
   {
+    id: "robots",
+    title: "Limpieza de Robots",
+    description: "Registra y supervisa el servicio de mantenimiento y limpieza de robots",
+    shortTitle: "Limpieza Robots",
+    iconName: "Cpu"
+  },
+  {
     id: "usuario",
     title: "Administración de Usuarios",
     description: "Gestiona los asociados del equipo, sus niveles de acceso y credenciales de seguridad",
@@ -109,6 +117,7 @@ const ICON_COMPONENTS = {
   FileText,
   Printer,
   Radio,
+  Cpu,
   Bell,
   Users
 };
@@ -431,6 +440,26 @@ export default function App() {
   const [tempCatalog, setTempCatalog] = useState([]);
   const [newCatalogItem, setNewCatalogItem] = useState({ line: "A", station: "", printerType: "Sato", ip: "" });
   const [catalogError, setCatalogError] = useState("");
+
+  // Robot Cleaning State
+  const [robotCleanings, setRobotCleanings] = useState([]);
+  const [isRobotLoading, setIsRobotLoading] = useState(true);
+  const [robotId, setRobotId] = useState("");
+  const [robotScreen, setRobotScreen] = useState(true);
+  const [robotWheels, setRobotWheels] = useState(true);
+  const [robotExternal, setRobotExternal] = useState(true);
+  const [robotExtraRows, setRobotExtraRows] = useState([]);
+  const [isRobotSubmitting, setIsRobotSubmitting] = useState(false);
+  const [robotActiveSubTab, setRobotActiveSubTab] = useState("registro");
+  const [expandedRobotId, setExpandedRobotId] = useState(null);
+
+  useEffect(() => {
+    if (userLevel === 3) {
+      setRobotActiveSubTab("historial");
+    } else {
+      setRobotActiveSubTab("registro");
+    }
+  }, [userLevel]);
 
   // RFID Verification State
   const [rfidVerifications, setRfidVerifications] = useState([]);
@@ -932,6 +961,46 @@ export default function App() {
     } catch (error) {
       console.error("Failed to setup RFID verifications real-time listener:", error);
       setIsRfidLoading(false);
+    }
+  }, [currentUser, userLevel]);
+
+  // Effect to fetch robot cleanings in real-time from Firestore
+  useEffect(() => {
+    if (!currentUser || userLevel < 2) {
+      setRobotCleanings([]);
+      setIsRobotLoading(false);
+      return;
+    }
+    setIsRobotLoading(true);
+    try {
+      const q = collection(db, "robot_cleaning");
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          let list = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Sort by timestamp (newest first)
+          list.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
+          setRobotCleanings(list);
+          setIsRobotLoading(false);
+        },
+        (error) => {
+          console.error("Firestore robot cleanings query error:", error);
+          setIsRobotLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup robot cleanings real-time listener:", error);
+      setIsRobotLoading(false);
     }
   }, [currentUser, userLevel]);
 
@@ -2278,6 +2347,131 @@ export default function App() {
       setAlertMessage({ type: "error", text: "Error al registrar la verificación de RFID." });
     } finally {
       setIsRfidSubmitting(false);
+    }
+  };
+
+  // Robot Cleaning Helper Handlers
+  const handleAddRobotExtraRow = () => {
+    setRobotExtraRows([...robotExtraRows, { label: "", status: true }]);
+  };
+
+  const handleRemoveRobotExtraRow = (index) => {
+    const updated = robotExtraRows.filter((_, i) => i !== index);
+    setRobotExtraRows(updated);
+  };
+
+  const handleUpdateRobotExtraRowLabel = (index, val) => {
+    const updated = [...robotExtraRows];
+    updated[index].label = val;
+    setRobotExtraRows(updated);
+  };
+
+  const handleToggleRobotExtraRowStatus = (index) => {
+    const updated = [...robotExtraRows];
+    updated[index].status = !updated[index].status;
+    setRobotExtraRows(updated);
+  };
+
+  const handleSubmitRobotCleaning = async (e) => {
+    e.preventDefault();
+    if (userLevel >= 3) {
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" 
+          ? "Acceso Denegado: Los administradores (Nivel 3) no pueden registrar limpiezas." 
+          : "Access Denied: Administrators (Level 3) cannot register cleanings." 
+      });
+      return;
+    }
+    
+    const rId = robotId.trim();
+    if (!rId) {
+      setAlertMessage({ type: "error", text: language === "es" ? "ID de Robot obligatorio." : "Robot ID is required." });
+      return;
+    }
+
+    // Check custom rows
+    let hasEmptyCustomLabel = false;
+    robotExtraRows.forEach(row => {
+      if (!row.label.trim()) {
+        hasEmptyCustomLabel = true;
+      }
+    });
+
+    if (hasEmptyCustomLabel) {
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" 
+          ? "Por favor, completa todas las descripciones de las filas personalizadas." 
+          : "Please complete all custom row descriptions." 
+      });
+      return;
+    }
+
+    setIsRobotSubmitting(true);
+    try {
+      const items = [
+        { name: language === "es" ? "Limpieza de Pantalla" : "Screen Cleaning", status: robotScreen },
+        { name: language === "es" ? "Limpieza de Llantas" : "Tire Cleaning", status: robotWheels },
+        { name: language === "es" ? "Limpieza Externa" : "External Cleaning", status: robotExternal },
+        ...robotExtraRows.map(row => ({ name: row.label.trim(), status: row.status }))
+      ];
+
+      const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+      await addDoc(collection(db, "robot_cleaning"), {
+        robotId: rId,
+        items: items,
+        createdBy: currentUser.username,
+        nombreAsociado: getAssociateName(currentUser.username),
+        userLevel: userLevel,
+        date: today,
+        timestamp: serverTimestamp()
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "limpieza_robots",
+        message: language === "es"
+          ? `El operador "${currentUser.username}" ha registrado la Limpieza de Robot para el ID "${rId}".`
+          : `Operator "${currentUser.username}" has registered the Robot Cleaning for ID "${rId}".`,
+        title: language === "es" ? "Limpieza de Robots" : "Robot Cleaning",
+        read: false
+      });
+
+      setRobotId("");
+      setRobotScreen(true);
+      setRobotWheels(true);
+      setRobotExternal(true);
+      setRobotExtraRows([]);
+
+      setAlertMessage({ 
+        type: "success", 
+        text: language === "es" ? "¡Limpieza de robot registrada exitosamente!" : "Robot cleaning registered successfully!" 
+      });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error submitting robot cleaning:", error);
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" ? "Error al registrar la limpieza de robot." : "Error registering robot cleaning." 
+      });
+    } finally {
+      setIsRobotSubmitting(false);
+    }
+  };
+
+  const handleDeleteRobotCleaning = async (id) => {
+    if (userLevel < 2) return;
+    if (window.confirm(language === "es" ? "¿Estás seguro de que deseas eliminar este reporte de limpieza de robot?" : "Are you sure you want to delete this robot cleaning report?")) {
+      try {
+        await deleteDoc(doc(db, "robot_cleaning", id));
+        setAlertMessage({ type: "success", text: language === "es" ? "Reporte de limpieza de robot eliminado." : "Robot cleaning report deleted." });
+        setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+      } catch (error) {
+        console.error("Error deleting robot cleaning:", error);
+        setAlertMessage({ type: "error", text: language === "es" ? "Error al eliminar el reporte." : "Error deleting report." });
+      }
     }
   };
 
@@ -3780,7 +3974,7 @@ export default function App() {
 
           {/* Bottom Area containing the Tab Content Views */}
           <div className="flex-1 min-h-0 overflow-hidden relative z-10">
-            <div className={`h-full ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "usuario") ? "overflow-y-auto pb-4" : "overflow-hidden"}`}>
+            <div className={`h-full ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "robots" || activeTab === "usuario") ? "overflow-y-auto pb-4" : "overflow-hidden"}`}>
             
             {/* TAB 1: INVENTARIO */}
             {activeTab === "inventario" && (
@@ -5346,7 +5540,423 @@ export default function App() {
               </div>
             )}
 
-            {/* TAB 6: ADMINISTRACIÓN DE USUARIOS (Solo Nivel 3) */}
+            {/* TAB 6: LIMPIEZA DE ROBOTS */}
+            {activeTab === "robots" && (
+              <div className="flex flex-col gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass w-full animate-fade-in">
+                
+                {/* Sub-tab selection (Visible only if userLevel >= 2) */}
+                {userLevel >= 2 && (
+                  <div className="flex gap-2 p-1.5 rounded-full bg-slate-500/5 dark:bg-slate-900/10 border border-slate-200/40 dark:border-slate-800/30 max-w-md shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setRobotActiveSubTab("registro")}
+                      className={`flex-1 py-2 px-4 rounded-full text-xs font-bold transition-all duration-300 border-none cursor-pointer ${
+                        robotActiveSubTab === "registro"
+                          ? getThemeActiveTabClass(visualTheme)
+                          : getThemeInactiveTabClass(visualTheme)
+                      }`}
+                    >
+                      {language === "es" ? "Registrar Limpieza" : "Register Cleaning"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRobotActiveSubTab("historial")}
+                      className={`flex-1 py-2 px-4 rounded-full text-xs font-bold transition-all duration-300 border-none cursor-pointer ${
+                        robotActiveSubTab === "historial"
+                          ? getThemeActiveTabClass(visualTheme)
+                          : getThemeInactiveTabClass(visualTheme)
+                      }`}
+                    >
+                      {language === "es" ? "Historial de Reportes" : "Reports History"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Sub-tab 1: Formulario de Registro */}
+                {robotActiveSubTab === "registro" && (
+                  <div className="flex flex-col h-auto max-w-3xl">
+                    {userLevel >= 3 ? (
+                      /* Access Denied Card for Nivel 3 if they somehow attempt to see registration */
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-8 shadow-lg flex flex-col items-center text-center gap-4 border`}>
+                        <Shield className="w-16 h-16 text-rose-500 animate-pulse" />
+                        <h2 className="text-lg font-extrabold text-slate-800 dark:text-white font-serif-premium">
+                          {language === "es" ? "Acceso Restringido" : "Restricted Access"}
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
+                          {language === "es" 
+                            ? "Los usuarios con perfil de Administrador (Nivel 3) no tienen permisos para registrar servicios de limpieza de robots. Por favor, consulta el Historial de Reportes utilizando la pestaña superior."
+                            : "Users with Administrator profile (Level 3) do not have permissions to register robot cleaning services. Please check the Reports History using the top tab."}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-6 shadow-lg flex flex-col border`}>
+                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
+                          {language === "es" ? "Registrar Servicio de Limpieza de Robots" : "Register Robot Cleaning Service"}
+                        </h2>
+
+                        <form onSubmit={handleSubmitRobotCleaning} className="flex flex-col gap-6">
+                          {/* ID Robot Input */}
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                              {language === "es" ? "ID de Robot *" : "Robot ID *"}
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="Ej. ROBOT-A01"
+                              value={robotId}
+                              onChange={(e) => setRobotId(e.target.value.toUpperCase())}
+                              className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
+                            />
+                          </div>
+
+                          {/* Predefined Checklist Items */}
+                          <div className="flex flex-col gap-3">
+                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
+                              {language === "es" ? "Tareas de Limpieza Base" : "Base Cleaning Tasks"}
+                            </label>
+
+                            {/* Row 1: Pantalla */}
+                            <div className="flex items-center justify-between p-3.5 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 transition-all duration-200">
+                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                {language === "es" ? "Limpieza de Pantalla" : "Screen Cleaning"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setRobotScreen(!robotScreen)}
+                                className={`w-28 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer flex items-center justify-center gap-1.5 border-none shadow-sm transition-all duration-300 hover-scale ${
+                                  robotScreen
+                                    ? getThemeActiveTabClass(visualTheme)
+                                    : "bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400"
+                                }`}
+                              >
+                                {robotScreen ? (
+                                  <>
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>{language === "es" ? "Completado" : "Completed"}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <X className="w-3.5 h-3.5" />
+                                    <span>{language === "es" ? "Pendiente" : "Pending"}</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Row 2: Llantas */}
+                            <div className="flex items-center justify-between p-3.5 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 transition-all duration-200">
+                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                {language === "es" ? "Limpieza de Llantas" : "Tire Cleaning"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setRobotWheels(!robotWheels)}
+                                className={`w-28 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer flex items-center justify-center gap-1.5 border-none shadow-sm transition-all duration-300 hover-scale ${
+                                  robotWheels
+                                    ? getThemeActiveTabClass(visualTheme)
+                                    : "bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400"
+                                }`}
+                              >
+                                {robotWheels ? (
+                                  <>
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>{language === "es" ? "Completado" : "Completed"}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <X className="w-3.5 h-3.5" />
+                                    <span>{language === "es" ? "Pendiente" : "Pending"}</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Row 3: Externa */}
+                            <div className="flex items-center justify-between p-3.5 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 transition-all duration-200">
+                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                {language === "es" ? "Limpieza Externa" : "External Cleaning"}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setRobotExternal(!robotExternal)}
+                                className={`w-28 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer flex items-center justify-center gap-1.5 border-none shadow-sm transition-all duration-300 hover-scale ${
+                                  robotExternal
+                                    ? getThemeActiveTabClass(visualTheme)
+                                    : "bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400"
+                                }`}
+                              >
+                                {robotExternal ? (
+                                  <>
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <span>{language === "es" ? "Completado" : "Completed"}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <X className="w-3.5 h-3.5" />
+                                    <span>{language === "es" ? "Pendiente" : "Pending"}</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Custom Rows Checklist List */}
+                          {robotExtraRows.length > 0 && (
+                            <div className="flex flex-col gap-3">
+                              <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
+                                {language === "es" ? "Tareas Personalizadas" : "Custom Tasks"}
+                              </label>
+
+                              {robotExtraRows.map((row, idx) => (
+                                <div key={idx} className="grid grid-cols-12 gap-3 items-center p-3.5 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 animate-fade-in">
+                                  {/* Input description */}
+                                  <div className="col-span-8 md:col-span-9">
+                                    <input
+                                      type="text"
+                                      required
+                                      placeholder={language === "es" ? "Descripción de la tarea (Ej. Limpieza de Sensores)" : "Task description (e.g., Sensors Cleaning)"}
+                                      value={row.label}
+                                      onChange={(e) => handleUpdateRobotExtraRowLabel(idx, e.target.value)}
+                                      className="w-full px-3 py-1.5 rounded-xl text-xs glass-input font-semibold border"
+                                    />
+                                  </div>
+
+                                  {/* State toggle */}
+                                  <div className="col-span-3 md:col-span-2 flex justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleRobotExtraRowStatus(idx)}
+                                      className={`w-full py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer flex items-center justify-center gap-1.5 border-none shadow-sm transition-all duration-300 hover-scale ${
+                                        row.status
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400"
+                                      }`}
+                                    >
+                                      {row.status ? (
+                                        <>
+                                          <CheckCircle className="w-3.5 h-3.5" />
+                                          <span className="hidden sm:inline">{language === "es" ? "Completado" : "Completed"}</span>
+                                          <span className="sm:hidden">OK</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <X className="w-3.5 h-3.5" />
+                                          <span className="hidden sm:inline">{language === "es" ? "Pendiente" : "Pending"}</span>
+                                          <span className="sm:hidden">PEND</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+
+                                  {/* Remove row */}
+                                  <div className="col-span-1 flex justify-end">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveRobotExtraRow(idx)}
+                                      className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white transition-colors duration-200 border-none cursor-pointer shadow-sm hover-scale shrink-0"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Add Row and Submit Action Buttons */}
+                          <div className="flex flex-col sm:flex-row items-center gap-3 mt-2 pt-4 border-t border-slate-200/50 dark:border-slate-800/40">
+                            <button
+                              type="button"
+                              onClick={handleAddRobotExtraRow}
+                              className={`w-full sm:w-auto px-4 py-2.5 rounded-full border border-dashed text-xs font-bold transition-all duration-300 cursor-pointer hover-scale shrink-0 flex items-center justify-center gap-2 ${
+                                visualTheme === "gradient-warm"
+                                  ? "border-orange-500/40 text-orange-650 hover:bg-orange-500/5"
+                                  : visualTheme === "gradient-cyberpunk"
+                                  ? "border-fuchsia-500/40 text-fuchsia-300 hover:bg-fuchsia-500/10"
+                                  : visualTheme === "gradient-electric-blue"
+                                  ? "border-blue-500/40 text-blue-800 hover:bg-blue-500/5"
+                                  : "border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+                              }`}
+                            >
+                              <PlusCircle className="w-4 h-4" />
+                              <span>{language === "es" ? "(+) Agregar Fila" : "(+) Add Row"}</span>
+                            </button>
+
+                            <button
+                              type="submit"
+                              disabled={isRobotSubmitting}
+                              className="w-full sm:flex-1 py-2.5 rounded-full font-black text-xs hover-scale shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer border-none"
+                              style={{
+                                background: visualTheme === "gradient-warm"
+                                  ? "linear-gradient(135deg, #FAAE87 0%, #F98A8B 100%)"
+                                  : visualTheme === "gradient-cyberpunk"
+                                  ? "linear-gradient(135deg, #260073 0%, #D82EFF 100%)"
+                                  : visualTheme === "gradient-electric-blue"
+                                  ? "linear-gradient(135deg, #00B4FF 0%, #3262FF 100%)"
+                                  : "linear-gradient(135deg, #064e3b 0%, #10b981 100%)",
+                                color: visualTheme === "gradient-warm" ? "#1e293b" : "#ffffff"
+                              }}
+                            >
+                              {isRobotSubmitting ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span>{language === "es" ? "Registrando..." : "Registering..."}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span>{language === "es" ? "Registrar Limpieza de Robot" : "Register Robot Cleaning"}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Sub-tab 2: Historial (Visible ONLY if userLevel >= 2) */}
+                {robotActiveSubTab === "historial" && userLevel >= 2 && (
+                  <div className="flex flex-col gap-4 w-full max-w-4xl">
+                    <div className="flex items-center justify-between shrink-0">
+                      <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                        {language === "es" ? "Historial de Limpieza de Robots" : "Robot Cleaning Log History"}
+                      </h2>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      {isRobotLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <Loader2 className={`w-8 h-8 animate-spin mb-2 ${
+                            visualTheme === "gradient-warm" 
+                              ? "text-orange-500" 
+                              : visualTheme === "gradient-cyberpunk"
+                              ? "text-fuchsia-500"
+                              : visualTheme === "gradient-electric-blue"
+                              ? "text-blue-500"
+                              : "text-emerald-500"
+                          }`} />
+                          <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
+                        </div>
+                      ) : robotCleanings.length === 0 ? (
+                        <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                          {language === "es" ? "No se encontraron reportes de limpieza de robots." : "No robot cleaning reports found."}
+                        </div>
+                      ) : (
+                        robotCleanings.map((record) => {
+                          const isExpanded = expandedRobotId === record.id;
+                          const completedCount = record.items?.filter(item => item.status).length || 0;
+                          const totalCount = record.items?.length || 0;
+                          
+                          return (
+                            <div 
+                              key={record.id}
+                              className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl border p-4 shadow-sm flex flex-col gap-3 transition-all duration-300 animate-fade-in`}
+                            >
+                              {/* Header row */}
+                              <div 
+                                onClick={() => setExpandedRobotId(isExpanded ? null : record.id)}
+                                className="flex items-center justify-between cursor-pointer select-none"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2 rounded-xl flex items-center justify-center shrink-0 ${
+                                    visualTheme === "gradient-warm"
+                                      ? "bg-orange-500/10 text-orange-600"
+                                      : visualTheme === "gradient-cyberpunk"
+                                      ? "bg-fuchsia-500/15 text-fuchsia-400"
+                                      : visualTheme === "gradient-electric-blue"
+                                      ? "bg-blue-500/10 text-blue-600"
+                                      : "bg-emerald-500/10 text-emerald-400"
+                                  }`}>
+                                    <Cpu className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                                      {record.robotId}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                      {record.date}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider ${
+                                    completedCount === totalCount
+                                      ? (visualTheme === "gradient-warm" ? "bg-orange-500/10 text-orange-700" : "bg-emerald-500/15 text-emerald-400")
+                                      : "bg-red-500/10 text-red-500"
+                                  }`}>
+                                    {completedCount}/{totalCount} {language === "es" ? "Completados" : "Completed"}
+                                  </span>
+                                  <ListCollapse className={`w-4 h-4 text-slate-400 transition-transform duration-250 ${isExpanded ? "rotate-180" : ""}`} />
+                                </div>
+                              </div>
+
+                              {/* Expanded details */}
+                              {isExpanded && (
+                                <div className="flex flex-col gap-4 mt-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/35 animate-fade-in">
+                                  <div className="flex flex-col gap-2">
+                                    {record.items?.map((item, index) => (
+                                      <div 
+                                        key={index}
+                                        className="flex items-center justify-between p-2.5 rounded-xl bg-slate-500/5 dark:bg-slate-900/5 border border-slate-200/20 dark:border-slate-800/10 text-xs font-semibold"
+                                      >
+                                        <span className="text-slate-700 dark:text-slate-350">{item.name}</span>
+                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase flex items-center gap-1 ${
+                                          item.status
+                                            ? (visualTheme === "gradient-warm" ? "bg-orange-500/10 text-orange-700" : "bg-emerald-500/10 text-emerald-400")
+                                            : "bg-red-500/10 text-red-500"
+                                        }`}>
+                                          {item.status ? (
+                                            <>
+                                              <CheckCircle className="w-3 h-3" />
+                                              <span>{language === "es" ? "Completado" : "Completed"}</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <X className="w-3 h-3" />
+                                              <span>{language === "es" ? "Pendiente" : "Pending"}</span>
+                                            </>
+                                          )}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Details footer metadata */}
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/20">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                      {t.registered_by_level} {record.nombreAsociado || getAssociateName(record.createdBy)} ({t.level_short} {record.userLevel})
+                                    </span>
+                                    
+                                    {userLevel >= 3 && (
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() => handleDeleteRobotCleaning(record.id)}
+                                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200 border-none"
+                                          title={language === "es" ? "Eliminar Reporte" : "Delete Report"}
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                          <span>{t.delete}</span>
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 7: ADMINISTRACIÓN DE USUARIOS (Solo Nivel 3) */}
             {activeTab === "usuario" && userLevel >= 3 && (
               <div className="flex flex-col gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass w-full">
                 

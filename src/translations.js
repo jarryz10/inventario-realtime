@@ -21,6 +21,10 @@ export const translations = {
     tab_rfid_desc: "Registra y supervisa las lecturas y el estado de antenas y sensores RFID",
     tab_rfid_short: "Verificación RFID",
 
+    tab_robots_title: "Limpieza de Robots",
+    tab_robots_desc: "Registra y supervisa el servicio de mantenimiento y limpieza de robots",
+    tab_robots_short: "Limpieza Robots",
+
     tab_notificaciones_title: "Notificaciones del Sistema",
     tab_notificaciones_desc: "Alertas de stock mínimo y registros importantes del almacén",
     tab_notificaciones_short: "Notificaciones",
@@ -319,6 +323,10 @@ export const translations = {
     tab_rfid_title: "RFID Verification",
     tab_rfid_desc: "Register and supervise antenna readings and RFID sensor status",
     tab_rfid_short: "RFID Verification",
+
+    tab_robots_title: "Robot Cleaning",
+    tab_robots_desc: "Register and supervise robot cleaning and maintenance services",
+    tab_robots_short: "Robot Cleaning",
 
     tab_notificaciones_title: "System Notifications",
     tab_notificaciones_desc: "Minimum stock alerts and important warehouse logs",
