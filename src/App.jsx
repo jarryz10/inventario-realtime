@@ -5759,157 +5759,161 @@ export default function App() {
                         </h2>
 
                         <form onSubmit={handleSubmitRobotCleaning} className="flex flex-col gap-6">
-                          {/* ID Robot Input */}
-                          <div className="flex flex-col">
-                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-                              {language === "es" ? "ID de Robot *" : "Robot ID *"}
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Ej. ROBOT-A01"
-                              value={robotId}
-                              onChange={(e) => setRobotId(e.target.value.toUpperCase())}
-                              className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
-                            />
-                          </div>
+                          {/* Unified Horizontal Row: ID de Robot + Tareas de Limpieza Base */}
+                          <div className="flex flex-col lg:flex-row lg:items-end gap-4 w-full">
+                            
+                            {/* Column 1: ID Robot (Left) */}
+                            <div className="flex flex-col w-full lg:w-48 shrink-0">
+                              <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                                {language === "es" ? "ID de Robot *" : "Robot ID *"}
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="Ej. ROBOT-A01"
+                                value={robotId}
+                                onChange={(e) => setRobotId(e.target.value.toUpperCase())}
+                                className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold"
+                              />
+                            </div>
 
-                          {/* Predefined Checklist Items (4 Columns Grid) */}
-                          <div className="flex flex-col gap-3">
-                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
-                              {language === "es" ? "Tareas de Limpieza Base" : "Base Cleaning Tasks"}
-                            </label>
+                            {/* Column 2: Tareas de Limpieza Base (Right) */}
+                            <div className="flex-1 w-full flex flex-col gap-2.5">
+                              <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                {language === "es" ? "Tareas de Limpieza Base" : "Base Cleaning Tasks"}
+                              </label>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                              {/* Task 1: Pantalla */}
-                              <div className="flex flex-col gap-3 p-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200">
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">
-                                  {language === "es" ? "Limpieza de Pantalla" : "Screen Cleaning"}
-                                </span>
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotScreen(true)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      robotScreen
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
-                                  >
-                                    <CheckCircle className="w-5 h-5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotScreen(false)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      !robotScreen
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full">
+                                {/* Task 1: Pantalla */}
+                                <div className="flex flex-col gap-3 p-3 pb-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200 min-h-[105px]">
+                                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-350 leading-tight">
+                                    {language === "es" ? "Limpieza de Pantalla" : "Screen Cleaning"}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotScreen(true)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        robotScreen
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
+                                    >
+                                      <CheckCircle className="w-4.5 h-4.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotScreen(false)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        !robotScreen
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
+                                    >
+                                      <X className="w-4.5 h-4.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Task 2: Llantas */}
-                              <div className="flex flex-col gap-3 p-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200">
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">
-                                  {language === "es" ? "Limpieza de Llantas" : "Tire Cleaning"}
-                                </span>
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotWheels(true)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      robotWheels
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
-                                  >
-                                    <CheckCircle className="w-5 h-5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotWheels(false)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      !robotWheels
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
+                                {/* Task 2: Llantas */}
+                                <div className="flex flex-col gap-3 p-3 pb-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200 min-h-[105px]">
+                                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-350 leading-tight">
+                                    {language === "es" ? "Limpieza de Llantas" : "Tire Cleaning"}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotWheels(true)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        robotWheels
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
+                                    >
+                                      <CheckCircle className="w-4.5 h-4.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotWheels(false)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        !robotWheels
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
+                                    >
+                                      <X className="w-4.5 h-4.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Task 3: Externa */}
-                              <div className="flex flex-col gap-3 p-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200">
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">
-                                  {language === "es" ? "Limpieza Externa" : "External Cleaning"}
-                                </span>
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotExternal(true)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      robotExternal
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
-                                  >
-                                    <CheckCircle className="w-5 h-5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotExternal(false)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      !robotExternal
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
+                                {/* Task 3: Externa */}
+                                <div className="flex flex-col gap-3 p-3 pb-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200 min-h-[105px]">
+                                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-350 leading-tight">
+                                    {language === "es" ? "Limpieza Externa" : "External Cleaning"}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotExternal(true)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        robotExternal
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
+                                    >
+                                      <CheckCircle className="w-4.5 h-4.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotExternal(false)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        !robotExternal
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
+                                    >
+                                      <X className="w-4.5 h-4.5" />
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
 
-                              {/* Task 4: Interna */}
-                              <div className="flex flex-col gap-3 p-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200">
-                                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">
-                                  {language === "es" ? "Limpieza Interna" : "Internal Cleaning"}
-                                </span>
-                                <div className="flex items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotInternal(true)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      robotInternal
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
-                                  >
-                                    <CheckCircle className="w-5 h-5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setRobotInternal(false)}
-                                    className={`w-9 h-9 rounded-xl flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
-                                      !robotInternal
-                                        ? getThemeActiveTabClass(visualTheme)
-                                        : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
-                                    }`}
-                                    title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
-                                  >
-                                    <X className="w-5 h-5" />
-                                  </button>
+                                {/* Task 4: Interna */}
+                                <div className="flex flex-col gap-3 p-3 pb-4 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 justify-between items-center text-center transition-all duration-200 min-h-[105px]">
+                                  <span className="text-[11px] font-bold text-slate-700 dark:text-slate-350 leading-tight">
+                                    {language === "es" ? "Limpieza Interna" : "Internal Cleaning"}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotInternal(true)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        robotInternal
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Óptimo / Completado" : "Optimal / Completed"}
+                                    >
+                                      <CheckCircle className="w-4.5 h-4.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setRobotInternal(false)}
+                                      className={`w-8.5 h-8.5 rounded-lg flex items-center justify-center border-none shadow-sm cursor-pointer transition-all duration-300 hover-scale ${
+                                        !robotInternal
+                                          ? getThemeActiveTabClass(visualTheme)
+                                          : "bg-slate-500/10 hover:bg-slate-500/20 text-slate-450 dark:text-slate-500"
+                                      }`}
+                                      title={language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}
+                                    >
+                                      <X className="w-4.5 h-4.5" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
