@@ -175,6 +175,23 @@ const getThemeLanguageSwitcherClass = (theme) => {
 const getMetallicFrameClass = (theme) => "";
 const getMetallicIconClass = (theme) => "";
 
+const getHeaderBtnClass = (theme) => {
+  if (theme === "gradient-warm") {
+    return "bg-gradient-to-r from-[#FAAE87] to-[#F98A8B] shadow-md shadow-amber-500/10 hover:brightness-105";
+  }
+  if (theme === "gradient-cyberpunk") {
+    return "bg-gradient-to-r from-[#260073] to-[#D82EFF] shadow-md shadow-fuchsia-500/25 hover:brightness-105";
+  }
+  return "bg-gradient-to-r from-emerald-800 to-emerald-600 shadow-md shadow-emerald-800/10 hover:brightness-110";
+};
+
+const getHeaderIconColor = (theme) => {
+  if (theme === "gradient-warm") {
+    return "text-slate-900";
+  }
+  return "text-white";
+};
+
 
 const MOCK_ICONS = [
   { name: "CPU", url: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?w=100&auto=format&fit=crop&q=80" },
@@ -3281,10 +3298,10 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                    className="p-2 rounded-full hover:bg-white/10 text-white transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border-none bg-transparent"
+                    className={`p-2.5 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border-none ${getHeaderBtnClass(visualTheme)}`}
                     title={language === "es" ? "Cambiar Tema" : "Change Theme"}
                   >
-                    <Palette className="w-5 h-5 text-white/90" />
+                    <Palette className={`w-4.5 h-4.5 ${getHeaderIconColor(visualTheme)}`} />
                   </button>
 
                   {isThemeDropdownOpen && (() => {
@@ -3365,12 +3382,12 @@ export default function App() {
                         handleMarkAllAsRead();
                       }
                     }}
-                    className="p-2 rounded-full hover:bg-white/10 text-white relative focus:outline-none transition-colors duration-200 cursor-pointer border-none bg-transparent"
+                    className={`p-2.5 rounded-full flex items-center justify-center relative focus:outline-none transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer border-none ${getHeaderBtnClass(visualTheme)}`}
                     aria-label="Notifications"
                   >
-                    <Bell className="w-5 h-5 text-white/90" />
+                    <Bell className={`w-4.5 h-4.5 ${getHeaderIconColor(visualTheme)}`} />
                     {unreadCount > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full border border-white animate-pulse" />
+                      <span className="absolute top-0 right-0 w-3 h-3 bg-rose-600 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
                     )}
                   </button>
 
