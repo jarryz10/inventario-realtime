@@ -25,6 +25,10 @@ export const translations = {
     tab_robots_desc: "Registra y supervisa el servicio de mantenimiento y limpieza de robots",
     tab_robots_short: "Limpieza Robots",
 
+    tab_autobagger_title: "Autobagger",
+    tab_autobagger_desc: "Registra y supervisa las auditorías y el estado de la máquina Autobagger",
+    tab_autobagger_short: "Autobagger",
+
     tab_notificaciones_title: "Notificaciones del Sistema",
     tab_notificaciones_desc: "Alertas de stock mínimo y registros importantes del almacén",
     tab_notificaciones_short: "Notificaciones",
@@ -327,6 +331,10 @@ export const translations = {
     tab_robots_title: "Robot Cleaning",
     tab_robots_desc: "Register and supervise robot cleaning and maintenance services",
     tab_robots_short: "Robot Cleaning",
+
+    tab_autobagger_title: "Autobagger",
+    tab_autobagger_desc: "Register and supervise Autobagger machine audits and status",
+    tab_autobagger_short: "Autobagger",
 
     tab_notificaciones_title: "System Notifications",
     tab_notificaciones_desc: "Minimum stock alerts and important warehouse logs",

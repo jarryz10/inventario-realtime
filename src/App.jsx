@@ -103,6 +103,13 @@ const TABS_CONFIG = [
     iconName: "Cpu"
   },
   {
+    id: "autobagger",
+    title: "Autobagger",
+    description: "Registra y supervisa las auditorías y el estado de la máquina Autobagger",
+    shortTitle: "Autobagger",
+    iconName: "Package"
+  },
+  {
     id: "usuario",
     title: "Administración de Usuarios",
     description: "Gestiona los asociados del equipo, sus niveles de acceso y credenciales de seguridad",
@@ -118,6 +125,7 @@ const ICON_COMPONENTS = {
   Printer,
   Radio,
   Cpu,
+  Package,
   Bell,
   Users
 };
@@ -458,6 +466,30 @@ export default function App() {
       setRobotActiveSubTab("historial");
     } else {
       setRobotActiveSubTab("registro");
+    }
+  }, [userLevel]);
+
+  // Autobagger State
+  const [autobaggerAudits, setAutobaggerAudits] = useState([]);
+  const [isAutobaggerLoading, setIsAutobaggerLoading] = useState(true);
+  const [autobaggerStatuses, setAutobaggerStatuses] = useState({
+    Impresoras: true,
+    Estacion: true,
+    Conveyer: true,
+    Panel: true,
+    Selladora: true,
+    Sensores: true
+  });
+  const [autobaggerComments, setAutobaggerComments] = useState("");
+  const [isAutobaggerSubmitting, setIsAutobaggerSubmitting] = useState(false);
+  const [autobaggerActiveSubTab, setAutobaggerActiveSubTab] = useState("registro");
+  const [expandedAutobaggerId, setExpandedAutobaggerId] = useState(null);
+
+  useEffect(() => {
+    if (userLevel === 3) {
+      setAutobaggerActiveSubTab("historial");
+    } else {
+      setAutobaggerActiveSubTab("registro");
     }
   }, [userLevel]);
 
@@ -1001,6 +1033,46 @@ export default function App() {
     } catch (error) {
       console.error("Failed to setup robot cleanings real-time listener:", error);
       setIsRobotLoading(false);
+    }
+  }, [currentUser, userLevel]);
+
+  // Effect to fetch Autobagger audits in real-time from Firestore
+  useEffect(() => {
+    if (!currentUser || userLevel < 2) {
+      setAutobaggerAudits([]);
+      setIsAutobaggerLoading(false);
+      return;
+    }
+    setIsAutobaggerLoading(true);
+    try {
+      const q = collection(db, "autobagger");
+      const unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          let list = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          
+          // Sort by timestamp (newest first)
+          list.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : 0);
+            const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : 0);
+            return timeB - timeA;
+          });
+          
+          setAutobaggerAudits(list);
+          setIsAutobaggerLoading(false);
+        },
+        (error) => {
+          console.error("Firestore autobagger query error:", error);
+          setIsAutobaggerLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Failed to setup autobagger real-time listener:", error);
+      setIsAutobaggerLoading(false);
     }
   }, [currentUser, userLevel]);
 
@@ -2470,6 +2542,95 @@ export default function App() {
         setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
       } catch (error) {
         console.error("Error deleting robot cleaning:", error);
+        setAlertMessage({ type: "error", text: language === "es" ? "Error al eliminar el reporte." : "Error deleting report." });
+      }
+    }
+  };
+
+  // Autobagger Handlers
+  const handleToggleAutobaggerStatus = (stationName) => {
+    setAutobaggerStatuses(prev => ({
+      ...prev,
+      [stationName]: !prev[stationName]
+    }));
+  };
+
+  const handleSubmitAutobagger = async (e) => {
+    e.preventDefault();
+    if (userLevel >= 3) {
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" 
+          ? "Acceso Denegado: Los administradores (Nivel 3) no pueden registrar auditorías." 
+          : "Access Denied: Administrators (Level 3) cannot register audits." 
+      });
+      return;
+    }
+
+    setIsAutobaggerSubmitting(true);
+    try {
+      const stations = Object.keys(autobaggerStatuses).map(name => ({
+        name: name,
+        status: autobaggerStatuses[name]
+      }));
+
+      const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+      await addDoc(collection(db, "autobagger"), {
+        stations: stations,
+        comments: autobaggerComments.trim(),
+        createdBy: currentUser.username,
+        nombreAsociado: getAssociateName(currentUser.username),
+        userLevel: userLevel,
+        date: today,
+        timestamp: serverTimestamp()
+      });
+
+      await addDoc(collection(db, "notifications"), {
+        timestamp: serverTimestamp(),
+        type: "autobagger",
+        message: language === "es"
+          ? `El operador "${currentUser.username}" ha registrado la Auditoría de Autobagger.`
+          : `Operator "${currentUser.username}" has registered the Autobagger Audit.`,
+        title: language === "es" ? "Auditoría Autobagger" : "Autobagger Audit",
+        read: false
+      });
+
+      setAutobaggerStatuses({
+        Impresoras: true,
+        Estacion: true,
+        Conveyer: true,
+        Panel: true,
+        Selladora: true,
+        Sensores: true
+      });
+      setAutobaggerComments("");
+
+      setAlertMessage({ 
+        type: "success", 
+        text: language === "es" ? "¡Auditoría de Autobagger registrada exitosamente!" : "Autobagger audit registered successfully!" 
+      });
+      setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+    } catch (error) {
+      console.error("Error submitting Autobagger audit:", error);
+      setAlertMessage({ 
+        type: "error", 
+        text: language === "es" ? "Error al registrar la auditoría de Autobagger." : "Error registering Autobagger audit." 
+      });
+    } finally {
+      setIsAutobaggerSubmitting(false);
+    }
+  };
+
+  const handleDeleteAutobagger = async (id) => {
+    if (userLevel < 3) return;
+    if (window.confirm(language === "es" ? "¿Estás seguro de que deseas eliminar este reporte de Autobagger?" : "Are you sure you want to delete this Autobagger report?")) {
+      try {
+        await deleteDoc(doc(db, "autobagger", id));
+        setAlertMessage({ type: "success", text: language === "es" ? "Reporte de Autobagger eliminado." : "Autobagger report deleted." });
+        setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
+      } catch (error) {
+        console.error("Error deleting Autobagger report:", error);
         setAlertMessage({ type: "error", text: language === "es" ? "Error al eliminar el reporte." : "Error deleting report." });
       }
     }
@@ -3974,7 +4135,7 @@ export default function App() {
 
           {/* Bottom Area containing the Tab Content Views */}
           <div className="flex-1 min-h-0 overflow-hidden relative z-10">
-            <div className={`h-full ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "robots" || activeTab === "usuario") ? "overflow-y-auto pb-4" : "overflow-hidden"}`}>
+            <div className={`h-full ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "robots" || activeTab === "autobagger" || activeTab === "usuario") ? "overflow-y-auto pb-4" : "overflow-hidden"}`}>
             
             {/* TAB 1: INVENTARIO */}
             {activeTab === "inventario" && (
@@ -5935,6 +6096,299 @@ export default function App() {
                                       <div className="flex items-center gap-2">
                                         <button
                                           onClick={() => handleDeleteRobotCleaning(record.id)}
+                                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200 border-none"
+                                          title={language === "es" ? "Eliminar Reporte" : "Delete Report"}
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                          <span>{t.delete}</span>
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB: AUTOBAGGER */}
+            {activeTab === "autobagger" && (
+              <div className="flex flex-col gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass w-full animate-fade-in">
+                
+                {/* Sub-tab selection (Visible only if userLevel >= 2) */}
+                {userLevel >= 2 && (
+                  <div className="flex gap-2 p-1.5 rounded-full bg-slate-500/5 dark:bg-slate-900/10 border border-slate-200/40 dark:border-slate-800/30 max-w-md shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setAutobaggerActiveSubTab("registro")}
+                      className={`flex-1 py-2 px-4 rounded-full text-xs font-bold transition-all duration-300 border-none cursor-pointer ${
+                        autobaggerActiveSubTab === "registro"
+                          ? getThemeActiveTabClass(visualTheme)
+                          : getThemeInactiveTabClass(visualTheme)
+                      }`}
+                    >
+                      {language === "es" ? "Registrar Auditoría" : "Register Audit"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAutobaggerActiveSubTab("historial")}
+                      className={`flex-1 py-2 px-4 rounded-full text-xs font-bold transition-all duration-300 border-none cursor-pointer ${
+                        autobaggerActiveSubTab === "historial"
+                          ? getThemeActiveTabClass(visualTheme)
+                          : getThemeInactiveTabClass(visualTheme)
+                      }`}
+                    >
+                      {language === "es" ? "Historial de Autobagger" : "Autobagger History"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Sub-tab 1: Formulario de Registro */}
+                {autobaggerActiveSubTab === "registro" && (
+                  <div className="flex flex-col h-auto max-w-3xl">
+                    {userLevel >= 3 ? (
+                      /* Access Denied Card for Nivel 3 if they somehow attempt to see registration */
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-8 shadow-lg flex flex-col items-center text-center gap-4 border`}>
+                        <Shield className="w-16 h-16 text-rose-500 animate-pulse" />
+                        <h2 className="text-lg font-extrabold text-slate-800 dark:text-white font-serif-premium">
+                          {language === "es" ? "Acceso Restringido" : "Restricted Access"}
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
+                          {language === "es" 
+                            ? "Los usuarios con perfil de Administrador (Nivel 3) no tienen permisos para registrar auditorías de Autobagger. Por favor, consulta el Historial de Autobagger utilizando la pestaña superior."
+                            : "Users with Administrator profile (Level 3) do not have permissions to register Autobagger audits. Please check the Autobagger History using the top tab."}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-6 shadow-lg flex flex-col border`}>
+                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
+                          {language === "es" ? "Auditoría de Autobagger" : "Autobagger Audit"}
+                        </h2>
+
+                        <form onSubmit={handleSubmitAutobagger} className="flex flex-col gap-6">
+                          {/* Predefined Checklist Items */}
+                          <div className="flex flex-col gap-3">
+                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">
+                              {language === "es" ? "Estaciones de Verificación *" : "Verification Stations *"}
+                            </label>
+
+                            {Object.keys(autobaggerStatuses).map((stationName) => (
+                              <div 
+                                key={stationName}
+                                className="flex items-center justify-between p-3.5 bg-slate-500/5 dark:bg-slate-900/10 rounded-2xl border border-slate-200/30 dark:border-slate-800/10 transition-all duration-200"
+                              >
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-350">
+                                  {stationName}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleAutobaggerStatus(stationName)}
+                                  className={`w-36 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer flex items-center justify-center gap-1.5 border-none shadow-sm transition-all duration-300 hover-scale ${
+                                    autobaggerStatuses[stationName]
+                                      ? getThemeActiveTabClass(visualTheme)
+                                      : "bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400"
+                                  }`}
+                                >
+                                  {autobaggerStatuses[stationName] ? (
+                                    <>
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                      <span>{language === "es" ? "Completado / Óptimo" : "Completed / Optimal"}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <X className="w-3.5 h-3.5" />
+                                      <span>{language === "es" ? "Pendiente / Fallo" : "Pending / Failed"}</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Comments Area (Not Required) */}
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
+                              {language === "es" ? "Comentarios (Opcional)" : "Comments (Optional)"}
+                            </label>
+                            <textarea
+                              placeholder={language === "es" ? "Escribe observaciones sobre la auditoría..." : "Write audit observations..."}
+                              value={autobaggerComments}
+                              onChange={(e) => setAutobaggerComments(e.target.value)}
+                              rows={3}
+                              className="w-full px-4 py-2.5 rounded-2xl text-xs glass-input font-semibold leading-relaxed border"
+                            />
+                          </div>
+
+                          {/* Submit Action Button */}
+                          <div className="flex justify-end mt-2 pt-4 border-t border-slate-200/50 dark:border-slate-800/40">
+                            <button
+                              type="submit"
+                              disabled={isAutobaggerSubmitting}
+                              className="w-full sm:w-auto px-6 py-2.5 rounded-full font-black text-xs hover-scale shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer border-none"
+                              style={{
+                                background: visualTheme === "gradient-warm"
+                                  ? "linear-gradient(135deg, #FAAE87 0%, #F98A8B 100%)"
+                                  : visualTheme === "gradient-cyberpunk"
+                                  ? "linear-gradient(135deg, #260073 0%, #D82EFF 100%)"
+                                  : visualTheme === "gradient-electric-blue"
+                                  ? "linear-gradient(135deg, #00B4FF 0%, #3262FF 100%)"
+                                  : "linear-gradient(135deg, #064e3b 0%, #10b981 100%)",
+                                color: visualTheme === "gradient-warm" ? "#1e293b" : "#ffffff"
+                              }}
+                            >
+                              {isAutobaggerSubmitting ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  <span>{language === "es" ? "Registrando..." : "Registering..."}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span>{language === "es" ? "Registrar Auditoría de Autobagger" : "Register Autobagger Audit"}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Sub-tab 2: Historial (Visible ONLY if userLevel >= 2) */}
+                {autobaggerActiveSubTab === "historial" && userLevel >= 2 && (
+                  <div className="flex flex-col gap-4 w-full max-w-4xl">
+                    <div className="flex items-center justify-between shrink-0">
+                      <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                        {language === "es" ? "Historial de Auditoría Autobagger" : "Autobagger Audit History"}
+                      </h2>
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      {isAutobaggerLoading ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <Loader2 className={`w-8 h-8 animate-spin mb-2 ${
+                            visualTheme === "gradient-warm" 
+                              ? "text-orange-500" 
+                              : visualTheme === "gradient-cyberpunk"
+                              ? "text-fuchsia-500"
+                              : visualTheme === "gradient-electric-blue"
+                              ? "text-blue-500"
+                              : "text-emerald-500"
+                          }`} />
+                          <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
+                        </div>
+                      ) : autobaggerAudits.length === 0 ? (
+                        <div className="text-center py-16 text-slate-400 dark:text-slate-500 text-xs font-semibold">
+                          {language === "es" ? "No se encontraron reportes de Autobagger." : "No Autobagger reports found."}
+                        </div>
+                      ) : (
+                        autobaggerAudits.map((record) => {
+                          const isExpanded = expandedAutobaggerId === record.id;
+                          const optimalCount = record.stations?.filter(s => s.status).length || 0;
+                          const totalCount = record.stations?.length || 0;
+                          
+                          return (
+                            <div 
+                              key={record.id}
+                              className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-2xl border p-4 shadow-sm flex flex-col gap-3 transition-all duration-300 animate-fade-in`}
+                            >
+                              {/* Header row */}
+                              <div 
+                                onClick={() => setExpandedAutobaggerId(isExpanded ? null : record.id)}
+                                className="flex items-center justify-between cursor-pointer select-none"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2 rounded-xl flex items-center justify-center shrink-0 ${
+                                    visualTheme === "gradient-warm"
+                                      ? "bg-orange-500/10 text-orange-600"
+                                      : visualTheme === "gradient-cyberpunk"
+                                      ? "bg-fuchsia-500/15 text-fuchsia-400"
+                                      : visualTheme === "gradient-electric-blue"
+                                      ? "bg-blue-500/10 text-blue-600"
+                                      : "bg-emerald-500/10 text-emerald-400"
+                                  }`}>
+                                    <Package className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                                      {language === "es" ? "Auditoría Autobagger" : "Autobagger Audit"}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                      {record.date}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider ${
+                                    optimalCount === totalCount
+                                      ? (visualTheme === "gradient-warm" ? "bg-orange-500/10 text-orange-700" : "bg-emerald-500/15 text-emerald-400")
+                                      : "bg-red-500/10 text-red-500"
+                                  }`}>
+                                    {optimalCount}/{totalCount} {language === "es" ? "Óptimos" : "Optimal"}
+                                  </span>
+                                  <ListCollapse className={`w-4 h-4 text-slate-400 transition-transform duration-250 ${isExpanded ? "rotate-180" : ""}`} />
+                                </div>
+                              </div>
+
+                              {/* Expanded details */}
+                              {isExpanded && (
+                                <div className="flex flex-col gap-4 mt-2 pt-3 border-t border-slate-200/50 dark:border-slate-800/35 animate-fade-in">
+                                  <div className="flex flex-col gap-2">
+                                    {record.stations?.map((station, index) => (
+                                      <div 
+                                        key={index}
+                                        className="flex items-center justify-between p-2.5 rounded-xl bg-slate-500/5 dark:bg-slate-900/5 border border-slate-200/20 dark:border-slate-800/10 text-xs font-semibold"
+                                      >
+                                        <span className="text-slate-700 dark:text-slate-350">{station.name}</span>
+                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase flex items-center gap-1 ${
+                                          station.status
+                                            ? (visualTheme === "gradient-warm" ? "bg-orange-500/10 text-orange-700" : "bg-emerald-500/10 text-emerald-400")
+                                            : "bg-red-500/10 text-red-500"
+                                        }`}>
+                                          {station.status ? (
+                                            <>
+                                              <CheckCircle className="w-3.5 h-3.5" />
+                                              <span>{language === "es" ? "Completado" : "Completed"}</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <X className="w-3.5 h-3.5" />
+                                              <span>{language === "es" ? "Pendiente" : "Pending"}</span>
+                                            </>
+                                          )}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {/* Comments */}
+                                  <div className="p-3 rounded-xl bg-slate-500/5 dark:bg-slate-900/5 border border-slate-200/20 dark:border-slate-800/10">
+                                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1">
+                                      {language === "es" ? "Comentarios" : "Comments"}
+                                    </span>
+                                    <p className="text-xs text-slate-700 dark:text-slate-300 font-semibold leading-relaxed">
+                                      {record.comments || (language === "es" ? "Sin comentarios" : "No comments")}
+                                    </p>
+                                  </div>
+
+                                  {/* Details footer metadata */}
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/20">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+                                      {t.registered_by_level} {record.nombreAsociado || getAssociateName(record.createdBy)} ({t.level_short} {record.userLevel})
+                                    </span>
+                                    
+                                    {userLevel >= 3 && (
+                                      <div className="flex items-center gap-2">
+                                        <button
+                                          onClick={() => handleDeleteAutobagger(record.id)}
                                           className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200 border-none"
                                           title={language === "es" ? "Eliminar Reporte" : "Delete Report"}
                                         >
