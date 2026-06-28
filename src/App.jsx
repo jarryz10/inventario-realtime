@@ -133,14 +133,8 @@ const getBackgroundStyle = (theme) => {
 };
 
 const getThemeActiveTabClass = (theme) => {
-  if (theme === "gradient-sunset") {
-    return "bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] text-[#1e293b] rounded-full font-bold shadow-md shadow-amber-500/10 border-none transition-all duration-300 hover:brightness-105";
-  }
   if (theme === "gradient-warm") {
     return "bg-gradient-to-r from-[#FAAE87] to-[#F98A8B] text-[#1e293b] rounded-full font-bold shadow-md shadow-amber-500/10 border-none transition-all duration-300 hover:brightness-105";
-  }
-  if (theme === "gradient-muted-harmony") {
-    return "bg-gradient-to-r from-[#5e727e] to-[#8f8285] text-white rounded-full font-bold shadow-md shadow-slate-500/10 border-none transition-all duration-300 hover:brightness-105";
   }
   if (theme === "gradient-cyberpunk") {
     return "bg-gradient-to-r from-[#260073] to-[#D82EFF] text-white rounded-full font-bold shadow-md shadow-fuchsia-500/20 border-none transition-all duration-300 hover:brightness-105";
@@ -149,14 +143,8 @@ const getThemeActiveTabClass = (theme) => {
 };
 
 const getThemeProfileClass = (theme) => {
-  if (theme === "gradient-sunset") {
-    return "p-3 bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] text-[#1e293b] rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
-  }
   if (theme === "gradient-warm") {
     return "p-3 bg-gradient-to-r from-[#FAAE87] to-[#F98A8B] text-[#1e293b] rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
-  }
-  if (theme === "gradient-muted-harmony") {
-    return "p-3 bg-gradient-to-r from-[#5e727e] to-[#8f8285] text-white rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
   }
   if (theme === "gradient-cyberpunk") {
     return "p-3 bg-gradient-to-r from-[#260073] to-[#D82EFF] text-white rounded-2xl border-none flex items-center justify-between shadow-sm transition-all duration-300 hover:scale-[1.02] hover:brightness-105";
@@ -165,14 +153,8 @@ const getThemeProfileClass = (theme) => {
 };
 
 const getThemeInitialsClass = (theme) => {
-  if (theme === "gradient-sunset") {
-    return "w-8 h-8 rounded-full bg-white/40 text-[#1e293b] border border-[#E5A273]/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
-  }
   if (theme === "gradient-warm") {
     return "w-8 h-8 rounded-full bg-white/40 text-[#1e293b] border border-[#F8D675]/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
-  }
-  if (theme === "gradient-muted-harmony") {
-    return "w-8 h-8 rounded-full bg-white/20 text-white border border-[#5e727e]/20 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
   }
   if (theme === "gradient-cyberpunk") {
     return "w-8 h-8 rounded-full bg-white/20 text-[#FFFF00] border border-[#D82EFF]/40 flex items-center justify-center font-bold text-xs shrink-0 shadow-inner";
@@ -181,14 +163,8 @@ const getThemeInitialsClass = (theme) => {
 };
 
 const getThemeLanguageSwitcherClass = (theme) => {
-  if (theme === "gradient-sunset") {
-    return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] text-[#1e293b] text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
-  }
   if (theme === "gradient-warm") {
     return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#FAAE87] to-[#F98A8B] text-[#1e293b] text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
-  }
-  if (theme === "gradient-muted-harmony") {
-    return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#5e727e] to-[#8f8285] text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
   }
   if (theme === "gradient-cyberpunk") {
     return "flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-gradient-to-r from-[#260073] to-[#D82EFF] text-white text-[10px] font-bold border-none select-none cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] hover:brightness-105 shadow-sm";
@@ -213,24 +189,26 @@ export default function App() {
   const t = translations[language];
 
   // Visual Theme State
-  const [visualTheme, setVisualTheme] = useState(() => localStorage.getItem("app_theme") || "classic");
+  const [visualTheme, setVisualTheme] = useState(() => {
+    const saved = localStorage.getItem("app_theme");
+    const allowed = ["gradient-green", "gradient-warm", "gradient-cyberpunk"];
+    if (allowed.includes(saved)) {
+      return saved;
+    }
+    localStorage.setItem("app_theme", "gradient-green");
+    return "gradient-green";
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("theme-classic", "theme-gradient", "theme-gradient-green", "theme-gradient-sunset", "theme-gradient-warm", "theme-gradient-muted-harmony", "theme-gradient-cyberpunk");
     
-    if (visualTheme === "gradient-sunset") {
-      root.classList.add("theme-gradient-sunset");
-    } else if (visualTheme === "gradient-warm") {
+    if (visualTheme === "gradient-warm") {
       root.classList.add("theme-gradient-warm");
-    } else if (visualTheme === "gradient-muted-harmony") {
-      root.classList.add("theme-gradient-muted-harmony");
     } else if (visualTheme === "gradient-cyberpunk") {
       root.classList.add("theme-gradient-cyberpunk");
-    } else if (visualTheme === "gradient-green" || visualTheme === "gradient") {
-      root.classList.add("theme-gradient-green");
     } else {
-      root.classList.add("theme-classic");
+      root.classList.add("theme-gradient-green");
     }
   }, [visualTheme]);
 
@@ -399,6 +377,19 @@ export default function App() {
 
   // User Management State
   const [usersList, setUsersList] = useState([]);
+  
+  const getAssociateName = (username) => {
+    if (!username) return "N/D";
+    const foundUser = usersList.find(u => u.id === username || u.username === username);
+    if (foundUser && foundUser.name) return foundUser.name;
+    if (username === "harris") return "Jarryz Beteran";
+    if (username === "ariel") return "Ariel Espinoza";
+    if (username === "operador") return "Operador Soporte";
+    if (username === "supervisor") return "Supervisor Almacén";
+    if (username === "admin") return "Administrador";
+    return username;
+  };
+
   const [isUsersLoading, setIsUsersLoading] = useState(true);
   const [userForm, setUserForm] = useState({
     name: "",
@@ -862,9 +853,9 @@ export default function App() {
     }
   }, [currentUser, userLevel]);
 
-  // Effect to fetch all users in real-time from Firestore for Nivel 3 (Admin)
+  // Effect to fetch all users in real-time from Firestore (for mapping usernames to full names)
   useEffect(() => {
-    if (!currentUser || userLevel < 3) {
+    if (!currentUser) {
       setIsUsersLoading(false);
       return;
     }
@@ -890,7 +881,7 @@ export default function App() {
       console.error("Failed to setup users list real-time listener:", error);
       setIsUsersLoading(false);
     }
-  }, [currentUser, userLevel]);
+  }, [currentUser]);
 
   // Effect to fetch notifications in real-time from Firestore
   useEffect(() => {
@@ -1266,7 +1257,8 @@ export default function App() {
         itemName: itemName,
         type: type, // "Entrada" | "Salida" | "Ajuste por Edición"
         amount: amount,
-        operator: activeOperator
+        operator: activeOperator,
+        nombreAsociado: getAssociateName(activeOperator)
       });
     } catch (error) {
       console.error("Error logging movement to Firestore:", error);
@@ -1290,14 +1282,14 @@ export default function App() {
       doc.setTextColor(100, 116, 139); // Slate-500
       const todayStr = new Date().toLocaleString("es-CL");
       doc.text(`Fecha de generación: ${todayStr}`, 14, 28);
-      doc.text(`Generado por: ${currentUser?.username || "Sistema"}`, 14, 34);
+      doc.text(`Generado por: ${getAssociateName(currentUser?.username) || "Sistema"}`, 14, 34);
 
       // Divider line
       doc.setDrawColor(226, 232, 240); // Slate-200
       doc.line(14, 38, 196, 38);
 
       // Prepare Table Data
-      const tableHeaders = [["Fecha y Hora", "Artículo", "Tipo de Movimiento", "Cantidad", "Operador"]];
+      const tableHeaders = [["Fecha y Hora", "Artículo", "Tipo de Movimiento", "Cantidad", "Asociado"]];
       const tableRows = movements.map(mov => {
         const dateStr = mov.timestamp?.toDate
           ? mov.timestamp.toDate().toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" })
@@ -1307,7 +1299,7 @@ export default function App() {
           mov.itemName || "N/D",
           mov.type || "N/D",
           mov.amount !== undefined ? mov.amount : "N/D",
-          mov.operator || "N/D"
+          mov.nombreAsociado || getAssociateName(mov.operator) || "N/D"
         ];
       });
 
@@ -1544,6 +1536,7 @@ export default function App() {
       await addDoc(collection(db, "daily_reports"), {
         activities: filledRows.map(r => ({ time: r.time, activity: r.activity.trim() })),
         createdBy: currentUser.username,
+        nombreAsociado: getAssociateName(currentUser.username),
         userLevel: userLevel,
         date: today,
         timestamp: serverTimestamp()
@@ -1578,7 +1571,7 @@ export default function App() {
         throw new Error("El reporte es nulo o indefinido");
       }
       
-      const createdBy = report.createdBy || "N/A";
+      const createdBy = report.nombreAsociado || getAssociateName(report.createdBy) || "N/A";
       const date = report.date || "N/A";
       const activities = Array.isArray(report.activities) ? report.activities : [];
       const userLevel = report.userLevel !== undefined ? report.userLevel : "N/A";
@@ -1898,6 +1891,7 @@ export default function App() {
       await addDoc(collection(db, "printer_cleaning"), {
         printers: printersData,
         createdBy: currentUser.username,
+        nombreAsociado: getAssociateName(currentUser.username),
         userLevel: userLevel,
         date: today,
         timestamp: serverTimestamp()
@@ -1984,7 +1978,7 @@ export default function App() {
         throw new Error("El registro es nulo o indefinido");
       }
 
-      const createdBy = record.createdBy || "N/A";
+      const createdBy = record.nombreAsociado || getAssociateName(record.createdBy) || "N/A";
       const date = record.date || "N/A";
       const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/A";
       
@@ -2179,6 +2173,7 @@ export default function App() {
       await addDoc(collection(db, "rfid_verification"), {
         stations: stationsData,
         createdBy: currentUser.username,
+        nombreAsociado: getAssociateName(currentUser.username),
         userLevel: userLevel,
         date: today,
         timestamp: serverTimestamp()
@@ -2573,7 +2568,7 @@ export default function App() {
         throw new Error("El registro es nulo o indefinido");
       }
 
-      const createdBy = record.createdBy || "N/A";
+      const createdBy = record.nombreAsociado || getAssociateName(record.createdBy) || "N/A";
       const date = record.date || "N/A";
       const recordUserLevel = record.userLevel !== undefined ? record.userLevel : "N/A";
       const stations = record.stations || (record.station ? [{
@@ -3292,102 +3287,73 @@ export default function App() {
                     <Palette className="w-5 h-5 text-white/90" />
                   </button>
 
-                  {isThemeDropdownOpen && (
-                    <div 
-                      className="absolute right-0 top-full mt-2 w-48 rounded-[1.25rem] bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 flex flex-col gap-1 animate-scale-in text-white"
-                      style={{ zIndex: 9999 }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVisualTheme("classic");
-                          localStorage.setItem("app_theme", "classic");
-                          setIsThemeDropdownOpen(false);
-                        }}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
-                          visualTheme === "classic" ? "bg-white/10 text-white" : "text-white/80"
-                        }`}
+                  {isThemeDropdownOpen && (() => {
+                    const isWarm = visualTheme === "gradient-warm";
+                    const dropdownBgClass = isWarm 
+                      ? "bg-white/80 border-white/20 text-slate-900 shadow-lg shadow-amber-500/5"
+                      : "bg-slate-900/80 border-slate-700/30 text-white shadow-lg shadow-slate-950/40";
+                    
+                    return (
+                      <div 
+                        className={`absolute right-0 top-full mt-2 w-48 rounded-[1.25rem] backdrop-blur-md border p-2 z-50 flex flex-col gap-1 animate-scale-in ${dropdownBgClass}`}
+                        style={{ zIndex: 9999 }}
                       >
-                        <span className="w-3.5 h-3.5 rounded-full bg-slate-700 border border-slate-600 block shrink-0" />
-                        <span>Classic Deep</span>
-                      </button>
+                        {/* Green Theme */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVisualTheme("gradient-green");
+                            localStorage.setItem("app_theme", "gradient-green");
+                            setIsThemeDropdownOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full ${
+                            visualTheme === "gradient-green" 
+                              ? (isWarm ? "bg-emerald-500/20 text-emerald-600" : "bg-[#10b981]/25 text-[#10b981]")
+                              : (isWarm ? "text-slate-700 hover:bg-emerald-500/10 hover:text-emerald-600" : "text-white/80 hover:bg-[#10b981]/15 hover:text-[#10b981]")
+                          }`}
+                        >
+                          <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-emerald-800 to-lime-400 border border-emerald-500/20 block shrink-0" />
+                          <span>Pastel Green</span>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVisualTheme("gradient-green");
-                          localStorage.setItem("app_theme", "gradient-green");
-                          setIsThemeDropdownOpen(false);
-                        }}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
-                          visualTheme === "gradient-green" || visualTheme === "gradient" ? "bg-white/10 text-white" : "text-white/80"
-                        }`}
-                      >
-                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-emerald-800 to-lime-400 border border-emerald-500/20 block shrink-0" />
-                        <span>Pastel Green</span>
-                      </button>
+                        {/* Warm Theme */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVisualTheme("gradient-warm");
+                            localStorage.setItem("app_theme", "gradient-warm");
+                            setIsThemeDropdownOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full ${
+                            visualTheme === "gradient-warm"
+                              ? (isWarm ? "bg-orange-500/20 text-orange-600" : "bg-orange-500/25 text-orange-300")
+                              : (isWarm ? "text-slate-700 hover:bg-orange-500/10 hover:text-orange-600" : "text-white/80 hover:bg-orange-500/15 hover:text-orange-350")
+                          }`}
+                        >
+                          <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#F8D675] to-[#F98A8B] border border-amber-300/20 block shrink-0" />
+                          <span>Warm Coral</span>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVisualTheme("gradient-sunset");
-                          localStorage.setItem("app_theme", "gradient-sunset");
-                          setIsThemeDropdownOpen(false);
-                        }}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
-                          visualTheme === "gradient-sunset" ? "bg-white/10 text-white" : "text-white/80"
-                        }`}
-                      >
-                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#E5A273] to-[#DDD2FA] border border-amber-300/20 block shrink-0" />
-                        <span>Sunset Pastel</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVisualTheme("gradient-warm");
-                          localStorage.setItem("app_theme", "gradient-warm");
-                          setIsThemeDropdownOpen(false);
-                        }}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
-                          visualTheme === "gradient-warm" ? "bg-white/10 text-white" : "text-white/80"
-                        }`}
-                      >
-                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#F8D675] to-[#F98A8B] border border-amber-300/20 block shrink-0" />
-                        <span>Warm Coral</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVisualTheme("gradient-muted-harmony");
-                          localStorage.setItem("app_theme", "gradient-muted-harmony");
-                          setIsThemeDropdownOpen(false);
-                        }}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
-                          visualTheme === "gradient-muted-harmony" ? "bg-white/10 text-white" : "text-white/80"
-                        }`}
-                      >
-                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#426C78] to-[#DAA88D] border border-amber-300/20 block shrink-0" />
-                        <span>Muted Harmony</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVisualTheme("gradient-cyberpunk");
-                          localStorage.setItem("app_theme", "gradient-cyberpunk");
-                          setIsThemeDropdownOpen(false);
-                        }}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full hover:bg-white/10 ${
-                          visualTheme === "gradient-cyberpunk" ? "bg-white/10 text-white" : "text-white/80"
-                        }`}
-                      >
-                        <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#260073] via-[#D82EFF] to-[#FFFF00] border border-amber-300/20 block shrink-0" />
-                        <span>Neon Cyber</span>
-                      </button>
-                    </div>
-                  )}
+                        {/* Cyber Theme */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVisualTheme("gradient-cyberpunk");
+                            localStorage.setItem("app_theme", "gradient-cyberpunk");
+                            setIsThemeDropdownOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-xs font-bold transition-all duration-150 border-none cursor-pointer w-full ${
+                            visualTheme === "gradient-cyberpunk"
+                              ? (isWarm ? "bg-fuchsia-500/20 text-fuchsia-600" : "bg-fuchsia-500/25 text-fuchsia-300")
+                              : (isWarm ? "text-slate-700 hover:bg-fuchsia-500/10 hover:text-fuchsia-600" : "text-white/80 hover:bg-fuchsia-500/15 hover:text-fuchsia-300")
+                          }`}
+                        >
+                          <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-[#260073] via-[#D82EFF] to-[#FFFF00] border border-amber-300/20 block shrink-0" />
+                          <span>Neon Cyber</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Campana de Notificaciones Flotante */}
@@ -4214,7 +4180,7 @@ export default function App() {
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.createdBy}</span>
+                                      <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.nombreAsociado || getAssociateName(report.createdBy)}</span>
                                       <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
                                         report.userLevel === 2 
                                           ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
@@ -4308,7 +4274,7 @@ export default function App() {
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.createdBy}</span>
+                                    <span className="font-extrabold text-xs text-slate-800 dark:text-slate-100">{report.nombreAsociado || getAssociateName(report.createdBy)}</span>
                                     <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
                                       report.userLevel === 2 
                                         ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" 
@@ -4593,7 +4559,7 @@ export default function App() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <span className="font-extrabold text-xs text-slate-900">
-                                        {t.user_label}: {record.createdBy}
+                                        {language === "es" ? "Asociado" : "Associate"}: {record.nombreAsociado || getAssociateName(record.createdBy)}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -4636,7 +4602,7 @@ export default function App() {
                                       
                                       <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                          {language === "es" ? "Registrado por" : "Registered by"}: {record.createdBy} ({t.level_label} {record.userLevel})
+                                          {language === "es" ? "Registrado por" : "Registered by"}: {record.nombreAsociado || getAssociateName(record.createdBy)} ({t.level_label} {record.userLevel})
                                         </span>
                                         <div className="flex items-center gap-2">
                                           {userLevel >= 3 && (
@@ -4713,7 +4679,7 @@ export default function App() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-900">
-                                      {t.user_label}: {record.createdBy}
+                                      {language === "es" ? "Asociado" : "Associate"}: {record.nombreAsociado || getAssociateName(record.createdBy)}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -4756,7 +4722,7 @@ export default function App() {
                                     
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                        {language === "es" ? "Registrado por" : "Registered by"}: {record.createdBy} ({t.level_label} {record.userLevel})
+                                        {language === "es" ? "Registrado por" : "Registered by"}: {record.nombreAsociado || getAssociateName(record.createdBy)} ({t.level_label} {record.userLevel})
                                       </span>
                                       <div className="flex items-center gap-2">
                                         {userLevel >= 3 && (
@@ -4978,7 +4944,7 @@ export default function App() {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       <span className="font-extrabold text-xs text-slate-900">
-                                        {t.user_label}: {record.createdBy}
+                                        {language === "es" ? "Asociado" : "Associate"}: {record.nombreAsociado || getAssociateName(record.createdBy)}
                                       </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -5026,7 +4992,7 @@ export default function App() {
                                       
                                       <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                          {t.registered_by_level} {record.createdBy} ({t.level_short} {record.userLevel})
+                                          {t.registered_by_level} {record.nombreAsociado || getAssociateName(record.createdBy)} ({t.level_short} {record.userLevel})
                                         </span>
                                         <div className="flex items-center gap-2">
                                           {userLevel >= 3 && (
@@ -5103,7 +5069,7 @@ export default function App() {
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <span className="font-extrabold text-xs text-slate-900">
-                                      {t.user_label}: {record.createdBy}
+                                      {language === "es" ? "Asociado" : "Associate"}: {record.nombreAsociado || getAssociateName(record.createdBy)}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2">
@@ -5151,7 +5117,7 @@ export default function App() {
                                     
                                     <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/20">
                                       <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">
-                                        {t.registered_by_level} {record.createdBy} ({t.level_short} {record.userLevel})
+                                        {t.registered_by_level} {record.nombreAsociado || getAssociateName(record.createdBy)} ({t.level_short} {record.userLevel})
                                       </span>
                                       <div className="flex items-center gap-2">
                                         {userLevel >= 3 && (
@@ -5675,7 +5641,7 @@ export default function App() {
                         <th className="pb-2 font-black">{language === "es" ? "Artículo" : "Item"}</th>
                         <th className="pb-2 font-black">{language === "es" ? "Tipo" : "Type"}</th>
                         <th className="pb-2 font-black text-center">{language === "es" ? "Cantidad" : "Quantity"}</th>
-                        <th className="pb-2 font-black">{language === "es" ? "Operador" : "Operator"}</th>
+                        <th className="pb-2 font-black">{language === "es" ? "Asociado" : "Associate"}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100/30 dark:divide-slate-800/10 text-[11px] font-semibold text-slate-600 dark:text-slate-350">
@@ -5694,7 +5660,7 @@ export default function App() {
                         }
 
                         return (
-                          <tr key={mov.id} className="hover:bg-slate-500/5 transition-colors">
+                           <tr key={mov.id} className="hover:bg-slate-500/5 transition-colors">
                             <td className="py-2.5 pr-2 font-mono text-slate-400 dark:text-slate-500 text-[10px]">{dateStr}</td>
                             <td className="py-2.5 max-w-[200px] truncate pr-2 font-bold text-slate-800 dark:text-slate-100">{mov.itemName}</td>
                             <td className="py-2.5 pr-2">
@@ -5705,7 +5671,7 @@ export default function App() {
                             <td className="py-2.5 text-center font-bold text-slate-700 dark:text-slate-200">
                               {mov.type === "Ajuste por Edición" ? "-" : mov.amount}
                             </td>
-                            <td className="py-2.5 text-slate-500 dark:text-slate-400 font-bold">{mov.operator}</td>
+                            <td className="py-2.5 text-slate-500 dark:text-slate-400 font-bold">{mov.nombreAsociado || getAssociateName(mov.operator)}</td>
                           </tr>
                         );
                       })}

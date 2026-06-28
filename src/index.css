@@ -137,103 +137,6 @@ body {
 }
 
 
-/* --- THEME GRADIENT SUNSET (Atardecer Pastel Coral y Lavanda) --- */
-.theme-gradient-sunset body,
-.theme-gradient-sunset .dashboard-root {
-  background: linear-gradient(180deg, #E5A273 0%, #F1C3BA 45%, #E3D2FA 80%, #DDD2FA 100%) !important;
-  background-attachment: fixed !important;
-  color: #1e293b !important;
-}
-
-.theme-gradient-sunset .glass-container,
-.theme-gradient-sunset .glass-card {
-  position: relative !important;
-  isolation: isolate !important;
-  background: rgba(255, 255, 255, 0.72) !important;
-  border: 1px solid rgba(229, 162, 115, 0.22) !important;
-  box-shadow: 0 15px 35px rgba(229, 162, 115, 0.12) !important;
-  border-radius: 2rem !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: #1e293b !important;
-}
-
-.theme-gradient-sunset .glass-sidebar {
-  position: relative !important;
-  isolation: isolate !important;
-  background: rgba(255, 255, 255, 0.8) !important;
-  border-right: 1px solid rgba(229, 162, 115, 0.22) !important;
-  border-top-right-radius: 2.5rem !important;
-  border-bottom-right-radius: 2.5rem !important;
-  border-radius: 0px 2.5rem 2.5rem 0px !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: #1e293b !important;
-}
-
-/* Sunset Theme Text Overrides to guarantee readability and eliminate green or white text leakage */
-.theme-gradient-sunset h1,
-.theme-gradient-sunset h2,
-.theme-gradient-sunset h3,
-.theme-gradient-sunset h4,
-.theme-gradient-sunset h5,
-.theme-gradient-sunset h6,
-.theme-gradient-sunset p,
-.theme-gradient-sunset span,
-.theme-gradient-sunset label,
-.theme-gradient-sunset div,
-.theme-gradient-sunset td,
-.theme-gradient-sunset th,
-.theme-gradient-sunset .product-name-text,
-.theme-gradient-sunset .text-white,
-.theme-gradient-sunset .text-slate-100,
-.theme-gradient-sunset .text-slate-200,
-.theme-gradient-sunset .text-slate-300,
-.theme-gradient-sunset .text-slate-400,
-.theme-gradient-sunset .text-slate-500,
-.theme-gradient-sunset .text-slate-800,
-.theme-gradient-sunset .text-slate-900,
-.theme-gradient-sunset .text-emerald-800,
-.theme-gradient-sunset .text-emerald-950,
-.theme-gradient-sunset .text-emerald-700,
-.theme-gradient-sunset .text-emerald-900 {
-  color: #1e293b !important;
-}
-
-.theme-gradient-sunset .glass-card .text-slate-500,
-.theme-gradient-sunset .glass-card .text-slate-400,
-.theme-gradient-sunset .glass-container .text-slate-500,
-.theme-gradient-sunset .glass-container .text-slate-400,
-.theme-gradient-sunset .glass-sidebar .text-slate-500,
-.theme-gradient-sunset .glass-sidebar .text-slate-400 {
-  color: rgba(30, 41, 59, 0.75) !important;
-}
-
-.theme-gradient-sunset .glass-input {
-  background-color: rgba(255, 255, 255, 0.6) !important;
-  border: 1px solid rgba(229, 162, 115, 0.25) !important;
-  color: #1e293b !important;
-  border-radius: 9999px !important;
-  outline: none;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-}
-.theme-gradient-sunset .glass-input::placeholder {
-  color: rgba(30, 41, 59, 0.5) !important;
-}
-.theme-gradient-sunset .glass-input:focus {
-  border-color: #E5A273 !important;
-  box-shadow: 0 0 0 1px #E5A273 !important;
-  background-color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.theme-gradient-sunset option,
-.theme-gradient-sunset select.glass-input option {
-  color: #1e293b !important;
-  background-color: #ffffff !important;
-}
-
-
 /* --- THEME GRADIENT WARM (Warm Coral - Amarillo Oro a Rosa/Coral) --- */
 .theme-gradient-warm body,
 .theme-gradient-warm .dashboard-root {
@@ -332,103 +235,6 @@ body {
 }
 
 
-/* --- THEME GRADIENT MUTED HARMONY (Muted Harmony - Azul Acero a Durazno) --- */
-.theme-gradient-muted-harmony body,
-.theme-gradient-muted-harmony .dashboard-root {
-  background: linear-gradient(180deg, #426C78 0%, #8E8A9E 50%, #DAA88D 100%) !important;
-  background-attachment: fixed !important;
-  color: #334155 !important;
-}
-
-.theme-gradient-muted-harmony .glass-container,
-.theme-gradient-muted-harmony .glass-card {
-  position: relative !important;
-  isolation: isolate !important;
-  background: rgba(247, 245, 240, 0.85) !important;
-  border: 1px solid rgba(143, 130, 133, 0.25) !important;
-  box-shadow: 0 15px 35px rgba(66, 108, 120, 0.08) !important;
-  border-radius: 2rem !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: #334155 !important;
-}
-
-.theme-gradient-muted-harmony .glass-sidebar {
-  position: relative !important;
-  isolation: isolate !important;
-  background: rgba(247, 245, 240, 0.9) !important;
-  border-right: 1px solid rgba(143, 130, 133, 0.25) !important;
-  border-top-right-radius: 2.5rem !important;
-  border-bottom-right-radius: 2.5rem !important;
-  border-radius: 0px 2.5rem 2.5rem 0px !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  color: #334155 !important;
-}
-
-/* Muted Harmony Text Overrides to guarantee readability and eliminate green or white text leakage */
-.theme-gradient-muted-harmony h1,
-.theme-gradient-muted-harmony h2,
-.theme-gradient-muted-harmony h3,
-.theme-gradient-muted-harmony h4,
-.theme-gradient-muted-harmony h5,
-.theme-gradient-muted-harmony h6,
-.theme-gradient-muted-harmony p,
-.theme-gradient-muted-harmony span,
-.theme-gradient-muted-harmony label,
-.theme-gradient-muted-harmony div,
-.theme-gradient-muted-harmony td,
-.theme-gradient-muted-harmony th,
-.theme-gradient-muted-harmony .product-name-text,
-.theme-gradient-muted-harmony .text-white,
-.theme-gradient-muted-harmony .text-slate-100,
-.theme-gradient-muted-harmony .text-slate-200,
-.theme-gradient-muted-harmony .text-slate-300,
-.theme-gradient-muted-harmony .text-slate-400,
-.theme-gradient-muted-harmony .text-slate-500,
-.theme-gradient-muted-harmony .text-slate-800,
-.theme-gradient-muted-harmony .text-slate-900,
-.theme-gradient-muted-harmony .text-emerald-800,
-.theme-gradient-muted-harmony .text-emerald-955,
-.theme-gradient-muted-harmony .text-emerald-950,
-.theme-gradient-muted-harmony .text-emerald-700,
-.theme-gradient-muted-harmony .text-emerald-900 {
-  color: #334155 !important;
-}
-
-.theme-gradient-muted-harmony .glass-card .text-slate-500,
-.theme-gradient-muted-harmony .glass-card .text-slate-400,
-.theme-gradient-muted-harmony .glass-container .text-slate-500,
-.theme-gradient-muted-harmony .glass-container .text-slate-400,
-.theme-gradient-muted-harmony .glass-sidebar .text-slate-500,
-.theme-gradient-muted-harmony .glass-sidebar .text-slate-400 {
-  color: rgba(51, 65, 85, 0.75) !important;
-}
-
-.theme-gradient-muted-harmony .glass-input {
-  background-color: rgba(255, 255, 255, 0.6) !important;
-  border: 1px solid rgba(143, 130, 133, 0.25) !important;
-  color: #334155 !important;
-  border-radius: 9999px !important;
-  outline: none;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-}
-.theme-gradient-muted-harmony .glass-input::placeholder {
-  color: rgba(51, 65, 85, 0.5) !important;
-}
-.theme-gradient-muted-harmony .glass-input:focus {
-  border-color: #426C78 !important;
-  box-shadow: 0 0 0 1px #426C78 !important;
-  background-color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.theme-gradient-muted-harmony option,
-.theme-gradient-muted-harmony select.glass-input option {
-  color: #334155 !important;
-  background-color: #ffffff !important;
-}
-
 
 /* --- THEME GRADIENT CYBERPUNK (Neon Cyber - Morado, Fucsia y Amarillo) --- */
 .theme-gradient-cyberpunk body,
@@ -523,89 +329,6 @@ body {
 .theme-gradient-cyberpunk select.glass-input option {
   color: #ffffff !important;
   background-color: #260073 !important;
-}
-
-
-/* --- THEME CLASSIC (Diseño Oscuro/Minimalista Plano Anterior) --- */
-.theme-classic body,
-.theme-classic .dashboard-root {
-  background-color: #0f172a !important;
-  background-image: none !important;
-  color: #f8fafc !important;
-}
-
-.theme-classic .glass-container,
-.theme-classic .glass-card {
-  position: relative !important;
-  isolation: isolate !important;
-  background-color: #1e293b !important;
-  border: 1px solid #334155 !important;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.25) !important;
-  border-radius: 2rem !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  color: #f8fafc !important;
-}
-
-.theme-classic .glass-sidebar {
-  position: relative !important;
-  isolation: isolate !important;
-  background-color: #0f172a !important;
-  border-right: 1px solid #1e293b !important;
-  border-top-right-radius: 2.5rem !important;
-  border-bottom-right-radius: 2.5rem !important;
-  border-radius: 0px 2.5rem 2.5rem 0px !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  color: #f8fafc !important;
-}
-
-.theme-classic .glass-card h1, .theme-classic .glass-card h2, .theme-classic .glass-card h3, .theme-classic .glass-card h4, .theme-classic .glass-card h5, .theme-classic .glass-card h6,
-.theme-classic .glass-container h1, .theme-classic .glass-container h2, .theme-classic .glass-container h3,
-.theme-classic .glass-sidebar h1, .theme-classic .glass-sidebar h2, .theme-classic .glass-sidebar h3 {
-  color: #ffffff !important;
-}
-
-.theme-classic .glass-card span, .theme-classic .glass-container span, .theme-classic .glass-sidebar span,
-.theme-classic .glass-card p, .theme-classic .glass-container p, .theme-classic .glass-sidebar p {
-  color: #cbd5e1 !important;
-}
-
-.theme-classic .glass-card label, .theme-classic .glass-container label, .theme-classic .glass-sidebar label {
-  color: #94a3b8 !important;
-}
-
-.theme-classic .text-slate-800, .theme-classic .text-emerald-900, .theme-classic .text-slate-900 {
-  color: #cbd5e1 !important;
-}
-
-.theme-classic .text-slate-500, .theme-classic .text-slate-400, .theme-classic .text-emerald-700 {
-  color: #94a3b8 !important;
-}
-
-.theme-classic .glass-input {
-  background-color: #0f172a !important;
-  border: 1px solid #334155 !important;
-  color: #f8fafc !important;
-  border-radius: 9999px !important;
-  outline: none;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-}
-
-.theme-classic .glass-input::placeholder {
-  color: #64748b !important;
-}
-
-.theme-classic .glass-input:focus {
-  border-color: #10b981 !important;
-  box-shadow: 0 0 0 1px #10b981 !important;
-}
-
-.theme-classic option,
-.theme-classic select.glass-input option {
-  color: #f3f4f6 !important;
-  background-color: #1f2937 !important;
 }
 
 /* Custom Scrollbar */
@@ -742,28 +465,6 @@ button.bg-emerald-500 {
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
 }
 
-/* Sunset Theme buttons styling */
-.theme-gradient-sunset button.btn-metallic-bronze,
-.theme-gradient-sunset button.btn-metallic-silver,
-.theme-gradient-sunset button[type="submit"],
-.theme-gradient-sunset button.bg-gradient-to-r,
-.theme-gradient-sunset button.bg-gradient-to-tr,
-.theme-gradient-sunset button.bg-sky-500,
-.theme-gradient-sunset button.bg-emerald-500 {
-  background: linear-gradient(135deg, #E5A273 0%, #F08A5D 60%, #E3D2FA 100%) !important;
-  color: #1e293b !important;
-  box-shadow: 0 4px 15px rgba(229, 162, 115, 0.2) !important;
-}
-.theme-gradient-sunset button.btn-metallic-bronze:hover,
-.theme-gradient-sunset button.btn-metallic-silver:hover,
-.theme-gradient-sunset button[type="submit"]:hover,
-.theme-gradient-sunset button.bg-gradient-to-r:hover,
-.theme-gradient-sunset button.bg-gradient-to-tr:hover,
-.theme-gradient-sunset button.bg-sky-500:hover,
-.theme-gradient-sunset button.bg-emerald-500:hover {
-  background: linear-gradient(135deg, #F08A5D 0%, #E5A273 60%, #DDD2FA 100%) !important;
-  box-shadow: 0 6px 20px rgba(229, 162, 115, 0.35) !important;
-}
 
 /* Warm Theme buttons styling */
 .theme-gradient-warm button.btn-metallic-bronze,
@@ -788,28 +489,6 @@ button.bg-emerald-500 {
   box-shadow: 0 6px 20px rgba(249, 138, 139, 0.35) !important;
 }
 
-/* Muted Harmony Theme buttons styling */
-.theme-gradient-muted-harmony button.btn-metallic-bronze,
-.theme-gradient-muted-harmony button.btn-metallic-silver,
-.theme-gradient-muted-harmony button[type="submit"],
-.theme-gradient-muted-harmony button.bg-gradient-to-r,
-.theme-gradient-muted-harmony button.bg-gradient-to-tr,
-.theme-gradient-muted-harmony button.bg-sky-500,
-.theme-gradient-muted-harmony button.bg-emerald-500 {
-  background: linear-gradient(135deg, #5e727e 0%, #76808f 60%, #8f8285 100%) !important;
-  color: #ffffff !important;
-  box-shadow: 0 4px 15px rgba(94, 114, 126, 0.2) !important;
-}
-.theme-gradient-muted-harmony button.btn-metallic-bronze:hover,
-.theme-gradient-muted-harmony button.btn-metallic-silver:hover,
-.theme-gradient-muted-harmony button[type="submit"]:hover,
-.theme-gradient-muted-harmony button.bg-gradient-to-r:hover,
-.theme-gradient-muted-harmony button.bg-gradient-to-tr:hover,
-.theme-gradient-muted-harmony button.bg-sky-500:hover,
-.theme-gradient-muted-harmony button.bg-emerald-500:hover {
-  background: linear-gradient(135deg, #8f8285 0%, #76808f 60%, #5e727e 100%) !important;
-  box-shadow: 0 6px 20px rgba(94, 114, 126, 0.35) !important;
-}
 
 /* Cyberpunk Theme buttons styling */
 .theme-gradient-cyberpunk button.btn-metallic-bronze,
@@ -834,28 +513,6 @@ button.bg-emerald-500 {
   box-shadow: 0 6px 20px rgba(216, 46, 255, 0.5) !important;
 }
 
-/* Classic Theme buttons styling */
-.theme-classic button.btn-metallic-bronze,
-.theme-classic button.btn-metallic-silver,
-.theme-classic button[type="submit"],
-.theme-classic button.bg-gradient-to-r,
-.theme-classic button.bg-gradient-to-tr,
-.theme-classic button.bg-sky-500,
-.theme-classic button.bg-emerald-500 {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  color: #ffffff !important;
-  border: 1px solid #475569 !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-}
-.theme-classic button.btn-metallic-bronze:hover,
-.theme-classic button.btn-metallic-silver:hover,
-.theme-classic button[type="submit"]:hover,
-.theme-classic button.bg-gradient-to-r:hover,
-.theme-classic button.bg-gradient-to-tr:hover,
-.theme-classic button.bg-sky-500:hover,
-.theme-classic button.bg-emerald-500:hover {
-  background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
-}
 
 /* Dashboard Fullscreen */
 .dashboard-root {
@@ -863,9 +520,6 @@ button.bg-emerald-500 {
   border: none !important;
 }
 
-/* Accent colors for text (fluid green) */
-.theme-classic .text-sky-600, .theme-classic .text-sky-500 { color: #10b981 !important; }
-.theme-classic.dark .text-sky-400, .dark .theme-classic .text-sky-400 { color: #34d399 !important; }
 
 .theme-nature .text-\[\#20a464\], .theme-nature .text-sky-600, .theme-nature .text-\[\#3cd070\] { color: #10b981 !important; }
 .theme-nature.dark .text-sky-400, .dark .theme-nature .text-sky-400 { color: #34d399 !important; }
@@ -935,47 +589,6 @@ button.bg-emerald-500 {
   color: #f87171 !important;
 }
 
-/* 2. Sunset Theme */
-.theme-gradient-sunset .inventory-item-card {
-  background: linear-gradient(135deg, #F5D3C1 0%, #EADFFE 100%) !important;
-  border: 1px solid rgba(229, 162, 115, 0.3) !important;
-  color: #1e293b !important;
-  box-shadow: 0 10px 25px rgba(229, 162, 115, 0.1) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.theme-gradient-sunset .inventory-item-card:hover {
-  transform: translateY(-4px) scale(1.01) !important;
-  box-shadow: 0 20px 30px rgba(229, 162, 115, 0.25) !important;
-  border-color: rgba(229, 162, 115, 0.5) !important;
-  filter: brightness(0.98);
-}
-.theme-gradient-sunset .card-brand-tag {
-  color: #e07a5f !important;
-}
-.theme-gradient-sunset .card-title-text,
-.theme-gradient-sunset .card-capsule-val {
-  color: #1e293b !important;
-}
-.theme-gradient-sunset .card-model-text {
-  color: #4f5d75 !important;
-}
-.theme-gradient-sunset .card-divider {
-  border-color: rgba(229, 162, 115, 0.2) !important;
-}
-.theme-gradient-sunset .card-capsule {
-  background-color: rgba(255, 255, 255, 0.45) !important;
-  border: 1px solid rgba(229, 162, 115, 0.15) !important;
-}
-.theme-gradient-sunset .card-capsule-label,
-.theme-gradient-sunset .card-stock-label {
-  color: #6c757d !important;
-}
-.theme-gradient-sunset .card-trash-btn {
-  color: #e07a5f !important;
-}
-.theme-gradient-sunset .card-trash-btn:hover {
-  color: #dc2626 !important;
-}
 
 /* 3. Warm Theme */
 .theme-gradient-warm .inventory-item-card {
@@ -1019,88 +632,7 @@ button.bg-emerald-500 {
   color: #be123c !important;
 }
 
-/* 4. Muted Harmony Theme */
-.theme-gradient-muted-harmony .inventory-item-card {
-  background: linear-gradient(135deg, #D4DFE2 0%, #E8D3C7 100%) !important;
-  border: 1px solid rgba(143, 130, 133, 0.25) !important;
-  color: #334155 !important;
-  box-shadow: 0 10px 25px rgba(66, 108, 120, 0.08) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.theme-gradient-muted-harmony .inventory-item-card:hover {
-  transform: translateY(-4px) scale(1.01) !important;
-  box-shadow: 0 20px 30px rgba(66, 108, 120, 0.18) !important;
-  border-color: rgba(143, 130, 133, 0.4) !important;
-  filter: brightness(0.98);
-}
-.theme-gradient-muted-harmony .card-brand-tag {
-  color: #426c78 !important;
-}
-.theme-gradient-muted-harmony .card-title-text,
-.theme-gradient-muted-harmony .card-capsule-val {
-  color: #334155 !important;
-}
-.theme-gradient-muted-harmony .card-model-text {
-  color: #4a5568 !important;
-}
-.theme-gradient-muted-harmony .card-divider {
-  border-color: rgba(143, 130, 133, 0.2) !important;
-}
-.theme-gradient-muted-harmony .card-capsule {
-  background-color: rgba(255, 255, 255, 0.5) !important;
-  border: 1px solid rgba(143, 130, 133, 0.15) !important;
-}
-.theme-gradient-muted-harmony .card-capsule-label,
-.theme-gradient-muted-harmony .card-stock-label {
-  color: #4a5568 !important;
-}
-.theme-gradient-muted-harmony .card-trash-btn {
-  color: #426c78 !important;
-}
-.theme-gradient-muted-harmony .card-trash-btn:hover {
-  color: #e53e3e !important;
-}
 
-/* 5. Classic Theme */
-.theme-classic .inventory-item-card {
-  background: #1e293b !important;
-  border: 1px solid #334155 !important;
-  color: #f8fafc !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-.theme-classic .inventory-item-card:hover {
-  transform: translateY(-2px) scale(1.01) !important;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
-  border-color: #475569 !important;
-}
-.theme-classic .card-brand-tag {
-  color: #38bdf8 !important;
-}
-.theme-classic .card-title-text,
-.theme-classic .card-capsule-val {
-  color: #f8fafc !important;
-}
-.theme-classic .card-model-text {
-  color: #94a3b8 !important;
-}
-.theme-classic .card-divider {
-  border-color: #334155 !important;
-}
-.theme-classic .card-capsule {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid #334155 !important;
-}
-.theme-classic .card-capsule-label,
-.theme-classic .card-stock-label {
-  color: #94a3b8 !important;
-}
-.theme-classic .card-trash-btn {
-  color: #94a3b8 !important;
-}
-.theme-classic .card-trash-btn:hover {
-  color: #ef4444 !important;
-}
 
 /* 6. Cyberpunk Theme */
 .theme-gradient-cyberpunk .inventory-item-card {
