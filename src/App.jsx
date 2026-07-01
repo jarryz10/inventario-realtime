@@ -5928,7 +5928,7 @@ export default function App() {
                                             <button
                                               type="button"
                                               onClick={() => {
-                                                setDeletingRecord({ id: record.id, collection: "rfid_verifications" });
+                                                setDeletingRecord({ id: record.id, collection: "rfid_verification" });
                                                 setIsDeleteConfirmModalOpen(true);
                                               }}
                                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
@@ -6057,7 +6057,7 @@ export default function App() {
                                           <button
                                             type="button"
                                             onClick={() => {
-                                              setDeletingRecord({ id: record.id, collection: "rfid_verifications" });
+                                              setDeletingRecord({ id: record.id, collection: "rfid_verification" });
                                               setIsDeleteConfirmModalOpen(true);
                                             }}
                                             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-550 hover:text-white text-[10px] font-bold shadow-sm hover-scale cursor-pointer transition-colors duration-200"
@@ -7591,6 +7591,7 @@ export default function App() {
                         <th className="pb-2 font-black">{language === "es" ? "Tipo" : "Type"}</th>
                         <th className="pb-2 font-black text-center">{language === "es" ? "Cantidad" : "Quantity"}</th>
                         <th className="pb-2 font-black">{language === "es" ? "Asociado" : "Associate"}</th>
+                        {userLevel >= 3 && <th className="pb-2 font-black text-center">{language === "es" ? "Acción" : "Action"}</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100/30 dark:divide-slate-800/10 text-[11px] font-semibold text-slate-600 dark:text-slate-350">
@@ -7621,6 +7622,21 @@ export default function App() {
                               {mov.type === "Ajuste por Edición" ? "-" : mov.amount}
                             </td>
                             <td className="py-2.5 text-slate-500 dark:text-slate-400 font-bold">{mov.nombreAsociado || getAssociateName(mov.operator)}</td>
+                            {userLevel >= 3 && (
+                              <td className="py-2.5 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDeletingRecord({ id: mov.id, collection: "movements" });
+                                    setIsDeleteConfirmModalOpen(true);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-colors duration-200 border-none cursor-pointer hover-scale flex items-center justify-center mx-auto"
+                                  title={language === "es" ? "Eliminar Movimiento" : "Delete Movement"}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
