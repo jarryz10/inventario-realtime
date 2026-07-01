@@ -1195,56 +1195,32 @@ export default function App() {
     }
   }, [currentUser]);
 
-  // Effect to fetch printer catalog in real-time from Firestore
+  // Effect: real-time listener on catalogo_impresoras (persistent, never self-deletes)
   useEffect(() => {
     let isMounted = true;
-    let unsubscribe = null;
-
-    const runCleanupAndListen = async () => {
-      try {
-        const colRef = collection(db, "printer_catalog");
-
-        // One-time database truncate/cleanup script to clean up old persistent data
-        const clearedKey = "printer_catalog_cleared_v2";
-        if (!localStorage.getItem(clearedKey)) {
-          console.log("Truncating printer catalog collection on the server...");
-          const snapshot = await getDocs(colRef);
-          for (const docObj of snapshot.docs) {
-            await deleteDoc(docObj.ref);
-          }
-          localStorage.setItem(clearedKey, "true");
-          console.log("Database printer catalog truncated successfully.");
-        }
-
+    const colRef = collection(db, "catalogo_impresoras");
+    const unsubscribe = onSnapshot(
+      colRef,
+      (snapshot) => {
         if (!isMounted) return;
-        unsubscribe = onSnapshot(
-          colRef,
-          (snapshot) => {
-            const list = snapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }));
-            list.sort((a, b) => {
-              if (a.line !== b.line) return a.line.localeCompare(b.line);
-              if (a.station !== b.station) return a.station.localeCompare(b.station);
-              return a.printerType.localeCompare(b.printerType);
-            });
-            setPrinterCatalog(list);
-          },
-          (error) => {
-            console.error("Firestore printer catalog query error:", error);
-          }
-        );
-      } catch (err) {
-        console.error("Error setting up printer catalog snapshot:", err);
+        const list = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        list.sort((a, b) => {
+          if (a.line !== b.line) return a.line.localeCompare(b.line);
+          if (a.station !== b.station) return a.station.localeCompare(b.station);
+          return (a.printerType || "").localeCompare(b.printerType || "");
+        });
+        setPrinterCatalog(list);
+      },
+      (error) => {
+        console.error("catalogo_impresoras listener error:", error);
       }
-    };
-
-    runCleanupAndListen();
-
+    );
     return () => {
       isMounted = false;
-      if (unsubscribe) unsubscribe();
+      unsubscribe();
     };
   }, []);
 
@@ -2262,14 +2238,14 @@ export default function App() {
       // 1. Find deleted items
       const deletedItems = printerCatalog.filter(orig => !tempCatalog.some(temp => temp.id === orig.id));
       for (const item of deletedItems) {
-        await deleteDoc(doc(db, "printer_catalog", item.id));
+        await deleteDoc(doc(db, "catalogo_impresoras", item.id));
       }
 
       // 2. Find modified or added items
       for (const item of tempCatalog) {
         if (!item.id) {
           // New item
-          await addDoc(collection(db, "printer_catalog"), {
+          await addDoc(collection(db, "catalogo_impresoras"), {
             line: item.line,
             station: item.station,
             printerType: item.printerType,
@@ -2279,7 +2255,7 @@ export default function App() {
           // Check if modified
           const original = printerCatalog.find(orig => orig.id === item.id);
           if (original && (original.line !== item.line || original.station !== item.station || original.printerType !== item.printerType || original.ip !== item.ip)) {
-            await updateDoc(doc(db, "printer_catalog", item.id), {
+            await updateDoc(doc(db, "catalogo_impresoras", item.id), {
               line: item.line,
               station: item.station,
               printerType: item.printerType,
