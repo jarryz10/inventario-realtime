@@ -1,5 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
@@ -25,8 +29,16 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore and export
-export const db = getFirestore(app);
+// Initialize Firestore with Persistent Local Cache (IndexedDB)
+// - persistentLocalCache: enables disk-based caching so all reads are served
+//   instantly from the local IndexedDB on page reload (zero flicker).
+// - persistentMultipleTabManager: allows safe multi-tab usage without
+//   throwing "failed-precondition" errors. One tab acts as primary owner.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 
 // Initialize Auth and export
 export const auth = getAuth(app);
