@@ -4325,81 +4325,6 @@ export default function App() {
                 {t[`tab_${activeTab}_desc`] || ""}
               </p>
             </div>
-
-            <div className="flex items-center gap-3 justify-end flex-wrap">
-              {activeTab === "inventario" && (
-                <div className="relative w-48 sm:w-60 shrink-0">
-                  <input
-                    type="text"
-                    placeholder={t.search_components}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full py-2 rounded-full text-xs glass-input font-bold"
-                    style={{ paddingLeft: '44px', paddingRight: '40px' }}
-                  />
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <svg
-                      className="h-3.5 w-3.5 text-slate-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  </div>
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600"
-                      type="button"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "inventario" && (() => {
-                const isWarm = visualTheme === "gradient-warm";
-                const isCyber = visualTheme === "gradient-cyberpunk";
-                
-                let buttonStyle = "bg-white/15 backdrop-blur border border-emerald-500/30 text-white hover:bg-emerald-500/20 shadow-md shadow-emerald-950/10";
-                let iconStyle = "text-emerald-400";
-                
-                if (isWarm) {
-                  buttonStyle = "bg-white/80 backdrop-blur border border-orange-200/60 text-slate-900 hover:bg-white shadow-sm";
-                  iconStyle = "text-orange-500";
-                } else if (isCyber) {
-                  buttonStyle = "bg-slate-950/60 backdrop-blur border border-fuchsia-500/40 text-white hover:bg-fuchsia-500/25 shadow-lg shadow-fuchsia-500/5";
-                  iconStyle = "text-[#FFFF00]";
-                }
-                
-                return (
-                  <button
-                    onClick={() => setIsMovementsModalOpen(true)}
-                    className={`flex items-center gap-2 px-4.5 py-2.5 rounded-full text-xs font-extrabold shadow-md hover-scale cursor-pointer ${buttonStyle}`}
-                  >
-                    <History className={`w-4 h-4 ${iconStyle}`} />
-                    <span>{language === "es" ? "Historial de Movimientos" : "Movement History"}</span>
-                  </button>
-                );
-              })()}
-
-              {activeTab === "inventario" && userLevel >= 2 && (
-                <button
-                  onClick={() => setIsAddModalOpen(true)}
-                  className="flex items-center gap-2 px-4.5 py-2.5 text-emerald-950 bg-gradient-to-r from-lime-300 to-emerald-400 hover:from-lime-400 hover:to-emerald-500 rounded-full text-xs font-black shadow-lg shadow-emerald-500/20 hover-scale cursor-pointer border border-lime-300"
-                >
-                  <PlusCircle className="w-4.5 h-4.5" />
-                  <span>{t.add_component}</span>
-                </button>
-              )}
-            </div>
           </div>
 
           {/* Success Alerts */}
@@ -4414,116 +4339,167 @@ export default function App() {
           <div className="flex-1 min-h-0 overflow-hidden relative z-10">
             <div className={`h-full ${(activeTab === "limpieza" || activeTab === "rfid" || activeTab === "robots" || activeTab === "autobagger" || activeTab === "usuario" || activeTab === "hospital") ? "overflow-y-auto pb-4" : "overflow-hidden"}`}>
             
-            {/* TAB 1: INVENTARIO */}
-            {activeTab === "inventario" && (
-              <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 shadow-lg h-full flex flex-col justify-between overflow-hidden`}>
-                <div className="flex items-center justify-between mb-4 shrink-0">
-                  <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
-                    {t.components_warehouse}
-                  </h2>
-                  <span className="px-2.5 py-0.5 rounded-full bg-white/10 dark:bg-slate-800/30 text-white text-[10px] font-bold border border-white/10 dark:border-slate-700/50">
-                    {products.length} {t.registered_suffix}
-                  </span>
-                </div>
+            {/* TAB 1: INVENTARIO — Smartsheet Shortcut Panel */}
+            {activeTab === "inventario" && (() => {
+              // Build gradient colours from active theme
+              const isWarm   = visualTheme === "gradient-warm";
+              const isCyber  = visualTheme === "gradient-cyberpunk";
+              const isBlue   = visualTheme === "gradient-electric-blue";
 
-                <div className="flex-1 overflow-y-auto pr-1 scroll-glass flex flex-col gap-3 min-h-[200px]">
-                  {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-center">
-                      <Loader2 className="w-8 h-8 text-sky-500 animate-spin mb-2" />
-                      <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
+              // Main gradient per theme
+              const heroGrad = isWarm
+                ? "from-[#FAAE87] to-[#F98A8B]"
+                : isCyber
+                ? "from-[#260073] to-[#D82EFF]"
+                : isBlue
+                ? "from-[#00B4FF] to-[#3262FF]"
+                : "from-emerald-700 to-emerald-500";
+
+              // Card accent colour for border & icon tint
+              const accentBorder = isWarm
+                ? "border-orange-300/40 hover:border-orange-400/70"
+                : isCyber
+                ? "border-fuchsia-500/30 hover:border-fuchsia-400/70"
+                : isBlue
+                ? "border-sky-400/30 hover:border-sky-300/70"
+                : "border-emerald-500/30 hover:border-emerald-400/70";
+
+              const accentIcon = isWarm
+                ? "text-orange-500"
+                : isCyber
+                ? "text-[#D82EFF]"
+                : isBlue
+                ? "text-sky-400"
+                : "text-emerald-500";
+
+              const accentRing = isWarm
+                ? "ring-orange-400/20"
+                : isCyber
+                ? "ring-fuchsia-500/20"
+                : isBlue
+                ? "ring-sky-400/20"
+                : "ring-emerald-500/20";
+
+              const btnGradient = isWarm
+                ? "from-[#FAAE87] to-[#F98A8B] text-slate-900"
+                : isCyber
+                ? "from-[#260073] to-[#D82EFF] text-white"
+                : isBlue
+                ? "from-[#00B4FF] to-[#3262FF] text-white"
+                : "from-emerald-700 to-emerald-500 text-white";
+
+              const badgeBg = isWarm
+                ? "bg-orange-100/60 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                : isCyber
+                ? "bg-fuchsia-900/30 text-fuchsia-300"
+                : isBlue
+                ? "bg-sky-100/60 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
+                : "bg-emerald-100/60 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
+
+              // Card definition: { id, label, sublabel, href, icon, minLevel }
+              const shortcuts = [
+                {
+                  id: "registro",
+                  label: language === "es" ? "Registro de Movimiento" : "Movement Registration",
+                  sublabel: language === "es" ? "Registra una entrada o salida en Smartsheet" : "Log an inventory movement in Smartsheet",
+                  href: "https://app.smartsheet.com/b/form/019e1ee7936172b7a62985cb7a9beba6",
+                  Icon: PlusCircle,
+                  badge: language === "es" ? "Todos los niveles" : "All levels",
+                  minLevel: 1,
+                },
+                {
+                  id: "historial",
+                  label: language === "es" ? "Historial de Movimiento" : "Movement History",
+                  sublabel: language === "es" ? "Consulta el registro histórico de movimientos" : "Browse the full movement history log",
+                  href: "https://app.smartsheet.com/sheets/RhgP3fr7j9W9ghhMWMXpqrgQgXcxVq6g8GfQcrJ1",
+                  Icon: History,
+                  badge: language === "es" ? "Nivel 2 y 3" : "Level 2 & 3",
+                  minLevel: 2,
+                },
+                {
+                  id: "maestro",
+                  label: language === "es" ? "Inventario Maestro" : "Master Inventory",
+                  sublabel: language === "es" ? "Vista completa del inventario centralizado" : "Full view of the centralized master inventory",
+                  href: "https://app.smartsheet.com/sheets/gQGV4jFFMRPWJjxPm6ggp6vRQXHHPFP5xP3r27m1",
+                  Icon: Database,
+                  badge: language === "es" ? "Nivel 2 y 3" : "Level 2 & 3",
+                  minLevel: 2,
+                },
+              ].filter(s => userLevel >= s.minLevel);
+
+              return (
+                <div className="h-full flex flex-col gap-6 animate-fade-in">
+
+                  {/* Hero Banner */}
+                  <div className={`bg-gradient-to-r ${heroGrad} rounded-[2rem] p-6 sm:p-8 flex items-center gap-5 shadow-xl shrink-0 overflow-hidden relative`}>
+                    {/* Decorative circles */}
+                    <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
+                    <div className="absolute -bottom-10 -left-6 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
+
+                    <div className="p-4 rounded-2xl bg-white/20 shrink-0 shadow-inner">
+                      <Boxes className="w-8 h-8 text-white" />
                     </div>
-                  ) : !products || products.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
-                      <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.empty_inventory || "No hay componentes registrados"}</h3>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                        {t.empty_inventory_desc || "No se registran componentes."}
+                    <div className="flex-1 min-w-0">
+                      <h2 className={`text-lg sm:text-2xl font-black leading-tight ${isWarm ? "text-slate-900" : "text-white"}`}>
+                        {language === "es" ? "Panel de Inventario" : "Inventory Panel"}
+                      </h2>
+                      <p className={`text-xs sm:text-sm font-semibold mt-1 opacity-80 ${isWarm ? "text-slate-800" : "text-white"}`}>
+                        {language === "es"
+                          ? "Accesos directos a Smartsheet para gestionar el inventario de manera centralizada."
+                          : "Quick links to Smartsheet to manage inventory in a centralized way."}
                       </p>
                     </div>
-                  ) : !filteredProducts || filteredProducts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-in">
-                      <PackageOpen className="w-14 h-14 text-slate-300 dark:text-slate-700 mb-2" />
-                      <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">{t.no_matches}</h3>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 max-w-xs">
-                        {language === "es" 
-                          ? `No encontramos artículos que coincidan con "${searchTerm}". Intenta buscar otro término.`
-                          : `No items matched the search term "${searchTerm}". Try another term.`}
-                      </p>
+                    <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                      <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/20 ${isWarm ? "text-slate-900" : "text-white"}`}>
+                        Smartsheet
+                      </span>
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-4">
-                      {filteredProducts.map((product, index) => {
-                        if (!product) return null;
-                        return (
-                          <div
-                            key={product.id || index}
-                            onClick={() => product.id && setSelectedProductId(product.id)}
-                            className="inventory-item-card rounded-[2rem] p-5 flex flex-col justify-between gap-4 cursor-pointer animate-fade-in"
-                          >
-                            <div className="flex gap-3">
-                              {/* Oval Image Mask */}
-                              <div className="w-14 h-20 rounded-full overflow-hidden bg-slate-950 shadow-inner shrink-0 border border-slate-500/20 aspect-[2/3]">
-                                <img
-                                  src={product?.image || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=100&auto=format&fit=crop&q=80"}
-                                  alt={product?.name || "Component"}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              
-                              <div className="min-w-0 flex-1">
-                                <span className="card-brand-tag text-[9px] uppercase font-bold tracking-wider">
-                                  {product?.brand || t.no_brand}
-                                </span>
-                                <h3 className="card-title-text font-black text-sm truncate leading-snug">
-                                  {product?.name || ""}
-                                </h3>
-                                <p className="card-model-text text-[11px] font-semibold mt-0.5 truncate">
-                                  Mod: {product?.model || t.na}
-                                </p>
-                              </div>
-                            </div>
+                  </div>
 
-                            <div className="card-divider grid grid-cols-2 gap-2 pt-3 border-t text-[11px]">
-                              <div className="card-capsule p-2 rounded-2xl flex flex-col">
-                                <span className="card-capsule-label text-[8px] uppercase font-black tracking-wider mb-0.5">SKU</span>
-                                <span className="card-capsule-val font-black truncate">{product?.sku || t.na}</span>
-                              </div>
-
-                              <div className="card-capsule p-2 rounded-2xl flex flex-col">
-                                <span className="card-capsule-label text-[8px] uppercase font-black tracking-wider mb-0.5">{language === "es" ? "Ubicación" : "Location"}</span>
-                                <span className="card-capsule-val font-black truncate">{product?.location || t.na}</span>
-                              </div>
-                            </div>
-
-                            <div className="card-divider flex items-center justify-between pt-2 border-t">
-                              <div className="flex flex-col gap-1">
-                                <span className="card-stock-label text-[8px] uppercase font-black tracking-wider block">{t.stock_status}</span>
-                                <div className="flex items-center gap-1.5">
-                                  {getStockStatus(product?.stock || 0, product?.minStock || 0)}
-                                </div>
-                              </div>
-
-                              {userLevel >= 2 && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    product.id && handleDeleteProduct(product.id);
-                                  }}
-                                  className="card-trash-btn w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-colors duration-150"
-                                  title={t.delete_firestore_tooltip}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
+                  {/* Shortcut Cards Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 flex-1">
+                    {shortcuts.map(({ id, label, sublabel, href, Icon, badge }) => (
+                      <a
+                        key={id}
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`glass-card group rounded-[2rem] p-6 flex flex-col gap-5 border shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.015] cursor-pointer no-underline ${accentBorder} ring-4 ${accentRing} ring-opacity-0 hover:ring-opacity-100`}
+                      >
+                        {/* Card Header */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className={`p-3.5 rounded-2xl bg-gradient-to-br ${heroGrad} shadow-md shrink-0`}>
+                            <Icon className="w-6 h-6 text-white" />
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          <span className={`mt-1 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0 ${badgeBg}`}>
+                            {badge}
+                          </span>
+                        </div>
+
+                        {/* Card Body */}
+                        <div className="flex flex-col gap-1.5">
+                          <h3 className="text-sm font-extrabold text-slate-800 dark:text-white leading-snug">
+                            {label}
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold leading-relaxed">
+                            {sublabel}
+                          </p>
+                        </div>
+
+                        {/* Card Footer */}
+                        <div className="mt-auto">
+                          <div className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-full text-xs font-black bg-gradient-to-r ${btnGradient} shadow-md transition-all duration-200 group-hover:brightness-110`}>
+                            <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                            <span>{language === "es" ? "Abrir en Smartsheet" : "Open in Smartsheet"}</span>
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* TAB 2: ÓRDENES Y PEDIDOS */}
             {activeTab === "ordenes" && (
