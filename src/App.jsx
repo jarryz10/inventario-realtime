@@ -518,30 +518,19 @@ export default function App() {
   const [deletingRecord, setDeletingRecord] = useState(null); // { id, collection }
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] = useState(false);
 
-  // RFID Verification State
+  // RFID Verification State (history list)
   const [rfidVerifications, setRfidVerifications] = useState([]);
   const [isRfidLoading, setIsRfidLoading] = useState(true);
-  const [rfidRows, setRfidRows] = useState(() => {
-    try {
-      const saved = localStorage.getItem("rfidRows");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Robust check: filter only valid objects having station and ip fields
-          const clean = parsed.filter(item => item && typeof item === "object" && "station" in item && "ip" in item);
-          if (clean.length > 0) {
-            return clean;
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Error reading/parsing saved rfidRows:", e);
-    }
-    return [{ station: "", ip: "10.40.", antennaStatus: "" }];
-  });
-  const [rfidErrors, setRfidErrors] = useState({});
+
+  // RFID Live Stations (realtime collaborative board)
+  const [rfidLiveStations, setRfidLiveStations] = useState([]);
+  const [isRfidLiveLoading, setIsRfidLiveLoading] = useState(true);
+  const [rfidLiveError, setRfidLiveError] = useState(null);
   const [isRfidSubmitting, setIsRfidSubmitting] = useState(false);
   const [expandedRfidId, setExpandedRfidId] = useState(null);
+
+  // Debounce timers map: stationId -> timeoutId
+  const rfidDebounceTimers = useRef({});
 
   // User Management State
   const [usersList, setUsersList] = useState([]);
@@ -1275,10 +1264,28 @@ export default function App() {
     };
   }, []);
 
-  // Effect to sync RFID verification rows to localStorage
+  // Effect: subscribe to rfid_live_stations in real-time (collaborative board)
   useEffect(() => {
-    localStorage.setItem("rfidRows", JSON.stringify(rfidRows));
-  }, [rfidRows]);
+    if (!currentUser) return;
+    setIsRfidLiveLoading(true);
+    const q = collection(db, "rfid_live_stations");
+    const unsub = onSnapshot(q, (snap) => {
+      const rows = snap.docs
+        .map(d => ({ _docId: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const tA = a._createdAt?.toMillis ? a._createdAt.toMillis() : (a._createdAt?.seconds ? a._createdAt.seconds * 1000 : 0);
+          const tB = b._createdAt?.toMillis ? b._createdAt.toMillis() : (b._createdAt?.seconds ? b._createdAt.seconds * 1000 : 0);
+          return tA - tB;
+        });
+      setRfidLiveStations(rows);
+      setIsRfidLiveLoading(false);
+    }, (err) => {
+      console.error("rfid_live_stations listener error:", err);
+      setRfidLiveError(err.message);
+      setIsRfidLiveLoading(false);
+    });
+    return () => unsub();
+  }, [currentUser]);
 
   // Effect to reset SKU and stock form inputs when details modal opens/closes
   useEffect(() => {
@@ -2416,87 +2423,109 @@ export default function App() {
     }
   };
 
-  // Restrict RFID IP Address editing to maintain 10.40. prefix and allow only numbers and dots for a specific row
-  const handleRfidIPChangeForRow = (index, val) => {
-    const updated = [...rfidRows];
-    if (!val.startsWith("10.40.")) {
-      updated[index].ip = "10.40.";
-    } else {
-      const suffix = val.substring(6);
-      const cleanSuffix = suffix.replace(/[^0-9.]/g, "");
-      updated[index].ip = "10.40." + cleanSuffix;
-    }
-    setRfidRows(updated);
-  };
+  // ─── RFID Live Collaborative Handlers ─────────────────────────────────────
 
-  // Add a new empty row to the RFID verification list
-  const handleAddRfidRow = () => {
-    setRfidRows([...rfidRows, { station: "", ip: "10.40.", antennaStatus: "" }]);
-  };
-
-  // Remove a row from the RFID verification list
-  const handleRemoveRfidRow = (index) => {
-    if (rfidRows.length > 1) {
-      const updated = rfidRows.filter((_, i) => i !== index);
-      setRfidRows(updated);
-      
-      const updatedErrors = { ...rfidErrors };
-      delete updatedErrors[index];
-      setRfidErrors(updatedErrors);
-    }
-  };
-
-  // Submit RFID verification form rows to Firestore
-  const handleSubmitRfid = async (e) => {
-    e.preventDefault();
+  // Add a new blank station row to Firestore live board
+  const handleAddRfidLiveStation = async () => {
     if (userLevel >= 3) return;
-    setAlertMessage({ type: "", text: "" });
+    try {
+      await addDoc(collection(db, "rfid_live_stations"), {
+        station: "",
+        ip: "10.40.",
+        antennaStatus: "",
+        lastEditedBy: currentUser.username,
+        _createdAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Error adding live RFID station:", err);
+    }
+  };
 
-    const errors = {};
-    let hasErrors = false;
+  // Delete a live station row from Firestore immediately
+  const handleDeleteRfidLiveStation = async (docId) => {
+    if (!docId) return;
+    try {
+      await deleteDoc(doc(db, "rfid_live_stations", docId));
+    } catch (err) {
+      console.error("Error deleting live RFID station:", err);
+    }
+  };
 
-    rfidRows.forEach((row, index) => {
-      const station = row.station.trim();
-      const ip = row.ip.trim();
-      const antennaStatus = row.antennaStatus.trim();
-      const rowErrors = {};
+  // Debounced field update — fires updateDoc 600ms after the user stops typing
+  const handleRfidLiveFieldChange = (docId, field, rawValue) => {
+    // Optimistic local update so UI feels instant
+    setRfidLiveStations(prev =>
+      prev.map(s => s._docId === docId ? { ...s, [field]: rawValue } : s)
+    );
 
-      if (!station) {
-        rowErrors.station = t.err_station_req;
-      } else if (station.length > 3) {
-        rowErrors.station = t.err_station_max;
+    // IP prefix guard
+    let value = rawValue;
+    if (field === "ip") {
+      if (!rawValue.startsWith("10.40.")) {
+        value = "10.40.";
+      } else {
+        const suffix = rawValue.substring(6).replace(/[^0-9.]/g, "");
+        value = "10.40." + suffix;
       }
+      // Re-apply cleaned value to local state
+      setRfidLiveStations(prev =>
+        prev.map(s => s._docId === docId ? { ...s, ip: value } : s)
+      );
+    }
 
-      if (!ip) {
-        rowErrors.ip = t.err_ip_req;
-      } else if (!isValidRfidIP(ip)) {
-        rowErrors.ip = t.err_ip_invalid_rfid;
+    // Cancel previous debounce for this field on this doc
+    const timerKey = `${docId}_${field}`;
+    if (rfidDebounceTimers.current[timerKey]) {
+      clearTimeout(rfidDebounceTimers.current[timerKey]);
+    }
+
+    rfidDebounceTimers.current[timerKey] = setTimeout(async () => {
+      try {
+        await updateDoc(doc(db, "rfid_live_stations", docId), {
+          [field]: value,
+          lastEditedBy: currentUser?.username || "unknown",
+          lastEditedAt: serverTimestamp()
+        });
+      } catch (err) {
+        console.error(`Error updating rfid_live_stations field ${field}:`, err);
       }
+    }, 600);
+  };
 
-      if (!antennaStatus) {
-        rowErrors.antennaStatus = t.err_antenna_status_req;
-      }
+  // Clear all live stations from Firestore (batch delete)
+  const handleClearRfidLiveBoard = async () => {
+    if (userLevel >= 3) return;
+    try {
+      await Promise.all(
+        rfidLiveStations.map(s => deleteDoc(doc(db, "rfid_live_stations", s._docId)))
+      );
+    } catch (err) {
+      console.error("Error clearing rfid live board:", err);
+    }
+  };
 
-      if (Object.keys(rowErrors).length > 0) {
-        errors[index] = rowErrors;
-        hasErrors = true;
-      }
-    });
-
-    if (hasErrors) {
-      setRfidErrors(errors);
+  // Snapshot current live board → save as rfid_verification history record
+  const handleSaveRfidSnapshot = async () => {
+    if (userLevel >= 3) return;
+    if (rfidLiveStations.length === 0) {
+      setAlertMessage({ type: "error", text: language === "es" ? "No hay estaciones en el tablero para guardar." : "No stations on the board to save." });
       return;
     }
 
-    setRfidErrors({});
+    // Validate
+    const invalid = rfidLiveStations.filter(s => !s.station?.trim() || !isValidRfidIP(s.ip?.trim()) || !s.antennaStatus?.trim());
+    if (invalid.length > 0) {
+      setAlertMessage({ type: "error", text: language === "es" ? "Completa todos los campos antes de guardar el registro." : "Fill in all fields before saving the record." });
+      return;
+    }
+
     setIsRfidSubmitting(true);
     try {
       const today = new Date().toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
-      
-      const stationsData = rfidRows.map(row => ({
-        estacion: row.station.trim(),
-        ip: row.ip.trim(),
-        estado: row.antennaStatus.toLowerCase().trim()
+      const stationsData = rfidLiveStations.map(s => ({
+        estacion: s.station?.trim(),
+        ip: s.ip?.trim(),
+        estado: s.antennaStatus?.toLowerCase().trim()
       }));
 
       await addDoc(collection(db, "rfid_verification"), {
@@ -2512,21 +2541,22 @@ export default function App() {
         timestamp: serverTimestamp(),
         type: "rfid",
         message: language === "es"
-          ? `El operador "${currentUser.username}" ha registrado la Verificación de RFID para ${stationsData.length} estación(es).`
-          : `Operator "${currentUser.username}" has registered the RFID Verification for ${stationsData.length} station(s).`,
+          ? `El operador "${currentUser.username}" ha guardado la Verificación de RFID para ${stationsData.length} estación(es).`
+          : `Operator "${currentUser.username}" has saved the RFID Verification for ${stationsData.length} station(s).`,
         title: language === "es" ? "Verificación RFID" : "RFID Verification",
         read: false
       });
 
-      setAlertMessage({ type: "success", text: "¡Verificación(es) de RFID registrada(s) exitosamente!" });
+      setAlertMessage({ type: "success", text: language === "es" ? "¡Verificación de RFID guardada en el historial!" : "RFID Verification saved to history!" });
       setTimeout(() => setAlertMessage({ type: "", text: "" }), 3000);
     } catch (error) {
-      console.error("Error submitting RFID verification:", error);
-      setAlertMessage({ type: "error", text: "Error al registrar la verificación de RFID." });
+      console.error("Error saving RFID snapshot:", error);
+      setAlertMessage({ type: "error", text: language === "es" ? "Error al guardar la verificación de RFID." : "Error saving RFID verification." });
     } finally {
       setIsRfidSubmitting(false);
     }
   };
+
 
   // Robot Cleaning Helper Handlers (Multi-Robot)
   const handleAddRobotFormRow = () => {
@@ -5668,44 +5698,70 @@ export default function App() {
               <div className="flex flex-col gap-6 h-auto overflow-y-auto pb-12 pr-1 scroll-glass">
                 {userLevel < 3 ? (
                   <>
-                    {/* Form: create RFID verification logs (full width) */}
-                    <div className="w-full flex flex-col h-auto">
-                      <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col`}>
-                        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider mb-4">
-                          {t.rfid_form_title}
-                        </h2>
-                        
-                        <form onSubmit={handleSubmitRfid} className="flex flex-col gap-5">
-                          {/* List of dynamic rows */}
-                          <div className="flex flex-col gap-4">
-                            {rfidRows.map((row, index) => (
-                              <div key={index} className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border animate-fade-in ${getMetallicFrameClass(visualTheme)}`}>
-                                
+                    {/* ── Collaborative Live Board ── */}
+                    <div className={`glass-card ${getMetallicFrameClass(visualTheme)} rounded-[2rem] p-5 pb-8 shadow-lg flex flex-col`}>
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-5 shrink-0">
+                        <div>
+                          <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">
+                            {t.rfid_form_title}
+                          </h2>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5 flex items-center gap-1.5">
+                            <span className="inline-flex w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                            {language === "es" ? "Sincronización en tiempo real activa" : "Real-time sync active"}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black border border-emerald-500/20">
+                            {rfidLiveStations.length} {language === "es" ? "estaciones" : "stations"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Live Station Rows */}
+                      {isRfidLiveLoading ? (
+                        <div className="flex flex-col items-center justify-center py-16">
+                          <Loader2 className="w-7 h-7 animate-spin text-sky-500 mb-2" />
+                          <span className="text-xs text-slate-400 font-bold">{t.loading_database}</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-4">
+                          {rfidLiveStations.length === 0 && (
+                            <div className="text-center py-10 text-slate-400 text-xs font-semibold">
+                              {language === "es" ? "No hay estaciones. Presiona \"+ Agregar\" para comenzar." : "No stations yet. Press \"+ Add\" to begin."}
+                            </div>
+                          )}
+                          {rfidLiveStations.map((station) => {
+                            const docId = station._docId;
+                            const isBueno = station.antennaStatus === "Bueno";
+                            const isFallo = station.antennaStatus === "Fallo";
+                            return (
+                              <div
+                                key={docId}
+                                className={`grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-slate-500/5 dark:bg-slate-900/10 p-4 rounded-2xl border animate-fade-in transition-all duration-300 ${getMetallicFrameClass(visualTheme)} ${
+                                  isBueno ? "border-emerald-500/30" : isFallo ? "border-red-500/30" : ""
+                                }`}
+                              >
                                 {/* Estación */}
                                 <div className="md:col-span-3">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
                                     {t.station_field}
+                                    {station.lastEditedBy && station.lastEditedBy !== currentUser?.username && (
+                                      <span className="ml-2 text-[9px] font-normal text-sky-500 animate-pulse">
+                                        ✎ {station.lastEditedBy}
+                                      </span>
+                                    )}
                                   </label>
                                   <input
                                     type="text"
                                     maxLength={3}
                                     placeholder={language === "es" ? "Ej. A01" : "e.g. A01"}
-                                    value={row.station}
-                                    onChange={(e) => {
-                                      const updated = [...rfidRows];
-                                      updated[index].station = e.target.value;
-                                      setRfidRows(updated);
-                                    }}
-                                    className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold ${
-                                      rfidErrors[index]?.station ? "border-red-500" : ""
-                                    }`}
-                                    required
+                                    value={station.station || ""}
+                                    onChange={(e) => handleRfidLiveFieldChange(docId, "station", e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl text-xs glass-input font-semibold"
                                   />
-                                  {rfidErrors[index]?.station && (
-                                    <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].station}</p>
-                                  )}
                                 </div>
- 
+
                                 {/* Lector IP */}
                                 <div className="md:col-span-4">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
@@ -5714,100 +5770,88 @@ export default function App() {
                                   <input
                                     type="text"
                                     placeholder={language === "es" ? "Ej. 10.40.85.12" : "e.g. 10.40.85.12"}
-                                    value={row.ip}
-                                    onChange={(e) => handleRfidIPChangeForRow(index, e.target.value)}
+                                    value={station.ip || "10.40."}
+                                    onChange={(e) => handleRfidLiveFieldChange(docId, "ip", e.target.value)}
                                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-mono font-bold ${
-                                      rfidErrors[index]?.ip ? "border-red-500" : ""
+                                      station.ip && !isValidRfidIP(station.ip) && station.ip !== "10.40." ? "border-amber-500/60" : ""
                                     }`}
-                                    required
                                   />
-                                  {rfidErrors[index]?.ip && (
-                                    <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].ip}</p>
+                                  {station.ip && !isValidRfidIP(station.ip) && station.ip !== "10.40." && (
+                                    <p className="text-[9px] text-amber-500 font-bold mt-1">{t.err_ip_invalid_rfid}</p>
                                   )}
                                 </div>
- 
+
                                 {/* Estado de Antenas */}
                                 <div className="md:col-span-4">
                                   <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
                                     {t.antennas_field}
                                   </label>
                                   <select
-                                    value={row.antennaStatus}
-                                    onChange={(e) => {
-                                      const updated = [...rfidRows];
-                                      updated[index].antennaStatus = e.target.value;
-                                      setRfidRows(updated);
-                                    }}
+                                    value={station.antennaStatus || ""}
+                                    onChange={(e) => handleRfidLiveFieldChange(docId, "antennaStatus", e.target.value)}
                                     className={`w-full px-4 py-2.5 rounded-xl text-xs glass-input font-bold ${
-                                      rfidErrors[index]?.antennaStatus ? "border-red-500" : ""
+                                      isBueno ? "border-emerald-500/40" : isFallo ? "border-red-500/40" : ""
                                     }`}
-                                    required
                                   >
                                     <option value="" disabled className="bg-slate-100 dark:bg-slate-900 text-slate-400">{t.select_status_placeholder}</option>
                                     <option value="Bueno" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.status_optimo}</option>
                                     <option value="Fallo" className="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">{t.status_fallo}</option>
                                   </select>
-                                  {rfidErrors[index]?.antennaStatus && (
-                                    <p className="text-[9px] text-red-500 font-bold mt-1">{rfidErrors[index].antennaStatus}</p>
-                                  )}
                                 </div>
- 
-                                {/* Remover fila button */}
+
+                                {/* Delete row */}
                                 <div className="md:col-span-1 flex justify-center pb-1">
                                   <button
                                     type="button"
-                                    disabled={rfidRows.length === 1}
-                                    onClick={() => handleRemoveRfidRow(index)}
-                                    className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white disabled:opacity-30 disabled:hover:bg-red-500/10 disabled:hover:text-red-500 transition-colors duration-200 hover-scale cursor-pointer"
-                                    title={language === "es" ? "Eliminar fila" : "Remove row"}
+                                    onClick={() => handleDeleteRfidLiveStation(docId)}
+                                    className="p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-colors duration-200 hover-scale cursor-pointer"
+                                    title={language === "es" ? "Eliminar estación" : "Delete station"}
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
                                 </div>
- 
                               </div>
-                            ))}
-                          </div>
- 
-                          {/* Form actions */}
-                          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                            <div className="flex items-center gap-3 w-full sm:w-auto">
-                              <button
-                                type="button"
-                                onClick={handleAddRfidRow}
-                                className="px-5 py-2.5 rounded-xl border-2 border-dashed border-slate-300/40 hover:border-slate-400 dark:border-slate-700/40 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-white/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
-                              >
-                                <PlusCircle className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
-                                <span>{t.add_rfid_btn}</span>
-                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setRfidRows([{ station: "", ip: "10.40.", antennaStatus: "" }]);
-                                  setRfidErrors({});
-                                }}
-                                className="px-5 py-2.5 rounded-xl border border-red-500/30 hover:border-red-500 text-red-500 hover:bg-red-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
-                              >
-                                <RefreshCw className="w-4 h-4" />
-                                <span>{language === "es" ? "Limpiar" : "Clear"}</span>
-                              </button>
-                            </div>
+                      {/* Form actions */}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-4 border-t border-slate-200/30 dark:border-slate-800/20">
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                          <button
+                            type="button"
+                            onClick={handleAddRfidLiveStation}
+                            className="px-5 py-2.5 rounded-xl border-2 border-dashed border-slate-300/40 hover:border-slate-400 dark:border-slate-700/40 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-white/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200"
+                          >
+                            <PlusCircle className={`w-4 h-4 ${getMetallicIconClass(visualTheme)}`} />
+                            <span>{t.add_rfid_btn}</span>
+                          </button>
 
-                            <button
-                              type="submit"
-                              disabled={isRfidSubmitting}
-                              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                            >
-                              {isRfidSubmitting ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <CheckCircle className="w-3.5 h-3.5" />
-                              )}
-                              <span>{isRfidSubmitting ? t.loading : t.save_record}</span>
-                            </button>
-                          </div>
-                        </form>
+                          <button
+                            type="button"
+                            onClick={handleClearRfidLiveBoard}
+                            disabled={rfidLiveStations.length === 0}
+                            className="px-5 py-2.5 rounded-xl border border-red-500/30 hover:border-red-500 text-red-500 hover:bg-red-500/5 font-bold text-xs hover-scale flex items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            <span>{language === "es" ? "Limpiar todo" : "Clear all"}</span>
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleSaveRfidSnapshot}
+                          disabled={isRfidSubmitting || rfidLiveStations.length === 0}
+                          className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold text-xs shadow-lg shadow-sky-500/15 hover-scale flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                        >
+                          {isRfidSubmitting ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-3.5 h-3.5" />
+                          )}
+                          <span>{isRfidSubmitting ? t.loading : t.save_record}</span>
+                        </button>
                       </div>
                     </div>
                     
